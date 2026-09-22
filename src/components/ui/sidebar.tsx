@@ -35,9 +35,9 @@ export const SidebarProvider = ({
   animate = true,
 }: {
   children: React.ReactNode;
-  open?: boolean;
-  setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
-  animate?: boolean;
+  open?: boolean | undefined;
+  setOpen?: React.Dispatch<React.SetStateAction<boolean>> | undefined;
+  animate?: boolean | undefined;
 }) => {
   const [openState, setOpenState] = useState(false);
 
@@ -73,7 +73,7 @@ export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
   return (
     <>
       <DesktopSidebar {...props} />
-      <MobileSidebar {...(props as React.ComponentProps<"div">)} />
+      <MobileSidebar {...(props as unknown as React.ComponentProps<"div">)} />
     </>
   );
 };
