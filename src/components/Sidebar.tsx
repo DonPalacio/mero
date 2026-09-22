@@ -6,48 +6,46 @@ import {
   IconCashRegister,
   IconPackages,
   IconCategory2,
-  IconLayoutDashboard
+  IconLayoutDashboard,
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
-export default function SidebarDemo() {
+// Interfaz para recibir el <Outlet /> desde __root.tsx
+interface SidebarLayoutProps {
+  children?: React.ReactNode;
+}
+
+export default function SidebarDemo({ children }: SidebarLayoutProps) {
   const links = [
     {
-      label: "Transactions",
-      href: "#",
-      icon: (
-        <IconCashRegister stroke={2} className="text-foreground h-5 w-5 shrink-0" />
-      ),
-    },
-    {
-      label: "Categorys",
-      href: "#",
-      icon: (
-        <IconCategory2 className="text-foreground h-5 w-5 shrink-0" />
-      ),
-    },
-    {
-      label: "Boxes",
-      href: "#",
-      icon: (
-        <IconPackages className="text-foreground h-5 w-5 shrink-0" />
-      ),
-    },
-    {
       label: "Dashboard",
-      href: "#",
-      icon: (
-        <IconLayoutDashboard className="text-foreground h-5 w-5 shrink-0" />
-      ),
+      href: "/dashboard", // Apunta a la ruta que acabamos de crear
+      icon: <IconLayoutDashboard className="text-foreground h-5 w-5 shrink-0" />,
+    },
+    {
+      label: "Transacciones",
+      href: "/transactions",
+      icon: <IconCashRegister stroke={2} className="text-foreground h-5 w-5 shrink-0" />,
+    },
+    {
+      label: "Categorías",
+      href: "/categories",
+      icon: <IconCategory2 className="text-foreground h-5 w-5 shrink-0" />,
+    },
+    {
+      label: "Cajas",
+      href: "/boxes",
+      icon: <IconPackages className="text-foreground h-5 w-5 shrink-0" />,
     },
   ];
   const [open, setOpen] = useState(false);
+
   return (
     <div
       className={cn(
         "flex flex-col md:flex-row bg-sidebar w-full flex-1 mx-auto overflow-hidden",
-        "h-screen"
+        "h-screen",
       )}
     >
       <Sidebar open={open} setOpen={setOpen}>
@@ -64,19 +62,20 @@ export default function SidebarDemo() {
             <SidebarLink
               link={{
                 label: "Logout",
-                href: "#",
-                icon: (
-                  <IconArrowLeft className="text-foreground h-5 w-5 shrink-0" />
-                ),
+                href: "/logout",
+                icon: <IconArrowLeft className="text-foreground h-5 w-5 shrink-0" />,
               }}
             />
           </div>
         </SidebarBody>
       </Sidebar>
-      <Dashboard />
+
+      {/* Aquí se renderiza la vista de la URL actual */}
+      {children}
     </div>
   );
 }
+
 export const Logo = () => {
   return (
     <a
@@ -94,6 +93,7 @@ export const Logo = () => {
     </a>
   );
 };
+
 export const LogoIcon = () => {
   return (
     <a
@@ -102,31 +102,5 @@ export const LogoIcon = () => {
     >
       <div className="h-5 w-6 bg-foreground rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm shrink-0" />
     </a>
-  );
-};
-
-// Dummy dashboard component with content
-const Dashboard = () => {
-  return (
-    <div className="flex flex-1">
-      <div className="p-2 md:p-10 rounded-tl-2xl border border-border bg-background flex flex-col gap-2 flex-1 w-full h-full">
-        <div className="flex gap-2">
-          {[...new Array(4)].map((i, idx) => (
-            <div
-              key={"first-array-demo-1" + idx}
-              className="h-20 w-full rounded-lg bg-card animate-pulse"
-            ></div>
-          ))}
-        </div>
-        <div className="flex gap-2 flex-1">
-          {[...new Array(2)].map((i, idx) => (
-            <div
-              key={"second-array-demo-1" + idx}
-              className="h-full w-full rounded-lg bg-card animate-pulse"
-            ></div>
-          ))}
-        </div>
-      </div>
-    </div>
   );
 };

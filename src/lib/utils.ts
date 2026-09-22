@@ -13,3 +13,18 @@ export function fmt(monto: number): string {
     maximumFractionDigits: 0,
   }).format(monto);
 }
+
+export function monthLabelText(monthKey: string): string {
+  const parts = monthKey.split("-").map(Number);
+  const year = parts[0];
+  const month = parts[1];
+  const date = new Date(year, month - 1);
+  const label = date.toLocaleDateString("es-CO", { month: "long", year: "numeric" });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+export function getMonthAbbr(monthKey: string): string {
+  const [year, month] = [parseInt(monthKey.split("-")[0]), parseInt(monthKey.split("-")[1])];
+  const date = new Date(year, month - 1);
+  return date.toLocaleDateString("es-CO", { month: "short" }).slice(0, 3).toUpperCase();
+}

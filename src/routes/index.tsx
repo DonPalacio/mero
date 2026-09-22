@@ -1,28 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import SidebarDemo from "@/components/sidebar-demo";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Sidebar Demo — Acet Labs" },
-      {
-        name: "description",
-        content:
-          "An animated collapsible sidebar demo with desktop hover-expand and mobile drawer navigation.",
-      },
-      { property: "og:title", content: "Sidebar Demo — Acet Labs" },
-      {
-        property: "og:description",
-        content:
-          "An animated collapsible sidebar demo with desktop hover-expand and mobile drawer navigation.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-    ],
-  }),
-  component: Index,
+  // beforeLoad se ejecuta antes de intentar dibujar la pantalla
+  beforeLoad: () => {
+    // Lanzamos una redirección automática a tu nueva ruta limpia
+    throw redirect({
+      to: "/transactions",
+    });
+  },
+  // Como redirigimos inmediatamente, el componente visual puede quedar vacío
+  component: () => null,
 });
-
-function Index() {
-  return <SidebarDemo />;
-}
