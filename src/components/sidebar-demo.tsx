@@ -3,9 +3,10 @@ import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import {
   IconArrowLeft,
-  IconBrandTabler,
-  IconSettings,
-  IconUserBolt,
+  IconCashRegister,
+  IconPackages,
+  IconCategory2,
+  IconLayoutDashboard
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -13,31 +14,31 @@ import { cn } from "@/lib/utils";
 export default function SidebarDemo() {
   const links = [
     {
+      label: "Transactions",
+      href: "#",
+      icon: (
+        <IconCashRegister stroke={2} className="text-foreground h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Categorys",
+      href: "#",
+      icon: (
+        <IconCategory2 className="text-foreground h-5 w-5 shrink-0" />
+      ),
+    },
+    {
+      label: "Boxes",
+      href: "#",
+      icon: (
+        <IconPackages className="text-foreground h-5 w-5 shrink-0" />
+      ),
+    },
+    {
       label: "Dashboard",
       href: "#",
       icon: (
-        <IconBrandTabler className="text-foreground h-5 w-5 shrink-0" />
-      ),
-    },
-    {
-      label: "Profile",
-      href: "#",
-      icon: (
-        <IconUserBolt className="text-foreground h-5 w-5 shrink-0" />
-      ),
-    },
-    {
-      label: "Settings",
-      href: "#",
-      icon: (
-        <IconSettings className="text-foreground h-5 w-5 shrink-0" />
-      ),
-    },
-    {
-      label: "Logout",
-      href: "#",
-      icon: (
-        <IconArrowLeft className="text-foreground h-5 w-5 shrink-0" />
+        <IconLayoutDashboard className="text-foreground h-5 w-5 shrink-0" />
       ),
     },
   ];
@@ -45,7 +46,7 @@ export default function SidebarDemo() {
   return (
     <div
       className={cn(
-        "flex flex-col md:flex-row bg-background w-full flex-1 mx-auto overflow-hidden",
+        "flex flex-col md:flex-row bg-sidebar w-full flex-1 mx-auto overflow-hidden",
         "h-screen"
       )}
     >
@@ -62,16 +63,10 @@ export default function SidebarDemo() {
           <div>
             <SidebarLink
               link={{
-                label: "Manu Arora",
+                label: "Logout",
                 href: "#",
                 icon: (
-                  <img
-                    src="https://assets.aceternity.com/manu.png"
-                    className="h-7 w-7 shrink-0 rounded-full"
-                    width={50}
-                    height={50}
-                    alt="Avatar"
-                  />
+                  <IconArrowLeft className="text-foreground h-5 w-5 shrink-0" />
                 ),
               }}
             />
@@ -94,7 +89,7 @@ export const Logo = () => {
         animate={{ opacity: 1 }}
         className="font-medium text-foreground whitespace-pre"
       >
-        Acet Labs
+        Mero
       </motion.span>
     </a>
   );
