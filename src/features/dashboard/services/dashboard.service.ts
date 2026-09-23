@@ -7,7 +7,7 @@ export const dashboardService = {
   async obtenerMovimientos(): Promise<Movimiento[]> {
     const { data, error } = await supabase
       .from("movimientos")
-      .select("*")
+      .select("*, medios(nombre), categorias(nombre)")
       .order("fecha", { ascending: false });
 
     if (error) {
@@ -15,19 +15,19 @@ export const dashboardService = {
       throw new Error(error.message);
     }
 
-    return (data || []).map((m) => ({
+    return (data || []).map((m: any) => ({
       id: m.id,
       tipo: m.tipo as "gasto" | "ingreso",
       monto: Number(m.monto),
-      cajita: m.cajita,
-      medio: m.cajita, // Por ahora mapeamos cajita al medio/box
+      cajita: m.categorias?.nombre ?? "",
+      medio: m.medios?.nombre ?? "",
       fecha: m.fecha,
-      nota: m.nota || "",
+      nota: m.descripcion || "",
     }));
   },
 
   // 2. Obtener categorías con sus presupuestos
-  async obtenerCajitas(): Promise<Categoria[]> {
+  async obtenerCajitas(): Promise<any[]> {
     const { data, error } = await supabase
       .from("categorias")
       .select("*")
@@ -39,6 +39,7 @@ export const dashboardService = {
     }
 
     return (data || []).map((c) => ({
+      id: c.id,
       name: c.nombre,
       tipo: c.tipo as "gasto" | "ingreso",
       budget: Number(c.presupuesto_mensual),
@@ -79,7 +80,10 @@ export const dashboardService = {
 
   // 4. Eliminar movimiento
   async eliminarMovimiento(id: string): Promise<void> {
-    const { error } = await supabase.from("movimientos").delete().eq("id", id);
+    const { error } = await supabase
+      .from("movimientos")
+      .delete()
+      .eq("id", id);
 
     if (error) {
       console.error("Error al eliminar movimiento en Supabase:", error);

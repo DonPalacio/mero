@@ -1,5 +1,5 @@
-import { stringify } from "querystring";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { transactionsService } from "../services/transactions.service";
 
 export interface CategoriaBase {
   name: string;
@@ -17,34 +17,12 @@ export interface Movimiento {
 }
 
 export function useTransactions() {
-  const mediosDisponibles = ["Efectivo", "Nu", "Bancolombia"];
-  const categoriasDisponibles: CategoriaBase[] = [
-    { name: "Salario", tipo: "ingreso" },
-    { name: "Suscripciones", tipo: "gasto" },
-    { name: "Transporte", tipo: "gasto" },
-    { name: "Supermercado", tipo: "gasto" },
-  ];
-
-  const [movimientos, setMovimientos] = useState<Movimiento[]>([
-    {
-      id: "1",
-      tipo: "gasto",
-      monto: 150000,
-      cajita: "Supermercado",
-      medio: "Nu",
-      fecha: new Date().toISOString().split("T")[0] as string,
-      nota: "Mercado quincena",
-    },
-    {
-      id: "2",
-      tipo: "ingreso",
-      monto: 2500000,
-      cajita: "Salario",
-      medio: "Bancolombia",
-      fecha: new Date().toISOString().split("T")[0] as string,
-      nota: "Pago nómina",
-    },
-  ]);
+  const [mediosData, setMediosData] = useState<{ id: string; nombre: string }[]>([]);
+  const [categoriasData, setCategoriasData] = useState<
+    { id: string; nombre: string; tipo: "gasto" | "ingreso" }[]
+  >([]);
+  const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [tipoSel, setTipoSel] = useState<"gasto" | "ingreso">("gasto");
   const [monto, setMonto] = useState("");
@@ -55,9 +33,32 @@ export function useTransactions() {
   const [fMsg, setFMsg] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState<string | null>(null);
 
+  // Carga inicial: movimientos + catálogos de medios y categorías reales
+  useEffect(() => {
+    async function cargarDatos() {
+      setIsLoading(true);
+      const [movsData, mediosRes, categoriasRes] = await Promise.all([
+        transactionsService.obtenerMovimientos(),
+        transactionsService.obtenerMedios(),
+        transactionsService.obtenerCategorias(),
+      ]);
+      setMovimientos(movsData);
+      setMediosData(mediosRes);
+      setCategoriasData(categoriasRes);
+      setIsLoading(false);
+    }
+    cargarDatos();
+  }, []);
+
+  const mediosDisponibles = mediosData.map((m) => m.nombre);
+  const categoriasDisponibles: CategoriaBase[] = categoriasData.map((c) => ({
+    name: c.nombre,
+    tipo: c.tipo,
+  }));
+
   const categoriasFiltradas = categoriasDisponibles.filter((c) => c.tipo === tipoSel);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const montoNum = parseFloat(monto);
 
@@ -74,10 +75,32 @@ export function useTransactions() {
       return;
     }
 
+    const categoriaObj = categoriasData.find((c) => c.nombre === selectedCat);
+    const medioObj = mediosData.find((m) => m.nombre === selectedMedio);
+
+    if (!categoriaObj || !medioObj) {
+      setFMsg("Categoría o medio inválido");
+      return;
+    }
+
     setFMsg("");
 
+    const resultado = await transactionsService.crearMovimiento({
+      tipo: tipoSel,
+      monto: montoNum,
+      medioId: medioObj.id,
+      categoriaId: categoriaObj.id,
+      fecha,
+      nota,
+    });
+
+    if (!resultado) {
+      setFMsg("No se pudo guardar el movimiento");
+      return;
+    }
+
     const nuevoMov: Movimiento = {
-      id: Math.random().toString(36).substring(7),
+      id: resultado.id,
       tipo: tipoSel,
       monto: montoNum,
       cajita: selectedCat,
@@ -93,14 +116,18 @@ export function useTransactions() {
     setSelectedCat(null);
   }
 
-  function handleDelete(id: string) {
-    setMovimientos(movimientos.filter((m) => m.id !== id));
+  async function handleDelete(id: string) {
+    const exito = await transactionsService.eliminarMovimiento(id);
+    if (exito) {
+      setMovimientos(movimientos.filter((m) => m.id !== id));
+    }
   }
 
   return {
     mediosDisponibles,
     categoriasDisponibles,
     movimientos,
+    isLoading,
     tipoSel,
     setTipoSel,
     monto,

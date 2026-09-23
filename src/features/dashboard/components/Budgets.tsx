@@ -1,7 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { fmt, cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 export interface Categoria {
+  id: string;
   name: string;
   tipo: string;
   budget: number;
@@ -13,9 +15,26 @@ interface BudgetsProps {
   onBudgetChange: (name: string, value: string) => void;
 }
 
-export default function Budgets({ categorias, gastosPorCajita, onBudgetChange }: BudgetsProps) {
+export default function Budgets({ categorias, gastosPorCajita }: BudgetsProps) {
+  const [updating, setUpdating] = useState<string | null>(null);
 
   const gastoCategorias = categorias.filter((c) => c.tipo === "gasto");
+
+  const handleBudgetUpdate = async (catId: string, newBudget: string) => {
+    const valor = parseFloat(newBudget);
+    if (isNaN(valor) || valor < 0) return;
+
+    setUpdating(catId);
+    const { error } = await supabase
+      .from("categorias")
+      .update({ presupuesto_mensual: valor })
+      .eq("id", catId);
+
+    if (error) {
+      console.error("Error actualizando presupuesto:", error);
+    }
+    setUpdating(null);
+  };
 
   return (
     <div className="p-4 rounded-3xl border border-border bg-card flex flex-col gap-4 h-full">
@@ -34,7 +53,7 @@ export default function Budgets({ categorias, gastosPorCajita, onBudgetChange }:
           }
 
           return (
-            <div key={c.name} className="flex flex-col gap-1">
+            <div key={c.id} className="flex flex-col gap-1">
               <div className="flex items-center justify-between text-sm">
                 <span className="font-medium text-foreground">{c.name}</span>
                 <span className="text-muted-foreground flex items-center gap-2">
@@ -42,8 +61,9 @@ export default function Budgets({ categorias, gastosPorCajita, onBudgetChange }:
                   <input
                     type="number"
                     value={c.budget}
-                    className="w-24 px-2 py-1 text-sm bg-background border border-border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                    onChange={(e) => onBudgetChange(c.name, e.target.value)}
+                    disabled={updating === c.id}
+                    className="w-24 px-2 py-1 text-sm bg-background border border-border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
+                    onChange={(e) => handleBudgetUpdate(c.id, e.target.value)}
                   />
                 </span>
               </div>

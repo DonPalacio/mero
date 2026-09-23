@@ -84,13 +84,13 @@ export default function Categories() {
         {/* Lista de Categorías (Grid adaptativo) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {categorias.map((c) => {
-            const isEditing = editingCat === c.name;
-            const isConfirming = confirmDeleteCat === c.name;
+            const isEditing = editingCat === c.id;
+            const isConfirming = confirmDeleteCat === c.id;
             const isIngreso = c.tipo === "ingreso";
 
             return (
               <div
-                key={c.name}
+                key={c.id}
                 className="flex items-center justify-between p-4 bg-card rounded-xl border border-border shadow-sm transition-all hover:shadow-md relative overflow-hidden"
               >
                 {/* Borde de color sutil a la izquierda para identificar rápido */}
@@ -109,11 +109,11 @@ export default function Categories() {
                         value={renameValue}
                         className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                         onChange={(e) => setRenameValue(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && doRename(c.name)}
+                        onKeyDown={(e) => e.key === "Enter" && doRename(c.id)}
                         autoFocus
                       />
                       <button
-                        onClick={() => doRename(c.name)}
+                        onClick={() => doRename(c.id)}
                         className="p-1.5 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-full transition-colors shrink-0"
                       >
                         <IconCheck className="h-4 w-4" />
@@ -133,7 +133,7 @@ export default function Categories() {
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
                         <button
-                          onClick={() => doDeleteCat(c.name)}
+                          onClick={() => doDeleteCat(c.id)}
                           className="text-xs font-medium bg-destructive text-destructive-foreground px-2.5 py-1.5 rounded-md hover:bg-destructive/90 transition-colors"
                         >
                           Sí
@@ -157,14 +157,14 @@ export default function Categories() {
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <button
-                          onClick={() => startRename(c.name)}
+                          onClick={() => startRename(c.id, c.name)}
                           className="p-2 text-muted-foreground hover:text-primary hover:bg-secondary rounded-full transition-colors"
                           title="Editar"
                         >
                           <IconEdit className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => setConfirmDeleteCat(c.name)}
+                          onClick={() => setConfirmDeleteCat(c.id)}
                           className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
                           title="Eliminar"
                         >

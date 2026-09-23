@@ -1,58 +1,86 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { categoriesService, type Categoria as CategoriaDB } from "../services/categories.service";
 
 export interface Categoria {
+  id: string;
   name: string;
   tipo: "gasto" | "ingreso";
   budget: number;
 }
 
+function mapCategoria(c: CategoriaDB): Categoria {
+  return {
+    id: c.id,
+    name: c.nombre,
+    tipo: c.tipo,
+    budget: Number(c.presupuesto_mensual),
+  };
+}
+
 export function useCategories() {
-  // DATOS MOCK TEMPORALES PARA VISUALIZACIÓN LO MÁS FIEL POSIBLE A LA REALIDAD
-  const [categorias, setCategorias] = useState<Categoria[]>([
-    { name: "Salario", tipo: "ingreso", budget: 0 },
-    { name: "Suscripciones", tipo: "gasto", budget: 150000 },
-    { name: "Transporte y Mantenimiento", tipo: "gasto", budget: 250000 },
-  ]);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [newCatValue, setNewCatValue] = useState("");
   const [newCatTipo, setNewCatTipo] = useState<"gasto" | "ingreso">("gasto");
-  const [editingCat, setEditingCat] = useState<string | null>(null);
+  const [editingCat, setEditingCat] = useState<string | null>(null); // id
   const [renameValue, setRenameValue] = useState("");
-  const [confirmDeleteCat, setConfirmDeleteCat] = useState<string | null>(null);
+  const [confirmDeleteCat, setConfirmDeleteCat] = useState<string | null>(null); // id
 
-  function handleAddCat() {
+  useEffect(() => {
+    async function cargarDatos() {
+      setIsLoading(true);
+      const data = await categoriesService.obtenerCategorias();
+      setCategorias(data.map(mapCategoria));
+      setIsLoading(false);
+    }
+    cargarDatos();
+  }, []);
+
+  async function handleAddCat() {
     const v = newCatValue.trim();
     if (!v) return;
     if (categorias.some((c) => c.name === v)) {
       setNewCatValue("");
       return;
     }
-    setCategorias([...categorias, { name: v, tipo: newCatTipo, budget: 0 }]);
+
+    const nueva = await categoriesService.crearCategoria(v, newCatTipo);
+    if (nueva) {
+      setCategorias([...categorias, mapCategoria(nueva)]);
+    }
     setNewCatValue("");
     setNewCatTipo("gasto");
   }
 
-  function startRename(name: string) {
-    setEditingCat(name);
-    setRenameValue(name);
+  function startRename(id: string, nombreActual: string) {
+    setEditingCat(id);
+    setRenameValue(nombreActual);
     setConfirmDeleteCat(null);
   }
 
-  function doRename(oldName: string) {
+  async function doRename(id: string) {
     const nuevo = renameValue.trim();
     setEditingCat(null);
-    if (!nuevo || nuevo === oldName) return;
+    if (!nuevo) return;
 
-    setCategorias(categorias.map((c) => (c.name === oldName ? { ...c, name: nuevo } : c)));
+    const exito = await categoriesService.actualizarCategoria(id, { nombre: nuevo });
+    if (exito) {
+      setCategorias(categorias.map((c) => (c.id === id ? { ...c, name: nuevo } : c)));
+    }
   }
 
-  function doDeleteCat(name: string) {
+  async function doDeleteCat(id: string) {
     setConfirmDeleteCat(null);
-    setCategorias(categorias.filter((c) => c.name !== name));
+    const exito = await categoriesService.eliminarCategoria(id);
+    if (exito) {
+      setCategorias(categorias.filter((c) => c.id !== id));
+    }
   }
 
   return {
     categorias,
+    isLoading,
     newCatValue,
     setNewCatValue,
     newCatTipo,
