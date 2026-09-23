@@ -3,6 +3,7 @@
   "short_name": "Mero",
   "description": "Control de finanzas personales",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
