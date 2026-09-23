@@ -21,12 +21,16 @@ export default function Login() {
       >
         {/* Logo / Título */}
         <div className="flex flex-col items-center mb-2">
-          <div className="h-8 w-10 bg-foreground rounded-br-xl rounded-tr-md rounded-tl-xl rounded-bl-md mb-4 shrink-0" />
+          <img 
+            src="/favicon-white.png" 
+            alt="Mero Logo" 
+            className="h-8 w-8 mb-4 shrink-0" 
+          />
           <h2 className="text-2xl font-bold text-foreground">
             {modo === "login" ? "Iniciar sesión" : "Crear cuenta"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1 text-center">
-            {modo === "login" ? "Bienvenido de nuevo a Mero" : "Comienza a controlar tus finanzas"}
+            {modo === "login" ? "Bienvenido a Mero" : "Comienza a controlar tus finanzas"}
           </p>
         </div>
 

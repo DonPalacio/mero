@@ -76,6 +76,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
+function PendingComponent() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="h-6 w-6 rounded-full border-2 border-border border-t-primary animate-spin" />
+    </div>
+  );
+}
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   // Se ejecuta antes de cargar CUALQUIER ruta (incluidas las anidadas).
   // Si no hay sesión activa y no está en /login, lo manda a /login.
@@ -99,21 +107,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Mero" },
       { name: "description", content: "Control de finanzas personales" },
-      { name: "author", content: "Lovable" },
+      { name: "author", content: "Mero" },
       { property: "og:title", content: "Mero" },
       { property: "og:description", content: "Control de finanzas personales" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
       { name: "theme-color", content: "#000000" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap",
-      },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" },
 
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
@@ -125,18 +129,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "icon",
         type: "image/png",
         media: "(prefers-color-scheme: light)",
-        href: "/favicon-black.png?v=3",
+        href: "/favicon-black.png?v=3"
       },
       {
         rel: "icon",
         type: "image/png",
         media: "(prefers-color-scheme: dark)",
-        href: "/favicon-white.png?v=3",
-      },
+        href: "/favicon-white.png?v=3"
+      }
     ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
+  pendingComponent: PendingComponent,
   notFoundComponent: NotFoundComponent,
   errorComponent: ErrorComponent,
 });
