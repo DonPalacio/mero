@@ -15,8 +15,6 @@ export default function Boxes() {
     medios,
     newMedioValue,
     setNewMedioValue,
-    newMedioTipo,
-    setNewMedioTipo,
     editingMedio,
     setEditingMedio,
     renameMedioValue,
@@ -42,17 +40,6 @@ export default function Boxes() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <select
-              value={newMedioTipo}
-              onChange={(e) => setNewMedioTipo(e.target.value as TipoMedio)}
-              className="h-10 rounded-full border border-input bg-zinc-800 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            >
-              {TIPOS.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
             <input
               type="text"
               placeholder="Nuevo medio"
