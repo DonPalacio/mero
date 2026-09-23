@@ -116,7 +116,7 @@ export default function Transactions() {
 
               {/* Categorías (Chips) */}
               <div className="flex flex-col gap-1.5 shrink-0">
-                <label className="text-sm font-medium text-foreground">Categoría</label>
+                <span className="text-sm font-medium text-foreground">Categoría</span>
                 <div className="flex flex-wrap gap-2">
                   {categoriasFiltradas.map((c) => {
                     const isActive = selectedCat === c.name;
@@ -148,7 +148,7 @@ export default function Transactions() {
 
               {/* Medio/Box (Chips) */}
               <div className="flex flex-col gap-1.5 shrink-0">
-                <label className="text-sm font-medium text-foreground">Medio de pago</label>
+                <span className="text-sm font-medium text-foreground">Medio de pago</span>
                 <div className="flex flex-wrap gap-2">
                   {mediosDisponibles.map((m) => {
                     const isActive = selectedMedio === m;
