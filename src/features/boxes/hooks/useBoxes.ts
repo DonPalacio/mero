@@ -1,10 +1,6 @@
 import { useState, useEffect } from "react";
 import { boxesService, type Medio } from "../services/boxes.service";
 
-// Tipo por defecto para todos los medios creados desde este formulario.
-// Si más adelante necesitas diferenciar tipos, hay que reintroducir un selector.
-const TIPO_MEDIO_DEFAULT = "efectivo" as const;
-
 export function useBoxes() {
   const [medios, setMedios] = useState<Medio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +30,7 @@ export function useBoxes() {
       return; // Ya existe visualmente
     }
 
-    const nuevoMedio = await boxesService.crearMedio(v, TIPO_MEDIO_DEFAULT);
+    const nuevoMedio = await boxesService.crearMedio(v);
 
     if (nuevoMedio) {
       setMedios([...medios, nuevoMedio]);

@@ -1,14 +1,6 @@
 import React from "react";
 import { IconEdit, IconTrash, IconCheck, IconX, IconPlus } from "@tabler/icons-react";
 import { useBoxes } from "./hooks/useBoxes";
-import type { TipoMedio } from "./services/boxes.service";
-
-const TIPOS: { value: TipoMedio; label: string }[] = [
-  { value: "efectivo", label: "Efectivo" },
-  { value: "cuenta_bancaria", label: "Cuenta bancaria" },
-  { value: "billetera_digital", label: "Billetera digital" },
-  { value: "tarjeta_credito", label: "Tarjeta de crédito" },
-];
 
 export default function Boxes() {
   const {
@@ -115,13 +107,7 @@ export default function Boxes() {
                 ) : (
                   /* MODO VISUALIZACIÓN NORMAL */
                   <>
-                    <div className="flex flex-col truncate pr-2">
-                      <span className="font-medium text-card-foreground truncate">{m.nombre}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {TIPOS.find((t) => t.value === m.tipo)?.label ?? m.tipo} · $
-                        {m.saldo.toLocaleString("es-CO")}
-                      </span>
-                    </div>
+                    <span className="font-medium text-card-foreground truncate pr-2">{m.nombre}</span>
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => startRenameMedio(m.id, m.nombre)}

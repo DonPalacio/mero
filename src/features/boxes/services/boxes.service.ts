@@ -3,13 +3,10 @@ import { supabase } from "@/lib/supabase";
 // El nombre de tu tabla en Supabase
 const TABLA_MEDIOS = "medios";
 
-export type TipoMedio = "efectivo" | "cuenta_bancaria" | "billetera_digital" | "tarjeta_credito";
-
 export interface Medio {
   id: string;
   user_id: string;
   nombre: string;
-  tipo: TipoMedio;
   saldo: number;
   color: string | null;
   icono: string | null;
@@ -30,11 +27,7 @@ export const boxesService = {
     return data || [];
   },
 
-  crearMedio: async (
-    nombre: string,
-    tipo: TipoMedio,
-    saldoInicial: number = 0,
-  ): Promise<Medio | null> => {
+  crearMedio: async (nombre: string, saldoInicial: number = 0): Promise<Medio | null> => {
     const { data: userData, error: userError } = await supabase.auth.getUser();
     if (userError || !userData.user) {
       console.error("Error obteniendo usuario autenticado:", userError);
@@ -43,7 +36,7 @@ export const boxesService = {
 
     const { data, error } = await supabase
       .from(TABLA_MEDIOS)
-      .insert([{ nombre, tipo, saldo: saldoInicial, user_id: userData.user.id }])
+      .insert([{ nombre, saldo: saldoInicial, user_id: userData.user.id }])
       .select()
       .single();
 
@@ -58,7 +51,7 @@ export const boxesService = {
   // cada vez que se crea/edita/borra un movimiento asociado.
   actualizarMedio: async (
     id: string,
-    cambios: Partial<Pick<Medio, "nombre" | "tipo" | "color" | "icono">>,
+    cambios: Partial<Pick<Medio, "nombre" | "color" | "icono">>,
   ): Promise<boolean> => {
     const { error } = await supabase.from(TABLA_MEDIOS).update(cambios).eq("id", id);
     if (error) {
