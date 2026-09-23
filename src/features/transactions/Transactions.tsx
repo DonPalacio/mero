@@ -23,10 +23,17 @@ export default function Transactions() {
     fMsg,
     filtroCategoria,
     setFiltroCategoria,
+    selectedMonth,
+    setSelectedMonth,
+    monthOptions,
     categoriasFiltradas,
     handleSubmit,
     handleDelete,
   } = useTransactions();
+
+  const movimientosFiltrados = movimientos.filter(
+    (mov) => (!filtroCategoria || mov.cajita === filtroCategoria) && mov.fecha.startsWith(selectedMonth)
+  );
 
   return (
     <div className="flex flex-col flex-1 p-4 md:p-10 h-full overflow-y-auto min-h-0 bg-background rounded-tl-2xl">
@@ -39,7 +46,7 @@ export default function Transactions() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="col-span-1 bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-[550px] lg:h-[650px]">
+          <div className="col-span-1 bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-[550px] lg:h-[600px]">
             {/* shrink-0 evita que el título se encoja cuando hay mucho contenido abajo */}
             <h2 className="text-lg font-semibold text-card-foreground mb-4 shrink-0">
               Nuevo registro
@@ -195,98 +202,109 @@ export default function Transactions() {
           </div>
 
           {/* COLUMNA DERECHA: Historial / Tabla */}
-          <div className="col-span-1 lg:col-span-2 bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-[800px] lg:h-[650px]">
-            {/* Encabezado con el Filtro de Categoría */}
+          <div className="col-span-1 lg:col-span-2 bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-[800px] lg:h-[600px]">
+            {/* Encabezado con los filtros de Mes y Categoría */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 shrink-0 gap-3">
               <h2 className="text-lg font-semibold text-card-foreground">Últimas transacciones</h2>
 
-              <select
-                className="h-9 w-full sm:w-48 rounded-xl border border-input bg-zinc-800 px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                value={filtroCategoria || ""}
-                onChange={(e) => setFiltroCategoria(e.target.value === "" ? null : e.target.value)}
-              >
-                <option value="">Todas las categorías</option>
-                {categoriasDisponibles.map((c) => (
-                  <option key={`filter-${c.name}`} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <select
+                  className="h-9 w-full sm:w-40 rounded-xl border border-input bg-zinc-800 px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                >
+                  {monthOptions.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  className="h-9 w-full sm:w-48 rounded-xl border border-input bg-zinc-800 px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  value={filtroCategoria || ""}
+                  onChange={(e) => setFiltroCategoria(e.target.value === "" ? null : e.target.value)}
+                >
+                  <option value="">Todas las categorías</option>
+                  {categoriasDisponibles.map((c) => (
+                    <option key={`filter-${c.name}`} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Contenedor con scroll interno y clases para ocultar la barra */}
             <div className="flex flex-col gap-3 overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {movimientos
-                .filter((mov) => !filtroCategoria || mov.cajita === filtroCategoria)
-                .map((mov) => {
-                  const isGasto = mov.tipo === "gasto";
-                  return (
-                    <div
-                      key={mov.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-secondary/50 transition-colors gap-3 shrink-0"
-                    >
-                      {/* Info principal */}
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={cn(
-                            "p-2 rounded-full shrink-0",
-                            isGasto
-                              ? "bg-destructive/10 text-destructive"
-                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-                          )}
-                        >
-                          {isGasto ? <IconTrendingDown size={20} /> : <IconTrendingUp size={20} />}
-                        </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-medium text-foreground text-sm truncate">
-                            {mov.cajita}
-                          </span>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground truncate">
-                            <span>{mov.fecha}</span>
-                            <span>•</span>
-                            <span className="truncate">{mov.medio}</span>
-                            {mov.nota && (
-                              <>
-                                <span>•</span>
-                                <span className="truncate max-w-[100px] sm:max-w-[150px]">
-                                  {mov.nota}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
+              {movimientosFiltrados.map((mov) => {
+                const isGasto = mov.tipo === "gasto";
+                return (
+                  <div
+                    key={mov.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-secondary/50 transition-colors gap-3 shrink-0"
+                  >
+                    {/* Info principal */}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={cn(
+                          "p-2 rounded-full shrink-0",
+                          isGasto
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                        )}
+                      >
+                        {isGasto ? <IconTrendingDown size={20} /> : <IconTrendingUp size={20} />}
                       </div>
-
-                      {/* Monto y Acciones */}
-                      <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
-                        <span
-                          className={cn(
-                            "font-semibold whitespace-nowrap",
-                            isGasto ? "text-foreground" : "text-emerald-600 dark:text-emerald-400",
-                          )}
-                        >
-                          {isGasto ? "-" : "+"}
-                          {fmt(mov.monto)}
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-medium text-foreground text-sm truncate">
+                          {mov.cajita || "Sin categoría"}
                         </span>
-                        <button
-                          onClick={() => handleDelete(mov.id)}
-                          className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
-                          title="Eliminar"
-                        >
-                          <IconTrash className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground truncate">
+                          <span>{mov.fecha}</span>
+                          <span>•</span>
+                          <span className="truncate">{mov.medio}</span>
+                          {mov.nota && (
+                            <>
+                              <span>•</span>
+                              <span className="truncate max-w-[100px] sm:max-w-[150px]">
+                                {mov.nota}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  );
-                })}
 
-              {/* Mensaje de vacío dinámico según el filtro */}
-              {movimientos.filter((mov) => !filtroCategoria || mov.cajita === filtroCategoria)
-                .length === 0 && (
+                    {/* Monto y Acciones */}
+                    <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0">
+                      <span
+                        className={cn(
+                          "font-semibold whitespace-nowrap",
+                          isGasto ? "text-foreground" : "text-emerald-600 dark:text-emerald-400",
+                        )}
+                      >
+                        {isGasto ? "-" : "+"}
+                        {fmt(mov.monto)}
+                      </span>
+                      <button
+                        onClick={() => handleDelete(mov.id)}
+                        className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
+                        title="Eliminar"
+                      >
+                        <IconTrash className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Mensaje de vacío dinámico según los filtros */}
+              {movimientosFiltrados.length === 0 && (
                 <div className="py-10 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl shrink-0">
                   {filtroCategoria
-                    ? `No hay transacciones registradas para "${filtroCategoria}".`
-                    : "No hay transacciones registradas."}
+                    ? `No hay transacciones registradas para "${filtroCategoria}" en este mes.`
+                    : "No hay transacciones registradas en este mes."}
                 </div>
               )}
             </div>

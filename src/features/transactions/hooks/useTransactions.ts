@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { transactionsService } from "../services/transactions.service";
 
 export interface CategoriaBase {
@@ -33,6 +33,10 @@ export function useTransactions() {
   const [fMsg, setFMsg] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState<string | null>(null);
 
+  const hoy = new Date();
+  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+  const [selectedMonth, setSelectedMonth] = useState(mesActual);
+
   // Carga inicial: movimientos + catálogos de medios y categorías reales
   useEffect(() => {
     async function cargarDatos() {
@@ -57,6 +61,21 @@ export function useTransactions() {
   }));
 
   const categoriasFiltradas = categoriasDisponibles.filter((c) => c.tipo === tipoSel);
+
+  // Meses disponibles para filtrar la tabla: los que tengan movimientos + el mes actual siempre presente
+  const monthOptions = useMemo(() => {
+    const meses = new Set<string>(movimientos.map((m) => m.fecha.substring(0, 7)));
+    meses.add(mesActual);
+
+    return Array.from(meses)
+      .sort((a, b) => b.localeCompare(a)) // más reciente primero
+      .map((m) => {
+        const [year = 0, month = 1] = m.split("-").map(Number);
+        const date = new Date(year, month - 1);
+        const label = date.toLocaleDateString("es-CO", { month: "long", year: "numeric" });
+        return { value: m, label: label.charAt(0).toUpperCase() + label.slice(1) };
+      });
+  }, [movimientos, mesActual]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -143,6 +162,9 @@ export function useTransactions() {
     fMsg,
     filtroCategoria,
     setFiltroCategoria,
+    selectedMonth,
+    setSelectedMonth,
+    monthOptions,
     categoriasFiltradas,
     handleSubmit,
     handleDelete,
