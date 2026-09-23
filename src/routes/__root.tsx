@@ -115,6 +115,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#000000" },
+      { name: "color-scheme", content: "dark" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },

@@ -70,9 +70,9 @@ export default function Summary({
       </div>
 
       {medios && medios.length > 0 && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 flex-1 min-h-0">
           <h3 className="text-foreground font-semibold text-sm">Saldo por medio</h3>
-          <div className="flex flex-col gap-1 overflow-y-auto max-h-32">
+          <div className="flex flex-col gap-1 flex-1">
             {medios.map((m) => {
               const saldo = saldosPorMedio?.[m.name] || 0;
               return (
