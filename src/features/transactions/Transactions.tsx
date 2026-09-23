@@ -209,7 +209,7 @@ export default function Transactions() {
 
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                 <select
-                  className="h-9 w-full sm:w-40 rounded-xl border border-input bg-zinc-800 px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                  className="h-9 w-full lg:w-56 rounded-xl border border-input bg-zinc-800 px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
                   value={selectedMonth}
                   onChange={(e) => setSelectedMonth(e.target.value)}
                 >
