@@ -35,7 +35,7 @@ export default function Boxes() {
             <input
               type="text"
               placeholder="Nuevo medio"
-              className="flex h-10 w-full md:w-64 rounded-full border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               value={newMedioValue}
               onChange={(e) => setNewMedioValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddMedio()}

@@ -6,14 +6,20 @@ import Budgets from "./components/Budgets";
 import { useDashboard } from "./hooks/useDashboard";
 
 export default function Dashboard() {
-  // 1. Traemos toda la lógica desde el custom hook
   const { 
     gastosPorCajita, 
-    categoriasDePrueba, 
-    handleBudgetChange 
+    categorias, 
+    selectedMonth,
+    totalIngresos, 
+    totalGastos,   
+    queda,         
+    saldosPorMedio, // Extraemos los saldos
+    listaMedios,    // Extraemos la lista
+    handleBudgetChange,
+    handlePrevMonth,
+    handleNextMonth
   } = useDashboard();
 
-  // 2. Renderizado puro de UI
   return (
     <div className="flex flex-1 min-h-0">
       <div className="p-2 md:p-10 rounded-tl-2xl border border-border bg-background flex flex-col gap-4 lg:gap-2 flex-1 w-full h-full overflow-y-auto">
@@ -22,16 +28,16 @@ export default function Dashboard() {
           
           <div className="col-span-1 lg:col-span-2 lg:row-span-3">
             <Summary
-              selectedMonth="2026-09"
-              onPrev={() => {}}
-              onNext={() => {}}
-              ingresos={4500000}
-              gastos={3200000}
-              queda={1300000}
-              cmpText="12% menos que el promedio"
+              selectedMonth={selectedMonth}
+              onPrev={handlePrevMonth}
+              onNext={handleNextMonth}
+              ingresos={totalIngresos}
+              gastos={totalGastos}
+              queda={queda}
+              cmpText="Saldos calculados dinámicamente"
               cmpColor="#3fb27f"
-              medios={[{ name: "Efectivo" }, { name: "Nu" }]}
-              saldosPorMedio={{ Efectivo: 200000, Nu: 1100000 }}
+              medios={listaMedios}         // <- Inyectamos los medios
+              saldosPorMedio={saldosPorMedio} // <- Inyectamos los montos
             />
           </div>
 
@@ -48,7 +54,7 @@ export default function Dashboard() {
 
           <div className="col-span-1 lg:col-span-6 lg:row-span-2 lg:col-start-1 lg:row-start-4">
             <Budgets 
-              categorias={categoriasDePrueba}
+              categorias={categorias}
               gastosPorCajita={gastosPorCajita}
               onBudgetChange={handleBudgetChange}
             />

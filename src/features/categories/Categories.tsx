@@ -36,12 +36,12 @@ export default function Categories() {
 
           <div className="flex flex-col gap-3 w-full md:w-auto">
             {/* Selector de Tipo (Ingreso / Gasto) */}
-            <div className="flex p-1 bg-background rounded-full">
+            <div className="flex p-1 bg-zinc-800 rounded-full border boder-border">
               <button
                 className={cn(
                   "flex-1 px-4 py-1.5 text-sm font-medium rounded-full transition-colors",
                   newCatTipo === "gasto"
-                    ? "bg-secondary text-destructive shadow-sm"
+                    ? "text-destructive"
                     : "text-muted-foreground hover:text-foreground",
                 )}
                 onClick={() => setNewCatTipo("gasto")}
@@ -52,7 +52,7 @@ export default function Categories() {
                 className={cn(
                   "flex-1 px-4 py-1.5 text-sm font-medium rounded-xl transition-colors",
                   newCatTipo === "ingreso"
-                    ? "bg-secondary text-emerald-600 dark:text-emerald-500 shadow-sm"
+                    ? "text-emerald-600 dark:text-emerald-500"
                     : "text-muted-foreground hover:text-foreground",
                 )}
                 onClick={() => setNewCatTipo("ingreso")}
@@ -65,8 +65,8 @@ export default function Categories() {
             <div className="flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Nombre (ej. Supermercado)"
-                className="flex h-10 w-full md:w-64 rounded-full border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                placeholder="Nombre (ej. Restaurante)"
+                className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 value={newCatValue}
                 onChange={(e) => setNewCatValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddCat()}

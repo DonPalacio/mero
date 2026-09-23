@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -78,21 +79,39 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Mero App" }, // Te actualicé el título de la pestaña del navegador aquí
+      { title: "Mero" },
       { name: "description", content: "Control de finanzas personales" },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Mero App" },
+      { property: "og:title", content: "Mero" },
       { property: "og:description", content: "Control de finanzas personales" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "theme-color", content: "#000000" },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" },
+
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=3" },
+      
+      // ELIMINAMOS los favicons genéricos para que no sobreescriban estas reglas:
+      { 
+        rel: "icon", 
+        type: "image/png", 
+        media: "(prefers-color-scheme: light)", 
+        href: "/favicon-black.png?v=3" 
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { 
+        rel: "icon", 
+        type: "image/png", 
+        media: "(prefers-color-scheme: dark)", 
+        href: "/favicon-white.png?v=3" 
+      }
     ],
   }),
   shellComponent: RootShell,
@@ -103,7 +122,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="es" className="dark">
       <head>
         <HeadContent />
       </head>
@@ -117,12 +136,19 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
+  
+  const isLoginPage = location.pathname === "/login";
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SidebarDemo>
+      {isLoginPage ? (
         <Outlet />
-      </SidebarDemo>
+      ) : (
+        <SidebarDemo>
+          <Outlet />
+        </SidebarDemo>
+      )}
     </QueryClientProvider>
   );
 }

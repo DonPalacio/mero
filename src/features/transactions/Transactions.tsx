@@ -51,13 +51,13 @@ export default function Transactions() {
               className="flex flex-col gap-5 overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
               {/* Selector de Tipo */}
-              <div className="flex p-1 bg-secondary rounded-full shrink-0">
+              <div className="flex p-1 bg-zinc-800 rounded-full shrink-0 border border-border">
                 <button
                   type="button"
                   className={cn(
                     "flex-1 px-4 py-2 text-sm font-medium rounded-full transition-colors",
                     tipoSel === "gasto"
-                      ? "bg-background text-destructive shadow-sm"
+                      ? "text-destructive"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                   onClick={() => {
@@ -72,7 +72,7 @@ export default function Transactions() {
                   className={cn(
                     "flex-1 px-4 py-2 text-sm font-medium rounded-full transition-colors",
                     tipoSel === "ingreso"
-                      ? "bg-background text-emerald-600 dark:text-emerald-500 shadow-sm"
+                      ? "text-emerald-600 dark:text-emerald-500"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                   onClick={() => {
@@ -94,7 +94,7 @@ export default function Transactions() {
                   <input
                     type="number"
                     placeholder="0"
-                    className="flex h-11 w-full rounded-full border border-input bg-background pl-7 pr-3 py-2 text-lg font-medium focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="flex h-11 w-full rounded-full border border-input bg-zinc-800 pl-7 pr-3 py-2 text-lg font-medium focus:outline-none focus:ring-1 focus:ring-ring"
                     value={monto}
                     onChange={(e) => setMonto(e.target.value)}
                   />
@@ -118,7 +118,7 @@ export default function Transactions() {
                             ? tipoSel === "gasto"
                               ? "bg-destructive border-destructive text-destructive-foreground"
                               : "bg-emerald-600 border-emerald-600 text-white"
-                            : "bg-background border-border text-muted-foreground hover:bg-secondary",
+                            : "bg-zinc-800 border-border text-muted-foreground hover:bg-zinc-700",
                         )}
                       >
                         {c.name}
@@ -135,7 +135,7 @@ export default function Transactions() {
 
               {/* Medio/Box (Chips) */}
               <div className="flex flex-col gap-1.5 shrink-0">
-                <label className="text-sm font-medium text-foreground">Medio de pago (Box)</label>
+                <label className="text-sm font-medium text-foreground">Medio de pago</label>
                 <div className="flex flex-wrap gap-2">
                   {mediosDisponibles.map((m) => {
                     const isActive = selectedMedio === m;
@@ -148,7 +148,7 @@ export default function Transactions() {
                           "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
                           isActive
                             ? "bg-primary border-primary text-primary-foreground"
-                            : "bg-background border-border text-muted-foreground hover:bg-secondary",
+                            : "bg-zinc-800 border-border text-muted-foreground hover:bg-zinc-700",
                         )}
                       >
                         {m}
@@ -164,7 +164,7 @@ export default function Transactions() {
                   <label className="text-sm font-medium text-foreground">Fecha</label>
                   <input
                     type="date"
-                    className="flex h-10 w-full rounded-full border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="flex h-10 w-full rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring scheme-dark"
                     value={fecha}
                     onChange={(e) => setFecha(e.target.value)}
                   />
@@ -174,7 +174,7 @@ export default function Transactions() {
                   <input
                     type="text"
                     placeholder="Opcional..."
-                    className="flex h-10 w-full rounded-full border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="flex h-10 w-full rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                     value={nota}
                     onChange={(e) => setNota(e.target.value)}
                   />
@@ -201,7 +201,7 @@ export default function Transactions() {
               <h2 className="text-lg font-semibold text-card-foreground">Últimas transacciones</h2>
 
               <select
-                className="h-9 w-full sm:w-48 rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                className="h-9 w-full sm:w-48 rounded-xl border border-input bg-zinc-800 px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
                 value={filtroCategoria || ""}
                 onChange={(e) => setFiltroCategoria(e.target.value === "" ? null : e.target.value)}
               >
