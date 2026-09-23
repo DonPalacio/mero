@@ -224,7 +224,7 @@ export default function Transactions() {
               <h2 className="text-lg font-semibold text-card-foreground">Últimas transacciones</h2>
 
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                <label htmlFor="month-select" className="text-sm font-medium text-foreground">
+                <label htmlFor="month-select" className="sr-only">
                   Mes
                 </label>
                 <select
@@ -241,7 +241,7 @@ export default function Transactions() {
                   ))}
                 </select>
 
-                <label htmlFor="category-select" className="text-sm font-medium text-foreground">
+                <label htmlFor="category-select" className="sr-only">
                   Categoría
                 </label>
                 <select

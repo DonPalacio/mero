@@ -11,6 +11,7 @@ import {
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import { Link } from "@tanstack/react-router";
 
 interface SidebarLayoutProps {
   children?: React.ReactNode;
@@ -86,8 +87,8 @@ export default function SidebarDemo({ children }: SidebarLayoutProps) {
 
 export const Logo = () => {
   return (
-    <a
-      href="#"
+    <Link
+      to="/dashboard"
       className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
     >
       {/* Imagen de la ardilla pintada de blanco con Tailwind */}
@@ -103,14 +104,14 @@ export const Logo = () => {
       >
         MERO
       </motion.span>
-    </a>
+    </Link>
   );
 };
 
 export const LogoIcon = () => {
   return (
-    <a
-      href="#"
+    <Link
+      to="/dashboard"
       className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
     >
       {/* Imagen de la ardilla pintada de blanco con Tailwind (Modo colapsado) */}
@@ -119,6 +120,6 @@ export const LogoIcon = () => {
         alt="Mero Logo"
         className="h-7 w-7 shrink-0 brightness-0 invert"
       />
-    </a>
+    </Link>
   );
 };
