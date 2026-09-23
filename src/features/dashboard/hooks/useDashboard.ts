@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { dashboardService } from "../services/dashboard.service";
 import { Movimiento } from "@/features/transactions/hooks/useTransactions";
 import { Categoria } from "../components/Budgets";
@@ -8,7 +8,7 @@ export function useDashboard() {
   const [cajitas, setCajitas] = useState<Categoria[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. Estado para el mes actual (Por defecto, el mes actual del sistema)
+  // Estado para el mes actual
   const hoy = new Date();
   const mesActualInicial = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
   const [selectedMonth, setSelectedMonth] = useState(mesActualInicial);
@@ -34,25 +34,25 @@ export function useDashboard() {
     cargarDatos();
   }, []);
 
-  // 2. Funciones manejadoras de los botones del mes
   const handlePrevMonth = () => {
-    const [year, month] = selectedMonth.split("-").map(Number);
+    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth.split("-").map(Number);
     const date = new Date(year, month - 2);
     setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
   };
 
   const handleNextMonth = () => {
-    const [year, month] = selectedMonth.split("-").map(Number);
+    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth.split("-").map(Number);
     const date = new Date(year, month);
     setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
   };
 
-  // 3. Filtramos los movimientos SOLO para el mes seleccionado
+  // --------------------------------------------------------
+  // CÁLCULOS DEL MES SELECCIONADO (Summary, PieChart, Presupuestos)
+  // --------------------------------------------------------
   const movimientosDelMes = movimientosTotales.filter((m) => m.fecha.startsWith(selectedMonth));
 
-  // 4. Calculamos en base a los movimientos filtrados de ese mes
   const gastosPorCajita = movimientosDelMes
-    .filter((m) => m.tipo === "gasto")
+    .filter((m) => m.tipo === "gasto" && m.cajita) // Solo suman si tienen cajita (categoría)
     .reduce(
       (acumulador, mov) => {
         acumulador[mov.cajita] = (acumulador[mov.cajita] || 0) + mov.monto;
@@ -71,14 +71,53 @@ export function useDashboard() {
 
   const saldoDisponible = ingresosTotales - gastosTotales;
 
+  // --------------------------------------------------------
+  // CÁLCULOS HISTÓRICOS GLOBALES (Saldos por medio y BarChart)
+  // --------------------------------------------------------
+  const metricasGlobales = useMemo(() => {
+    const saldosCalc: Record<string, number> = {};
+    const gastosPorMesCalc: Record<string, number> = {};
+
+    movimientosTotales.forEach((mov) => {
+      // 1. Calcular Saldos por Medio (Afecta ingresos y gastos, sin importar la categoría)
+      if (mov.medio) {
+        if (!saldosCalc[mov.medio]) saldosCalc[mov.medio] = 0;
+        saldosCalc[mov.medio] =
+          (saldosCalc[mov.medio] ?? 0) + (mov.tipo === "ingreso" ? mov.monto : -mov.monto);
+      }
+
+      // 2. Agrupar gastos por mes para el BarChart (Solo suman si tienen cajita)
+      if (mov.tipo === "gasto" && mov.cajita) {
+        const mesMov = mov.fecha.substring(0, 7);
+        if (!gastosPorMesCalc[mesMov]) gastosPorMesCalc[mesMov] = 0;
+        gastosPorMesCalc[mesMov] += mov.monto;
+      }
+    });
+
+    // Formatear Lista de Medios para el componente Summary
+    const listaMedios = Object.keys(saldosCalc).map((name) => ({ name }));
+
+    // Formatear datos para el BarChart (Últimos 6 meses ordenados cronológicamente)
+    const mesesOrdenados = Object.keys(gastosPorMesCalc).sort().slice(-6);
+
+    const barLabels = mesesOrdenados.map((m) => {
+      const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = m.split("-").map(Number);
+      const date = new Date(year, month - 1);
+      return date.toLocaleDateString("es-CO", { month: "short" }).slice(0, 3).toUpperCase();
+    });
+    const barValues = mesesOrdenados.map((m) => gastosPorMesCalc[m]);
+
+    return { saldosCalc, listaMedios, barLabels, barValues };
+  }, [movimientosTotales]);
+
   const handleBudgetChange = (name: string, value: string) => {
     console.log(`Actualizar presupuesto de ${name} a ${value}`);
   };
 
   return {
-    selectedMonth, // Nuevo export
-    handlePrevMonth, // Nuevo export
-    handleNextMonth, // Nuevo export
+    selectedMonth,
+    handlePrevMonth,
+    handleNextMonth,
     cajitas,
     gastosPorCajita,
     ingresosTotales,
@@ -86,5 +125,10 @@ export function useDashboard() {
     saldoDisponible,
     isLoading,
     handleBudgetChange,
+    // Exportamos los nuevos cálculos globales
+    saldosPorMedio: metricasGlobales.saldosCalc,
+    listaMedios: metricasGlobales.listaMedios,
+    barLabels: metricasGlobales.barLabels,
+    barValues: metricasGlobales.barValues,
   };
 }

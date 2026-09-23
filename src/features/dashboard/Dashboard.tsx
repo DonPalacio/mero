@@ -17,6 +17,10 @@ export default function Dashboard() {
     saldoDisponible,
     isLoading,
     handleBudgetChange,
+    saldosPorMedio, // <- Nuevo
+    listaMedios, // <- Nuevo
+    barLabels, // <- Nuevo
+    barValues, // <- Nuevo
   } = useDashboard();
 
   if (isLoading) {
@@ -30,9 +34,13 @@ export default function Dashboard() {
   return (
     <div className="flex flex-1 min-h-0">
       <div className="p-2 md:p-10 rounded-tl-2xl border border-border bg-background flex flex-col gap-4 lg:gap-2 flex-1 w-full h-full overflow-y-auto">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
+          {[...new Array(4)].map((i, idx) => (
+            <div key={"first-array-demo-1" + idx} className="h-20 w-full rounded-lg bg-card"></div>
+          ))}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-6 lg:grid-rows-5 gap-4 lg:gap-2 flex-1">
-          
           <div className="col-span-1 lg:col-span-2 lg:row-span-3">
             <Summary
               selectedMonth={selectedMonth}
@@ -43,8 +51,8 @@ export default function Dashboard() {
               queda={saldoDisponible}
               cmpText="Datos en tiempo real"
               cmpColor="#3fb27f"
-              medios={[{ name: "Efectivo" }, { name: "Nu" }]}
-              saldosPorMedio={{ Efectivo: saldoDisponible, Nu: 0 }}
+              medios={listaMedios}
+              saldosPorMedio={saldosPorMedio}
             />
           </div>
 
@@ -54,19 +62,18 @@ export default function Dashboard() {
 
           <div className="col-span-1 lg:col-span-2 lg:row-span-3 lg:col-start-5 lg:row-start-1">
             <BarChart
-              labels={["Mar", "Abr", "May", "Jun", "Jul", "Ago"]}
-              values={[2100000, 2800000, 1900000, 3100000, 2400000, 3200000]}
+              labels={barLabels}
+              values={barValues.map((value) => value ?? 0)}
             />
           </div>
 
           <div className="col-span-1 lg:col-span-6 lg:row-span-2 lg:col-start-1 lg:row-start-4">
-            <Budgets 
+            <Budgets
               categorias={cajitas}
               gastosPorCajita={gastosPorCajita}
               onBudgetChange={handleBudgetChange}
             />
           </div>
-
         </div>
       </div>
     </div>
