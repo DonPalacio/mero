@@ -80,7 +80,6 @@ export default function SidebarDemo({ children }: SidebarLayoutProps) {
       </Sidebar>
 
       {children}
-
     </div>
   );
 }
@@ -92,10 +91,10 @@ export const Logo = () => {
       className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
     >
       {/* Imagen de la ardilla pintada de blanco con Tailwind */}
-      <img 
-        src="/favicon.ico" 
-        alt="Mero Logo" 
-        className="h-7 w-7 shrink-0 brightness-0 invert" 
+      <img
+        src="/favicon-white.svg"
+        alt="Mero Logo"
+        className="h-7 w-7 shrink-0 brightness-0 invert"
       />
       <motion.span
         initial={{ opacity: 0 }}
@@ -115,10 +114,10 @@ export const LogoIcon = () => {
       className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
     >
       {/* Imagen de la ardilla pintada de blanco con Tailwind (Modo colapsado) */}
-      <img 
-        src="/favicon-white.svg" 
-        alt="Mero Logo" 
-        className="h-7 w-7 shrink-0 brightness-0 invert" 
+      <img
+        src="/favicon-white.svg"
+        alt="Mero Logo"
+        className="h-7 w-7 shrink-0 brightness-0 invert"
       />
     </a>
   );
