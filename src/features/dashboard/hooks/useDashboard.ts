@@ -115,8 +115,8 @@ export function useDashboard() {
     });
 
     const barLabels = ultimosSeisMeses.map((m) => {
-      const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = m.split("-").map(Number);
-      const date = new Date(year, month - 1);
+      const [year, month] = m.split("-").map(Number);
+      const date = new Date(year ?? hoy.getFullYear(), (month ?? hoy.getMonth() + 1) - 1);
       return date.toLocaleDateString("es-CO", { month: "short" }).slice(0, 3).toUpperCase();
     });
     const barValues = ultimosSeisMeses.map((m) => gastosPorMesCalc[m] || 0);
@@ -124,8 +124,14 @@ export function useDashboard() {
     return { barLabels, barValues };
   }, [movimientosTotales, selectedMonth]);
 
-  const handleBudgetChange = (name: string, value: string) => {
-    console.log(`Actualizar presupuesto de ${name} a ${value}`);
+  const handleBudgetChange = async (id: string, value: string) => {
+    const valor = parseFloat(value);
+    if (isNaN(valor) || valor < 0) return;
+
+    const exito = await dashboardService.actualizarPresupuesto(id, valor);
+    if (exito) {
+      setCajitas((prev) => prev.map((c) => (c.id === id ? { ...c, budget: valor } : c)));
+    }
   };
 
   return {

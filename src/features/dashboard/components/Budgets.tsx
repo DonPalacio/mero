@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { fmt, cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
 
 export interface Categoria {
   id: string;
@@ -12,28 +11,26 @@ export interface Categoria {
 interface BudgetsProps {
   categorias: Categoria[];
   gastosPorCajita: Record<string, number>;
-  onBudgetChange: (name: string, value: string) => void;
+  onBudgetChange: (id: string, value: string) => void;
 }
 
-export default function Budgets({ categorias, gastosPorCajita }: BudgetsProps) {
-  const [updating, setUpdating] = useState<string | null>(null);
+export default function Budgets({ categorias, gastosPorCajita, onBudgetChange }: BudgetsProps) {
+  // Estado local para permitir escribir libremente antes de guardar
+  const [inputValues, setInputValues] = useState<Record<string, string>>({});
 
   const gastoCategorias = categorias.filter((c) => c.tipo === "gasto");
 
-  const handleBudgetUpdate = async (catId: string, newBudget: string) => {
-    const valor = parseFloat(newBudget);
-    if (isNaN(valor) || valor < 0) return;
+  const getValue = (c: Categoria) =>
+    inputValues[c.id] !== undefined ? inputValues[c.id] : String(c.budget);
 
-    setUpdating(catId);
-    const { error } = await supabase
-      .from("categorias")
-      .update({ presupuesto_mensual: valor })
-      .eq("id", catId);
+  const handleChange = (id: string, value: string) => {
+    setInputValues((prev) => ({ ...prev, [id]: value }));
+  };
 
-    if (error) {
-      console.error("Error actualizando presupuesto:", error);
-    }
-    setUpdating(null);
+  const commitChange = (id: string) => {
+    const value = inputValues[id];
+    if (value === undefined) return;
+    onBudgetChange(id, value);
   };
 
   return (
@@ -60,10 +57,13 @@ export default function Budgets({ categorias, gastosPorCajita }: BudgetsProps) {
                   {fmt(spent)} /{" "}
                   <input
                     type="number"
-                    value={c.budget}
-                    disabled={updating === c.id}
-                    className="w-24 px-2 py-1 text-sm bg-background border border-border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
-                    onChange={(e) => handleBudgetUpdate(c.id, e.target.value)}
+                    value={getValue(c)}
+                    className="w-24 px-2 py-1 text-sm bg-background border border-border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    onChange={(e) => handleChange(c.id, e.target.value)}
+                    onBlur={() => commitChange(c.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") (e.currentTarget as HTMLInputElement).blur();
+                    }}
                   />
                 </span>
               </div>
