@@ -7,11 +7,13 @@ import {
   useLocation,
   HeadContent,
   Scripts,
+  redirect,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { supabase } from "@/lib/supabase";
 import SidebarDemo from "@/components/Sidebar";
 
 function NotFoundComponent() {
@@ -75,6 +77,22 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // Se ejecuta antes de cargar CUALQUIER ruta (incluidas las anidadas).
+  // Si no hay sesión activa y no está en /login, lo manda a /login.
+  // Si ya tiene sesión y trata de entrar a /login, lo manda al home.
+  beforeLoad: async ({ location }) => {
+    const { data } = await supabase.auth.getSession();
+    const isAuthenticated = !!data.session;
+    const isLoginPage = location.pathname === "/login";
+
+    if (!isAuthenticated && !isLoginPage) {
+      throw redirect({ to: "/login" });
+    }
+
+    if (isAuthenticated && isLoginPage) {
+      throw redirect({ to: "/" });
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -92,26 +110,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap",
+      },
 
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
-      
+
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png?v=3" },
-      
+
       // ELIMINAMOS los favicons genéricos para que no sobreescriban estas reglas:
-      { 
-        rel: "icon", 
-        type: "image/png", 
-        media: "(prefers-color-scheme: light)", 
-        href: "/favicon-black.png?v=3" 
+      {
+        rel: "icon",
+        type: "image/png",
+        media: "(prefers-color-scheme: light)",
+        href: "/favicon-black.png?v=3",
       },
-      { 
-        rel: "icon", 
-        type: "image/png", 
-        media: "(prefers-color-scheme: dark)", 
-        href: "/favicon-white.png?v=3" 
-      }
+      {
+        rel: "icon",
+        type: "image/png",
+        media: "(prefers-color-scheme: dark)",
+        href: "/favicon-white.png?v=3",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -137,8 +158,18 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
-  
+  const router = useRouter();
+
   const isLoginPage = location.pathname === "/login";
+
+  // Si el usuario hace login/logout en cualquier parte de la app,
+  // esto fuerza a re-evaluar el beforeLoad (y por lo tanto redirigir).
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      router.invalidate();
+    });
+    return () => listener.subscription.unsubscribe();
+  }, [router]);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -1,6 +1,6 @@
-import { useState } from "react";
-// IMPORTANTE: Ajusta esta ruta a donde tengas tu cliente de Supabase en este nuevo repositorio
-// import { supabase } from "@/lib/supabaseClient";
+import { useEffect, useState } from "react";
+import type { Session, User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
 export function useAuth() {
   const [email, setEmail] = useState("");
@@ -9,48 +9,68 @@ export function useAuth() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Estado real de sesión, sincronizado con Supabase
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [initializing, setInitializing] = useState(true);
+
+  useEffect(() => {
+    // Al montar: recupera la sesión persistida (si el JWT sigue válido)
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setUser(data.session?.user ?? null);
+      setInitializing(false);
+    });
+
+    // Se dispara en login, logout, refresh de token, etc.
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+      setUser(newSession?.user ?? null);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMsg("");
     setLoading(true);
 
-    try {
-      // === LÓGICA DE PRODUCCIÓN ===
-      // (Está comentada temporalmente para que no romper la app si aún no se ha movido el archivo supabaseClient.ts. Descomentarse cuando se haga la migración).
-      /*
-      const { error } = modo === "login"
+    const { error } =
+      modo === "login"
         ? await supabase.auth.signInWithPassword({ email, password })
         : await supabase.auth.signUp({ email, password });
 
-      if (error) {
-        setMsg(error.message);
-      } else if (modo === "signup") {
-        setMsg("Revisa tu correo para confirmar la cuenta.");
-      }
-      */
-
-      // Simulación visual mientras se conecta el cliente real:
-      setTimeout(() => {
-        setLoading(false);
-        if (modo === "signup") {
-          setMsg("Revisa tu correo para confirmar la cuenta.");
-        } else {
-          console.log("Login exitoso. Aquí iría una redirección al dashboard.");
-        }
-      }, 1000);
-
-    } catch (error: any) {
-      setMsg(error?.message || "Ocurrió un error inesperado.");
-      setLoading(false);
+    if (error) {
+      setMsg(error.message);
+    } else if (modo === "signup") {
+      setMsg("Revisa tu correo para confirmar la cuenta.");
     }
+    // En login exitoso no hace falta redirigir aquí:
+    // onAuthStateChange actualiza `session`, y el guard de rutas se encarga de mover al usuario.
+
+    setLoading(false);
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
   }
 
   return {
-    email, setEmail,
-    password, setPassword,
-    modo, setModo,
-    msg, setMsg,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    modo,
+    setModo,
+    msg,
+    setMsg,
     loading,
-    handleSubmit
+    handleSubmit,
+    handleLogout,
+    session,
+    user,
+    initializing,
+    isAuthenticated: !!session,
   };
 }
