@@ -38,17 +38,13 @@ export function useDashboard() {
   }, []);
 
   const handlePrevMonth = () => {
-    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth
-      .split("-")
-      .map(Number);
+    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth.split("-").map(Number);
     const date = new Date(year, month - 2);
     setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
   };
 
   const handleNextMonth = () => {
-    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth
-      .split("-")
-      .map(Number);
+    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth.split("-").map(Number);
     const date = new Date(year, month);
     setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
   };
@@ -95,30 +91,38 @@ export function useDashboard() {
   );
 
   // --------------------------------------------------------
-  // HISTÓRICO PARA EL BARCHART (gastos por mes, solo categorizados)
+  // HISTÓRICO PARA EL BARCHART: siempre los 6 meses que terminan en
+  // selectedMonth (el mes que estás navegando en Summary), aunque
+  // algunos no tengan movimientos todavía (se muestran en 0).
   // --------------------------------------------------------
   const metricasGlobales = useMemo(() => {
-    const gastosPorMesCalc: Record<string, number> = {};
+    const [selYear = hoy.getFullYear(), selMonthNum = hoy.getMonth() + 1] = selectedMonth
+      .split("-")
+      .map(Number);
 
+    const ultimosSeisMeses: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(selYear, selMonthNum - 1 - i, 1);
+      ultimosSeisMeses.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+
+    const gastosPorMesCalc: Record<string, number> = {};
     movimientosTotales.forEach((mov) => {
       if (mov.tipo === "gasto" && mov.cajita) {
         const mesMov = mov.fecha.substring(0, 7);
-        if (!gastosPorMesCalc[mesMov]) gastosPorMesCalc[mesMov] = 0;
-        gastosPorMesCalc[mesMov] += mov.monto;
+        gastosPorMesCalc[mesMov] = (gastosPorMesCalc[mesMov] || 0) + mov.monto;
       }
     });
 
-    const mesesOrdenados = Object.keys(gastosPorMesCalc).sort().slice(-6);
-
-    const barLabels = mesesOrdenados.map((m) => {
+    const barLabels = ultimosSeisMeses.map((m) => {
       const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = m.split("-").map(Number);
       const date = new Date(year, month - 1);
       return date.toLocaleDateString("es-CO", { month: "short" }).slice(0, 3).toUpperCase();
     });
-    const barValues = mesesOrdenados.map((m) => gastosPorMesCalc[m]);
+    const barValues = ultimosSeisMeses.map((m) => gastosPorMesCalc[m] || 0);
 
     return { barLabels, barValues };
-  }, [movimientosTotales]);
+  }, [movimientosTotales, selectedMonth]);
 
   const handleBudgetChange = (name: string, value: string) => {
     console.log(`Actualizar presupuesto de ${name} a ${value}`);
