@@ -1,12 +1,22 @@
 import React from "react";
 import { IconEdit, IconTrash, IconCheck, IconX, IconPlus } from "@tabler/icons-react";
 import { useBoxes } from "./hooks/useBoxes";
+import type { TipoMedio } from "./services/boxes.service";
+
+const TIPOS: { value: TipoMedio; label: string }[] = [
+  { value: "efectivo", label: "Efectivo" },
+  { value: "cuenta_bancaria", label: "Cuenta bancaria" },
+  { value: "billetera_digital", label: "Billetera digital" },
+  { value: "tarjeta_credito", label: "Tarjeta de crédito" },
+];
 
 export default function Boxes() {
   const {
     medios,
     newMedioValue,
     setNewMedioValue,
+    newMedioTipo,
+    setNewMedioTipo,
     editingMedio,
     setEditingMedio,
     renameMedioValue,
@@ -31,7 +41,18 @@ export default function Boxes() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <select
+              value={newMedioTipo}
+              onChange={(e) => setNewMedioTipo(e.target.value as TipoMedio)}
+              className="h-10 rounded-full border border-input bg-zinc-800 px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              {TIPOS.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
             <input
               type="text"
               placeholder="Nuevo medio"
@@ -52,12 +73,12 @@ export default function Boxes() {
         {/* Lista de Medios (Grid adaptativo: 1 col celular, 2 tablet, 3 PC) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {medios.map((m) => {
-            const isEditing = editingMedio === m.name;
-            const isConfirming = confirmDeleteMedio === m.name;
+            const isEditing = editingMedio === m.id;
+            const isConfirming = confirmDeleteMedio === m.id;
 
             return (
               <div
-                key={m.name}
+                key={m.id}
                 className="flex items-center justify-between p-4 bg-card rounded-xl border border-border shadow-sm transition-all hover:shadow-md"
               >
                 {/* MODO EDICIÓN */}
@@ -67,11 +88,11 @@ export default function Boxes() {
                       value={renameMedioValue}
                       className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                       onChange={(e) => setRenameMedioValue(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && doRenameMedio(m.name)}
+                      onKeyDown={(e) => e.key === "Enter" && doRenameMedio(m.id)}
                       autoFocus
                     />
                     <button
-                      onClick={() => doRenameMedio(m.name)}
+                      onClick={() => doRenameMedio(m.id)}
                       className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full transition-colors"
                     >
                       <IconCheck className="h-4 w-4" />
@@ -87,11 +108,11 @@ export default function Boxes() {
                   /* MODO CONFIRMACIÓN DE BORRADO */
                   <div className="flex w-full items-center justify-between">
                     <span className="text-sm font-medium text-destructive">
-                      ¿Borrar "{m.name}"?
+                      ¿Borrar "{m.nombre}"?
                     </span>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => doDeleteMedio(m.name)}
+                        onClick={() => doDeleteMedio(m.id)}
                         className="text-xs font-medium bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md hover:bg-destructive/90 transition-colors"
                       >
                         Sí, borrar
@@ -107,17 +128,23 @@ export default function Boxes() {
                 ) : (
                   /* MODO VISUALIZACIÓN NORMAL */
                   <>
-                    <span className="font-medium text-card-foreground truncate pr-2">{m.name}</span>
+                    <div className="flex flex-col truncate pr-2">
+                      <span className="font-medium text-card-foreground truncate">{m.nombre}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {TIPOS.find((t) => t.value === m.tipo)?.label ?? m.tipo} · $
+                        {m.saldo.toLocaleString("es-CO")}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <button
-                        onClick={() => startRenameMedio(m.name)}
+                        onClick={() => startRenameMedio(m.id, m.nombre)}
                         className="p-2 text-muted-foreground hover:text-primary hover:bg-secondary rounded-full transition-colors"
                         title="Editar"
                       >
                         <IconEdit className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => setConfirmDeleteMedio(m.name)}
+                        onClick={() => setConfirmDeleteMedio(m.id)}
                         className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
                         title="Eliminar"
                       >

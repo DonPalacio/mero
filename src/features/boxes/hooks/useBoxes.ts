@@ -1,19 +1,15 @@
 import { useState, useEffect } from "react";
-import { boxesService } from "../services/boxes.service";
-
-export interface Medio {
-  id?: string | number; // Agregamos id opcional por si Supabase lo devuelve
-  name: string;
-}
+import { boxesService, type Medio, type TipoMedio } from "../services/boxes.service";
 
 export function useBoxes() {
   const [medios, setMedios] = useState<Medio[]>([]);
-  const [isLoading, setIsLoading] = useState(true); // <-- Nuevo estado para saber si está cargando
+  const [isLoading, setIsLoading] = useState(true);
 
   const [newMedioValue, setNewMedioValue] = useState("");
-  const [editingMedio, setEditingMedio] = useState<string | null>(null);
+  const [newMedioTipo, setNewMedioTipo] = useState<TipoMedio>("efectivo");
+  const [editingMedio, setEditingMedio] = useState<string | null>(null); // id
   const [renameMedioValue, setRenameMedioValue] = useState("");
-  const [confirmDeleteMedio, setConfirmDeleteMedio] = useState<string | null>(null);
+  const [confirmDeleteMedio, setConfirmDeleteMedio] = useState<string | null>(null); // id
 
   // 1. Cargar los datos reales al entrar a la pantalla
   useEffect(() => {
@@ -30,58 +26,56 @@ export function useBoxes() {
   async function handleAddMedio() {
     const v = newMedioValue.trim();
     if (!v) return;
-    if (medios.some((m) => m.name === v)) {
+    if (medios.some((m) => m.nombre === v)) {
       setNewMedioValue("");
       return; // Ya existe visualmente
     }
 
-    // Guardamos en la base de datos real
-    const nuevoMedio = await boxesService.crearMedio(v);
+    const nuevoMedio = await boxesService.crearMedio(v, newMedioTipo);
 
-    // Solo si Supabase lo creó con éxito, lo agregamos a la pantalla
     if (nuevoMedio) {
       setMedios([...medios, nuevoMedio]);
     }
     setNewMedioValue("");
   }
 
-  function startRenameMedio(name: string) {
-    setEditingMedio(name);
-    setRenameMedioValue(name);
+  function startRenameMedio(id: string, nombreActual: string) {
+    setEditingMedio(id);
+    setRenameMedioValue(nombreActual);
     setConfirmDeleteMedio(null);
   }
 
   // 3. Renombrar de forma asíncrona
-  async function doRenameMedio(oldName: string) {
+  async function doRenameMedio(id: string) {
     const nuevo = renameMedioValue.trim();
     setEditingMedio(null);
-    if (!nuevo || nuevo === oldName) return;
+    if (!nuevo) return;
 
-    // Actualizamos en la base de datos real
-    const exito = await boxesService.actualizarMedio(oldName, nuevo);
+    const exito = await boxesService.actualizarMedio(id, { nombre: nuevo });
 
     if (exito) {
-      setMedios(medios.map((m) => (m.name === oldName ? { ...m, name: nuevo } : m)));
+      setMedios(medios.map((m) => (m.id === id ? { ...m, nombre: nuevo } : m)));
     }
   }
 
   // 4. Eliminar de forma asíncrona
-  async function doDeleteMedio(name: string) {
+  async function doDeleteMedio(id: string) {
     setConfirmDeleteMedio(null);
 
-    // Eliminamos en la base de datos real
-    const exito = await boxesService.eliminarMedio(name);
+    const exito = await boxesService.eliminarMedio(id);
 
     if (exito) {
-      setMedios(medios.filter((m) => m.name !== name));
+      setMedios(medios.filter((m) => m.id !== id));
     }
   }
 
   return {
     medios,
-    isLoading, // Exportamos esto por si quieres poner un "Cargando..." en tu vista de Cajas
+    isLoading,
     newMedioValue,
     setNewMedioValue,
+    newMedioTipo,
+    setNewMedioTipo,
     editingMedio,
     setEditingMedio,
     renameMedioValue,

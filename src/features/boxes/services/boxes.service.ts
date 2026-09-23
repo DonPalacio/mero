@@ -1,9 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
-
-// Inicializamos el cliente de Supabase (Asegúrate de tener estas variables en tu archivo .env)
-const supabaseUrl = import.meta.env["VITE_SUPABASE_URL"] || "";
-const supabaseKey = import.meta.env["VITE_SUPABASE_ANON_KEY"] || "";
-export const supabase = createClient(supabaseUrl, supabaseKey);
+import { supabase } from "@/lib/supabase";
 
 // El nombre de tu tabla en Supabase
 const TABLA_MEDIOS = "medios";

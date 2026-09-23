@@ -26,22 +26,22 @@ export const dashboardService = {
     }));
   },
 
-  // 2. Obtener cajitas con sus presupuestos
+  // 2. Obtener categorías con sus presupuestos
   async obtenerCajitas(): Promise<Categoria[]> {
     const { data, error } = await supabase
-      .from("cajitas")
+      .from("categorias")
       .select("*")
-      .order("name", { ascending: true });
+      .order("nombre", { ascending: true });
 
     if (error) {
-      console.error("Error al obtener cajitas de Supabase:", error);
+      console.error("Error al obtener categorías de Supabase:", error);
       throw new Error(error.message);
     }
 
     return (data || []).map((c) => ({
-      name: c.name,
-      tipo: "gasto", // En el schema las cajitas actúan como categorías/gastos
-      budget: Number(c.budget),
+      name: c.nombre,
+      tipo: c.tipo as "gasto" | "ingreso",
+      budget: Number(c.presupuesto_mensual),
     }));
   },
 
@@ -79,10 +79,7 @@ export const dashboardService = {
 
   // 4. Eliminar movimiento
   async eliminarMovimiento(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("movimientos")
-      .delete()
-      .eq("id", id);
+    const { error } = await supabase.from("movimientos").delete().eq("id", id);
 
     if (error) {
       console.error("Error al eliminar movimiento en Supabase:", error);
