@@ -5,7 +5,7 @@ export const Route = createFileRoute("/")({
   beforeLoad: () => {
     // Lanzamos una redirección automática a tu nueva ruta limpia
     throw redirect({
-      to: "/transactions",
+      to: "/dashboard",
     });
   },
   // Como redirigimos inmediatamente, el componente visual puede quedar vacío
