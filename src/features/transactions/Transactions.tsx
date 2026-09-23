@@ -32,7 +32,8 @@ export default function Transactions() {
   } = useTransactions();
 
   const movimientosFiltrados = movimientos.filter(
-    (mov) => (!filtroCategoria || mov.cajita === filtroCategoria) && mov.fecha.startsWith(selectedMonth)
+    (mov) =>
+      (!filtroCategoria || mov.cajita === filtroCategoria) && mov.fecha.startsWith(selectedMonth),
   );
 
   return (
@@ -93,17 +94,22 @@ export default function Transactions() {
 
               {/* Monto */}
               <div className="flex flex-col gap-1.5 shrink-0">
-                <label className="text-sm font-medium text-foreground">Monto</label>
+                <label htmlFor="transaction-amount" className="text-sm font-medium text-foreground">
+                  Monto
+                </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                     $
                   </span>
                   <input
+                    id="transaction-amount"
+                    name="transaction-amount"
                     type="number"
                     placeholder="0"
                     className="flex h-11 w-full rounded-full border border-input bg-zinc-800 pl-7 pr-3 py-2 text-lg font-medium focus:outline-none focus:ring-1 focus:ring-ring"
                     value={monto}
                     onChange={(e) => setMonto(e.target.value)}
+                    autoComplete="off"
                   />
                 </div>
               </div>
@@ -168,22 +174,32 @@ export default function Transactions() {
               {/* Fecha y Nota */}
               <div className="grid grid-cols-2 gap-3 shrink-0">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-foreground">Fecha</label>
+                  <label htmlFor="transaction-date" className="text-sm font-medium text-foreground">
+                    Fecha
+                  </label>
                   <input
+                    id="transaction-date"
+                    name="transaction-date"
                     type="date"
                     className="flex h-10 w-full rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring scheme-dark"
                     value={fecha}
                     onChange={(e) => setFecha(e.target.value)}
+                    autoComplete="off"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-foreground">Nota</label>
+                  <label htmlFor="transaction-note" className="text-sm font-medium text-foreground">
+                    Nota
+                  </label>
                   <input
+                    id="transaction-note"
+                    name="transaction-note"
                     type="text"
                     placeholder="Opcional..."
                     className="flex h-10 w-full rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                     value={nota}
                     onChange={(e) => setNota(e.target.value)}
+                    autoComplete="off"
                   />
                 </div>
               </div>
@@ -208,6 +224,9 @@ export default function Transactions() {
               <h2 className="text-lg font-semibold text-card-foreground">Últimas transacciones</h2>
 
               <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <label htmlFor="month-select" className="text-sm font-medium text-foreground">
+                  Mes
+                </label>
                 <select
                   id="month-select"
                   name="month-select"
@@ -222,12 +241,17 @@ export default function Transactions() {
                   ))}
                 </select>
 
+                <label htmlFor="category-select" className="text-sm font-medium text-foreground">
+                  Categoría
+                </label>
                 <select
                   id="category-select"
                   name="category-select"
                   className="h-9 w-full sm:w-48 rounded-xl border border-input bg-zinc-800 px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
                   value={filtroCategoria || ""}
-                  onChange={(e) => setFiltroCategoria(e.target.value === "" ? null : e.target.value)}
+                  onChange={(e) =>
+                    setFiltroCategoria(e.target.value === "" ? null : e.target.value)
+                  }
                 >
                   <option value="">Todas las categorías</option>
                   {categoriasDisponibles.map((c) => (

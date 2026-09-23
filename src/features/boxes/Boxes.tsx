@@ -33,12 +33,15 @@ export default function Boxes() {
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <input
+              id="new-medio-input"
+              name="new-medio-input"
               type="text"
               placeholder="Nuevo medio"
               className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               value={newMedioValue}
               onChange={(e) => setNewMedioValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddMedio()}
+              autoComplete="off"
             />
             <button
               onClick={handleAddMedio}
