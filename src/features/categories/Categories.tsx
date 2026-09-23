@@ -64,12 +64,15 @@ export default function Categories() {
             {/* Input para agregar */}
             <div className="flex items-center gap-2">
               <input
+                id="new-category-input"
+                name="new-category-input"
                 type="text"
                 placeholder="Nombre (ej. Restaurante)"
                 className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 value={newCatValue}
                 onChange={(e) => setNewCatValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddCat()}
+                autoComplete="off"
               />
               <button
                 onClick={handleAddCat}

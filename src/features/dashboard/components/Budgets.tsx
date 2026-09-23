@@ -56,6 +56,8 @@ export default function Budgets({ categorias, gastosPorCajita, onBudgetChange }:
                 <span className="text-muted-foreground flex items-center gap-2">
                   {fmt(spent)} /{" "}
                   <input
+                    id={`budget-${c.id}`}
+                    name={`budget-${c.id}`}
                     type="number"
                     value={getValue(c)}
                     className="w-24 px-2 py-1 text-sm bg-background border border-border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring"

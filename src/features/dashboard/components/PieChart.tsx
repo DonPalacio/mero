@@ -28,7 +28,7 @@ export default function PieChart({ gastosPorCajita }: PieChartProps) {
 
   if (total > 0) {
     labels.forEach((label, i) => {
-      const frac = gastosPorCajita[label] / total;
+      const frac = (gastosPorCajita[label] ?? 0) / total;
       const len = frac * circ;
 
       segments.push(
@@ -76,7 +76,7 @@ export default function PieChart({ gastosPorCajita }: PieChartProps) {
         )}
 
         {labels.map((label, i) => {
-          const pct = total ? ((gastosPorCajita[label] / total) * 100).toFixed(1) : 0;
+          const pct = total ? (((gastosPorCajita[label] ?? 0) / total) * 100).toFixed(1) : "0";
 
           return (
             <div className="flex items-center justify-between text-sm" key={label}>

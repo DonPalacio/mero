@@ -17,10 +17,10 @@ export default function Dashboard() {
     saldoDisponible,
     isLoading,
     handleBudgetChange,
-    saldosPorMedio, // <- Nuevo
-    listaMedios, // <- Nuevo
-    barLabels, // <- Nuevo
-    barValues, // <- Nuevo
+    saldosPorMedio,
+    listaMedios,
+    barLabels,
+    barValues,
   } = useDashboard();
 
   if (isLoading) {

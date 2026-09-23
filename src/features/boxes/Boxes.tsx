@@ -64,10 +64,14 @@ export default function Boxes() {
                 {isEditing ? (
                   <div className="flex w-full items-center gap-2">
                     <input
+                      id={`rename-medio-${m.id}`}
+                      name={`rename-medio-${m.id}`}
+                      type="text"
                       value={renameMedioValue}
                       className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                       onChange={(e) => setRenameMedioValue(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && doRenameMedio(m.id)}
+                      autoComplete="off"
                       autoFocus
                     />
                     <button
@@ -107,7 +111,9 @@ export default function Boxes() {
                 ) : (
                   /* MODO VISUALIZACIÓN NORMAL */
                   <>
-                    <span className="font-medium text-card-foreground truncate pr-2">{m.nombre}</span>
+                    <span className="font-medium text-card-foreground truncate pr-2">
+                      {m.nombre}
+                    </span>
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => startRenameMedio(m.id, m.nombre)}
