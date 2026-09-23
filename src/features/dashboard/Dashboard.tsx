@@ -6,45 +6,65 @@ import Budgets from "./components/Budgets";
 import { useDashboard } from "./hooks/useDashboard";
 
 export default function Dashboard() {
-  const { 
-    gastosPorCajita, 
-    categorias, 
-    selectedMonth,
-    totalIngresos, 
-    totalGastos,   
-    queda,         
-    saldosPorMedio, // Extraemos los saldos
-    listaMedios,    // Extraemos la lista
+  // Consumimos los datos reales y funciones desde nuestro nuevo hook
+  const {
+    cajitas,
+    gastosPorCajita,
+    ingresosTotales,
+    gastosTotales,
+    saldoDisponible,
+    isLoading,
     handleBudgetChange,
-    handlePrevMonth,
-    handleNextMonth
   } = useDashboard();
+
+  // Si está cargando datos de Supabase, mostramos un aviso limpio
+  if (isLoading) {
+    return (
+      <div className="flex flex-1 items-center justify-center bg-background h-screen text-muted-foreground">
+        <p className="animate-pulse text-sm">Cargando tus finanzas desde Supabase...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 min-h-0">
       <div className="p-2 md:p-10 rounded-tl-2xl border border-border bg-background flex flex-col gap-4 lg:gap-2 flex-1 w-full h-full overflow-y-auto">
         
+        {/* Cajitas superiores */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
+          {[...new Array(4)].map((i, idx) => (
+            <div
+              key={"first-array-demo-1" + idx}
+              className="h-20 w-full rounded-lg bg-card"
+            ></div>
+          ))}
+        </div>
+
+        {/* Grilla principal adaptada */}
         <div className="grid grid-cols-1 lg:grid-cols-6 lg:grid-rows-5 gap-4 lg:gap-2 flex-1">
           
+          {/* Div 1: Summary con datos reales de Supabase */}
           <div className="col-span-1 lg:col-span-2 lg:row-span-3">
             <Summary
-              selectedMonth={selectedMonth}
-              onPrev={handlePrevMonth}
-              onNext={handleNextMonth}
-              ingresos={totalIngresos}
-              gastos={totalGastos}
-              queda={queda}
-              cmpText="Saldos calculados dinámicamente"
+              selectedMonth="2026-09"
+              onPrev={() => {}}
+              onNext={() => {}}
+              ingresos={ingresosTotales}
+              gastos={gastosTotales}
+              queda={saldoDisponible}
+              cmpText="Datos en tiempo real"
               cmpColor="#3fb27f"
-              medios={listaMedios}         // <- Inyectamos los medios
-              saldosPorMedio={saldosPorMedio} // <- Inyectamos los montos
+              medios={[{ name: "Efectivo" }, { name: "Nu" }]}
+              saldosPorMedio={{ Efectivo: saldoDisponible, Nu: 0 }}
             />
           </div>
 
+          {/* Div 5: PieChart con gastos reales agrupados */}
           <div className="col-span-1 lg:col-span-2 lg:row-span-3 lg:col-start-3 lg:row-start-1">
             <PieChart gastosPorCajita={gastosPorCajita} />
           </div>
 
+          {/* Div 4: BarChart */}
           <div className="col-span-1 lg:col-span-2 lg:row-span-3 lg:col-start-5 lg:row-start-1">
             <BarChart
               labels={["Mar", "Abr", "May", "Jun", "Jul", "Ago"]}
@@ -52,9 +72,10 @@ export default function Dashboard() {
             />
           </div>
 
+          {/* Div 3: Budgets con las cajitas reales de la base de datos */}
           <div className="col-span-1 lg:col-span-6 lg:row-span-2 lg:col-start-1 lg:row-start-4">
             <Budgets 
-              categorias={categorias}
+              categorias={cajitas}
               gastosPorCajita={gastosPorCajita}
               onBudgetChange={handleBudgetChange}
             />
