@@ -116,7 +116,7 @@ export const LogoIcon = () => {
     >
       {/* Imagen de la ardilla pintada de blanco con Tailwind (Modo colapsado) */}
       <img 
-        src="/favicon.ico" 
+        src="/favicon-white.svg" 
         alt="Mero Logo" 
         className="h-7 w-7 shrink-0 brightness-0 invert" 
       />

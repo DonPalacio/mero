@@ -22,7 +22,7 @@ export default function Login() {
         {/* Logo / Título */}
         <div className="flex flex-col items-center mb-2">
           <img 
-            src="/favicon-white.png" 
+            src="/favicon-white.svg" 
             alt="Mero Logo" 
             className="h-8 w-8 mb-4 shrink-0" 
           />
