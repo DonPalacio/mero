@@ -24,7 +24,7 @@ export default function Login() {
           <img 
             src="/favicon-white.svg"
             alt="Mero Logo" 
-            className="h-8 w-8 mb-4 shrink-0" 
+            className="h-8 w-8 mb-4 shrink-0 brightness-0 invert" 
           />
           <h2 className="text-2xl font-bold text-foreground">
             {modo === "login" ? "Iniciar sesión" : "Crear cuenta"}
