@@ -10,48 +10,43 @@ import {
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { useRouter } from "@tanstack/react-router"; 
+import { supabase } from "@/lib/supabase";
 
 interface SidebarLayoutProps {
   children?: React.ReactNode;
 }
 
 export default function SidebarDemo({ children }: SidebarLayoutProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   const links = [
     {
       label: "Transacciones",
-      href: "/transactions", 
+      href: "/transactions",
       icon: <IconCashRegister stroke={2} className="text-foreground h-5 w-5 shrink-0" />,
     },
     {
       label: "Categorías",
-      href: "/categories", 
+      href: "/categories",
       icon: <IconCategory2 className="text-foreground h-5 w-5 shrink-0" />,
     },
     {
       label: "Cajas",
-      href: "/boxes", 
+      href: "/boxes",
       icon: <IconPackages className="text-foreground h-5 w-5 shrink-0" />,
     },
     {
       label: "Dashboard",
-      href: "/dashboard", 
+      href: "/dashboard",
       icon: <IconLayoutDashboard className="text-foreground h-5 w-5 shrink-0" />,
     },
   ];
-  
+
+  // El redirect a /login lo maneja automáticamente el guard de __root.tsx
+  // (onAuthStateChange -> router.invalidate() -> beforeLoad detecta sesión nula)
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
-    
-    // === Aquí irá tu lógica de Supabase luego ===
-    // await supabase.auth.signOut();
-    
-    console.log("Cerrando sesión...");
-    
-    router.navigate({ to: "/login" });
+    await supabase.auth.signOut();
   };
 
   return (
@@ -71,21 +66,21 @@ export default function SidebarDemo({ children }: SidebarLayoutProps) {
               ))}
             </div>
           </div>
-          
+
           <div onClick={handleLogout} className="cursor-pointer">
             <SidebarLink
               link={{
                 label: "Cerrar sesión",
-                href: "#", 
+                href: "#",
                 icon: <IconArrowLeft className="text-foreground h-5 w-5 shrink-0" />,
               }}
             />
           </div>
         </SidebarBody>
       </Sidebar>
-      
+
       {children}
-      
+
     </div>
   );
 }
