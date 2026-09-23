@@ -30,15 +30,6 @@ export default function Dashboard() {
   return (
     <div className="flex flex-1 min-h-0">
       <div className="p-2 md:p-10 rounded-tl-2xl border border-border bg-background flex flex-col gap-4 lg:gap-2 flex-1 w-full h-full overflow-y-auto">
-        
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
-          {[...new Array(4)].map((i, idx) => (
-            <div
-              key={"first-array-demo-1" + idx}
-              className="h-20 w-full rounded-lg bg-card"
-            ></div>
-          ))}
-        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-6 lg:grid-rows-5 gap-4 lg:gap-2 flex-1">
           
