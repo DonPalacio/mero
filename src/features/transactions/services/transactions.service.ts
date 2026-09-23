@@ -76,7 +76,7 @@ export const transactionsService = {
     tipo: "gasto" | "ingreso";
     monto: number;
     medioId: string;
-    categoriaId: string;
+    categoriaId?: string | null;
     fecha: string;
     nota: string;
   }): Promise<{ id: string } | null> {
@@ -93,7 +93,7 @@ export const transactionsService = {
           tipo: params.tipo,
           monto: params.monto,
           medio_id: params.medioId,
-          categoria_id: params.categoriaId,
+          categoria_id: params.categoriaId ?? null,
           fecha: params.fecha,
           descripcion: params.nota || null,
           user_id: userData.user.id,

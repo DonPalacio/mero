@@ -1,6 +1,11 @@
 import { supabase } from "@/lib/supabase";
 import { Movimiento } from "@/features/transactions/hooks/useTransactions";
-import { Categoria } from "../components/Budgets";
+
+export interface MedioSaldo {
+  id: string;
+  name: string;
+  saldo: number;
+}
 
 export const dashboardService = {
   // 1. Obtener todos los movimientos del usuario actual
@@ -46,48 +51,22 @@ export const dashboardService = {
     }));
   },
 
-  // 3. Crear un movimiento nuevo
-  async crearMovimiento(movimiento: Omit<Movimiento, "id">): Promise<Movimiento> {
+  // 3. Obtener TODOS los medios con su saldo real (lo mantiene el trigger de la BD)
+  async obtenerMedios(): Promise<MedioSaldo[]> {
     const { data, error } = await supabase
-      .from("movimientos")
-      .insert([
-        {
-          tipo: movimiento.tipo,
-          monto: movimiento.monto,
-          cajita: movimiento.cajita,
-          fecha: movimiento.fecha,
-          nota: movimiento.nota,
-        },
-      ])
-      .select()
-      .single();
+      .from("medios")
+      .select("id, nombre, saldo")
+      .order("created_at", { ascending: true });
 
     if (error) {
-      console.error("Error al crear movimiento en Supabase:", error);
+      console.error("Error al obtener medios de Supabase:", error);
       throw new Error(error.message);
     }
 
-    return {
-      id: data.id,
-      tipo: data.tipo as "gasto" | "ingreso",
-      monto: Number(data.monto),
-      cajita: data.cajita,
-      medio: data.cajita,
-      fecha: data.fecha,
-      nota: data.nota || "",
-    };
-  },
-
-  // 4. Eliminar movimiento
-  async eliminarMovimiento(id: string): Promise<void> {
-    const { error } = await supabase
-      .from("movimientos")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      console.error("Error al eliminar movimiento en Supabase:", error);
-      throw new Error(error.message);
-    }
+    return (data || []).map((m) => ({
+      id: m.id,
+      name: m.nombre,
+      saldo: Number(m.saldo),
+    }));
   },
 };

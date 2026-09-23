@@ -66,20 +66,20 @@ export function useTransactions() {
       setFMsg("Ingresa un monto válido mayor a 0");
       return;
     }
-    if (!selectedCat) {
-      setFMsg("Selecciona una categoría");
-      return;
-    }
     if (!selectedMedio) {
       setFMsg("Selecciona un medio (Box)");
       return;
     }
 
-    const categoriaObj = categoriasData.find((c) => c.nombre === selectedCat);
+    // La categoría es opcional: sin ella, el movimiento no se contabiliza
+    // en los totales del dashboard (sirve para traspasos entre medios).
+    const categoriaObj = selectedCat
+      ? categoriasData.find((c) => c.nombre === selectedCat)
+      : undefined;
     const medioObj = mediosData.find((m) => m.nombre === selectedMedio);
 
-    if (!categoriaObj || !medioObj) {
-      setFMsg("Categoría o medio inválido");
+    if (!medioObj) {
+      setFMsg("Medio inválido");
       return;
     }
 
@@ -89,7 +89,7 @@ export function useTransactions() {
       tipo: tipoSel,
       monto: montoNum,
       medioId: medioObj.id,
-      categoriaId: categoriaObj.id,
+      categoriaId: categoriaObj?.id ?? null,
       fecha,
       nota,
     });
@@ -103,7 +103,7 @@ export function useTransactions() {
       id: resultado.id,
       tipo: tipoSel,
       monto: montoNum,
-      cajita: selectedCat,
+      cajita: selectedCat ?? "",
       medio: selectedMedio,
       fecha,
       nota,
