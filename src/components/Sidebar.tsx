@@ -1,195 +1,130 @@
 "use client";
+import React, { useState } from "react";
+import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
+import {
+  IconArrowLeft,
+  IconCashRegister,
+  IconPackages,
+  IconCategory2,
+  IconLayoutDashboard,
+} from "@tabler/icons-react";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import React, { useState, createContext, useContext } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { IconMenu2, IconX } from "@tabler/icons-react";
-import { Link, useRouterState } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router"; 
 
-interface Links {
-  label: string;
-  href: string;
-  icon: React.JSX.Element | React.ReactNode;
+interface SidebarLayoutProps {
+  children?: React.ReactNode;
 }
 
-interface SidebarContextProps {
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  animate: boolean;
-}
+export default function SidebarDemo({ children }: SidebarLayoutProps) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
 
-const SidebarContext = createContext<SidebarContextProps | undefined>(
-  undefined
-);
-
-export const useSidebar = () => {
-  const context = useContext(SidebarContext);
-  if (!context) {
-    throw new Error("useSidebar must be used within a SidebarProvider");
-  }
-  return context;
-};
-
-export const SidebarProvider = ({
-  children,
-  open: openProp,
-  setOpen: setOpenProp,
-  animate = true,
-}: {
-  children: React.ReactNode;
-  open?: boolean | undefined;
-  setOpen?: React.Dispatch<React.SetStateAction<boolean>> | undefined;
-  animate?: boolean | undefined;
-}) => {
-  const [openState, setOpenState] = useState(false);
-
-  const open = openProp !== undefined ? openProp : openState;
-  const setOpen = setOpenProp !== undefined ? setOpenProp : setOpenState;
-
-  return (
-    <SidebarContext.Provider value={{ open, setOpen, animate: animate }}>
-      {children}
-    </SidebarContext.Provider>
-  );
-};
-
-export const Sidebar = ({
-  children,
-  open,
-  setOpen,
-  animate,
-}: {
-  children: React.ReactNode;
-  open?: boolean;
-  setOpen?: React.Dispatch<React.SetStateAction<boolean>>;
-  animate?: boolean;
-}) => {
-  return (
-    <SidebarProvider open={open} setOpen={setOpen} animate={animate}>
-      {children}
-    </SidebarProvider>
-  );
-};
-
-export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
-  return (
-    <>
-      <DesktopSidebar {...props} />
-      <MobileSidebar {...(props as unknown as React.ComponentProps<"div">)} />
-    </>
-  );
-};
-
-export const DesktopSidebar = ({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<typeof motion.div>) => {
-  const { open, setOpen, animate } = useSidebar();
-  return (
-    <>
-      <motion.div
-        className={cn(
-          "h-full px-4 py-4 hidden md:flex md:flex-col bg-sidebar w-[300px] shrink-0",
-          className
-        )}
-        animate={{
-          width: animate ? (open ? "300px" : "60px") : "300px",
-        }}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        {...props}
-      >
-        {children}
-      </motion.div>
-    </>
-  );
-};
-
-export const MobileSidebar = ({
-  className,
-  children,
-  ...props
-}: React.ComponentProps<"div">) => {
-  const { open, setOpen } = useSidebar();
-  return (
-    <>
-      <div
-        className={cn(
-          "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-sidebar w-full"
-        )}
-        {...props}
-      >
-        <div className="flex justify-end z-20 w-full">
-          <IconMenu2
-            className="text-foreground"
-            onClick={() => setOpen(!open)}
-          />
-        </div>
-        <AnimatePresence>
-          {open && (
-            <motion.div
-              initial={{ x: "-100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "-100%", opacity: 0 }}
-              transition={{
-                duration: 0.3,
-                ease: "easeInOut",
-              }}
-              className={cn(
-                "fixed h-full w-full inset-0 bg-background p-10 z-[100] flex flex-col justify-between",
-                className
-              )}
-            >
-              <div
-                className="absolute right-10 top-10 z-50 text-foreground"
-                onClick={() => setOpen(!open)}
-              >
-                <IconX />
-              </div>
-              {children}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </>
-  );
-};
-
-export const SidebarLink = ({
-  link,
-  className,
-  ...props
-}: {
-  link: Links;
-  className?: string;
-}) => {
-  const { open, animate, setOpen } = useSidebar();
-  const routerState = useRouterState();
-  const isActive = routerState.location.pathname === link.href;
+  const links = [
+    {
+      label: "Transacciones",
+      href: "/transactions", 
+      icon: <IconCashRegister stroke={2} className="text-foreground h-5 w-5 shrink-0" />,
+    },
+    {
+      label: "Categorías",
+      href: "/categories", 
+      icon: <IconCategory2 className="text-foreground h-5 w-5 shrink-0" />,
+    },
+    {
+      label: "Cajas",
+      href: "/boxes", 
+      icon: <IconPackages className="text-foreground h-5 w-5 shrink-0" />,
+    },
+    {
+      label: "Dashboard",
+      href: "/dashboard", 
+      icon: <IconLayoutDashboard className="text-foreground h-5 w-5 shrink-0" />,
+    },
+  ];
+  
+  const handleLogout = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // === Aquí irá tu lógica de Supabase luego ===
+    // await supabase.auth.signOut();
+    
+    console.log("Cerrando sesión...");
+    
+    router.navigate({ to: "/login" });
+  };
 
   return (
-    <Link
-      to={link.href}
-      onClick={() => setOpen(false)}
+    <div
       className={cn(
-        "flex items-center justify-start gap-2 group/sidebar py-2",
-        isActive && "opacity-100",
-        !isActive && "opacity-80 hover:opacity-100",
-        className
+        "flex flex-col md:flex-row bg-sidebar w-full flex-1 mx-auto overflow-hidden",
+        "h-screen",
       )}
-      {...props}
     >
-      {link.icon}
+      <Sidebar open={open} setOpen={setOpen}>
+        <SidebarBody className="justify-between gap-10">
+          <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+            {open ? <Logo /> : <LogoIcon />}
+            <div className="mt-8 flex flex-col gap-2">
+              {links.map((link, idx) => (
+                <SidebarLink key={idx} link={link} />
+              ))}
+            </div>
+          </div>
+          
+          <div onClick={handleLogout} className="cursor-pointer">
+            <SidebarLink
+              link={{
+                label: "Cerrar sesión",
+                href: "#", 
+                icon: <IconArrowLeft className="text-foreground h-5 w-5 shrink-0" />,
+              }}
+            />
+          </div>
+        </SidebarBody>
+      </Sidebar>
+      
+      {children}
+      
+    </div>
+  );
+}
 
+export const Logo = () => {
+  return (
+    <a
+      href="#"
+      className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
+    >
+      {/* Imagen de la ardilla pintada de blanco con Tailwind */}
+      <img 
+        src="/favicon.ico" 
+        alt="Mero Logo" 
+        className="h-7 w-7 shrink-0 brightness-0 invert" 
+      />
       <motion.span
-        animate={{
-          display: animate ? (open ? "inline-block" : "none") : "inline-block",
-          opacity: animate ? (open ? 1 : 0) : 1,
-        }}
-        className="text-foreground text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="font-medium text-foreground whitespace-pre"
       >
-        {link.label}
+        MERO
       </motion.span>
-    </Link>
+    </a>
+  );
+};
+
+export const LogoIcon = () => {
+  return (
+    <a
+      href="#"
+      className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
+    >
+      {/* Imagen de la ardilla pintada de blanco con Tailwind (Modo colapsado) */}
+      <img 
+        src="/favicon.ico" 
+        alt="Mero Logo" 
+        className="h-7 w-7 shrink-0 brightness-0 invert" 
+      />
+    </a>
   );
 };
