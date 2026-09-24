@@ -47,7 +47,7 @@ export default function Transactions() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="col-span-1 bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-[550px] lg:h-[600px]">
+          <div className="col-span-1 bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-[600px] lg:h-[700px]">
             {/* shrink-0 evita que el título se encoja cuando hay mucho contenido abajo */}
             <h2 className="text-lg font-semibold text-card-foreground mb-4 shrink-0">
               Nuevo registro
@@ -218,7 +218,7 @@ export default function Transactions() {
           </div>
 
           {/* COLUMNA DERECHA: Historial / Tabla */}
-          <div className="col-span-1 lg:col-span-2 bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-[800px] lg:h-[600px]">
+          <div className="col-span-1 lg:col-span-2 bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-[800px] lg:h-[700px]">
             {/* Encabezado con los filtros de Mes y Categoría */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 shrink-0 gap-3">
               <h2 className="text-lg font-semibold text-card-foreground">Últimas transacciones</h2>
