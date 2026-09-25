@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabase";
 
-// El nombre de tu tabla en Supabase
 const TABLA_MEDIOS = "medios";
 
 export interface Medio {
@@ -28,15 +27,10 @@ export const boxesService = {
   },
 
   crearMedio: async (nombre: string, saldoInicial: number = 0): Promise<Medio | null> => {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData.user) {
-      console.error("Error obteniendo usuario autenticado:", userError);
-      return null;
-    }
-
+    // user_id lo asigna la BD (default auth.uid()) a partir del JWT
     const { data, error } = await supabase
       .from(TABLA_MEDIOS)
-      .insert([{ nombre, saldo: saldoInicial, user_id: userData.user.id }])
+      .insert([{ nombre, saldo: saldoInicial }])
       .select()
       .single();
 

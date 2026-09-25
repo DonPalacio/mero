@@ -80,12 +80,7 @@ export const transactionsService = {
     fecha: string;
     nota: string;
   }): Promise<{ id: string } | null> {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData.user) {
-      console.error("Error obteniendo usuario autenticado:", userError);
-      return null;
-    }
-
+    // user_id lo asigna la BD (default auth.uid()) a partir del JWT
     const { data, error } = await supabase
       .from("movimientos")
       .insert([
@@ -96,7 +91,6 @@ export const transactionsService = {
           categoria_id: params.categoriaId ?? null,
           fecha: params.fecha,
           descripcion: params.nota || null,
-          user_id: userData.user.id,
         },
       ])
       .select("id")
