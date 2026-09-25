@@ -10,7 +10,7 @@ import {
 } from "@tabler/icons-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
+import { useLogout } from "@/features/auth/hooks/useLogout";
 import { Link } from "@tanstack/react-router";
 
 interface SidebarLayoutProps {
@@ -19,6 +19,7 @@ interface SidebarLayoutProps {
 
 export default function SidebarDemo({ children }: SidebarLayoutProps) {
   const [open, setOpen] = useState(false);
+  const logout = useLogout();
 
   const links = [
     {
@@ -44,10 +45,10 @@ export default function SidebarDemo({ children }: SidebarLayoutProps) {
   ];
 
   // El redirect a /login lo maneja automáticamente el guard de __root.tsx
-  // (onAuthStateChange -> router.invalidate() -> beforeLoad detecta sesión nula)
+  // (useLogout -> router.invalidate() -> beforeLoad detecta sesión nula)
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
-    await supabase.auth.signOut();
+    await logout();
   };
 
   return (

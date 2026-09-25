@@ -13,7 +13,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { supabase } from "@/lib/supabase";
+import { getSessionUser } from "@/features/auth/services/auth.functions";
 import SidebarDemo from "@/components/Sidebar";
 
 function NotFoundComponent() {
@@ -86,22 +86,27 @@ function PendingComponent() {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   beforeLoad: async ({ location }) => {
-    const { data } = await supabase.auth.getSession();
-    const isAuthenticated = !!data.session;
+    // La sesión vive en cookies HttpOnly: se valida en el servidor, tanto en SSR
+    // como en navegaciones del cliente (server function).
+    const user = await getSessionUser();
     const isLoginPage = location.pathname === "/login";
+    // /auth/callback debe ser accesible sin sesión (confirmación de correo)
+    const isPublicPage = isLoginPage || location.pathname.startsWith("/auth/");
 
-    if (!isAuthenticated && !isLoginPage) {
+    if (!user && !isPublicPage) {
       throw redirect({
         to: "/login",
         search: { redirect: location.href },
       });
     }
 
-    if (isAuthenticated && isLoginPage) {
+    if (user && isLoginPage) {
       const params = new URLSearchParams(location.searchStr);
       const redirectTo = params.get("redirect");
       throw redirect({ href: redirectTo || "/" });
     }
+
+    return { user };
   },
   head: () => ({
     meta: [
@@ -165,16 +170,8 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
-  const router = useRouter();
 
   const isLoginPage = location.pathname === "/login";
-
-  useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      router.invalidate();
-    });
-    return () => listener.subscription.unsubscribe();
-  }, [router]);
 
   return (
     <QueryClientProvider client={queryClient}>

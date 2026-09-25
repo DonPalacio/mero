@@ -27,15 +27,10 @@ export const categoriesService = {
   },
 
   crearCategoria: async (nombre: string, tipo: "gasto" | "ingreso"): Promise<Categoria | null> => {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData.user) {
-      console.error("Error obteniendo usuario autenticado:", userError);
-      return null;
-    }
-
+    // user_id lo asigna la BD (default auth.uid()) a partir del JWT
     const { data, error } = await supabase
       .from(TABLA_CATEGORIAS)
-      .insert([{ nombre, tipo, presupuesto_mensual: 0, user_id: userData.user.id }])
+      .insert([{ nombre, tipo, presupuesto_mensual: 0 }])
       .select()
       .single();
 

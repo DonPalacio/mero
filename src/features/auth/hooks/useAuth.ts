@@ -1,59 +1,45 @@
-import { useEffect, useState } from "react";
-import type { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { useState } from "react";
+import { useRouter } from "@tanstack/react-router";
+import { signIn, signUp } from "../services/auth.functions";
+import { clearAccessTokenCache } from "@/lib/supabase";
 
+// Formulario de login/registro. La sesión vive en cookies HttpOnly manejadas
+// por el servidor; el estado de "quién soy" lo da el guard de __root.tsx
+// (router context `user`).
 export function useAuth() {
+  const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [modo, setModo] = useState<"login" | "signup">("login");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Estado real de sesión, sincronizado con Supabase
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [initializing, setInitializing] = useState(true);
-
-  useEffect(() => {
-    // Al montar: recupera la sesión persistida (si el JWT sigue válido)
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setInitializing(false);
-    });
-
-    // Se dispara en login, logout, refresh de token, etc.
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMsg("");
     setLoading(true);
 
-    const { error } =
-      modo === "login"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+    try {
+      const res =
+        modo === "login"
+          ? await signIn({ data: { email, password } })
+          : await signUp({ data: { email, password } });
 
-    if (error) {
-      setMsg(error.message);
-    } else if (modo === "signup") {
-      setMsg("Revisa tu correo para confirmar la cuenta.");
+      if (res.error) {
+        setMsg(res.error);
+      } else if ("needsConfirmation" in res && res.needsConfirmation) {
+        setMsg("Revisa tu correo para confirmar la cuenta.");
+      } else {
+        // Sesión creada: se vuelve a correr el guard, que redirige fuera de /login.
+        clearAccessTokenCache();
+        await router.invalidate();
+      }
+    } catch {
+      setMsg("No se pudo conectar. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
     }
-    // En login exitoso no hace falta redirigir aquí:
-    // onAuthStateChange actualiza `session`, y el guard de rutas se encarga de mover al usuario.
-
-    setLoading(false);
-  }
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
   }
 
   return {
@@ -67,10 +53,5 @@ export function useAuth() {
     setMsg,
     loading,
     handleSubmit,
-    handleLogout,
-    session,
-    user,
-    initializing,
-    isAuthenticated: !!session,
   };
 }
