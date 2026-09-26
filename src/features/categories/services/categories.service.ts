@@ -21,7 +21,7 @@ export const categoriesService = {
       .order("created_at", { ascending: true });
     if (error) {
       console.error("Error obteniendo categorías:", error);
-      return [];
+      throw new Error(error.message);
     }
     return data || [];
   },

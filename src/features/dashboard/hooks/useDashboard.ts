@@ -1,41 +1,46 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { dashboardService, MedioSaldo } from "../services/dashboard.service";
 import { Movimiento } from "@/features/transactions/hooks/useTransactions";
 import { Categoria } from "../components/Budgets";
+import type { Categoria as CategoriaDB } from "@/features/categories/services/categories.service";
+import { categoriasQuery, mediosQuery, movimientosQuery, queryKeys } from "@/lib/queries";
+
+const SIN_MOVIMIENTOS: Movimiento[] = [];
 
 export function useDashboard() {
-  const [movimientosTotales, setMovimientosTotales] = useState<Movimiento[]>([]);
-  const [cajitas, setCajitas] = useState<Categoria[]>([]);
-  const [medios, setMedios] = useState<MedioSaldo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const movimientosQ = useQuery(movimientosQuery);
+  const categoriasQ = useQuery(categoriasQuery);
+  const mediosQ = useQuery(mediosQuery);
+
+  const movimientosTotales = movimientosQ.data ?? SIN_MOVIMIENTOS;
+  const isLoading = movimientosQ.isPending || categoriasQ.isPending || mediosQ.isPending;
+
+  const cajitas: Categoria[] = useMemo(
+    () =>
+      [...(categoriasQ.data ?? [])]
+        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+        .map((c) => ({
+          id: c.id,
+          name: c.nombre,
+          tipo: c.tipo,
+          budget: Number(c.presupuesto_mensual),
+        })),
+    [categoriasQ.data],
+  );
+
+  // medios.saldo lo mantiene el trigger de la BD; se refresca al crear/eliminar movimientos
+  const medios: MedioSaldo[] = useMemo(
+    () =>
+      (mediosQ.data ?? []).map((m) => ({ id: m.id, name: m.nombre, saldo: Number(m.saldo) })),
+    [mediosQ.data],
+  );
 
   // Estado para el mes actual
   const hoy = new Date();
   const mesActualInicial = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
   const [selectedMonth, setSelectedMonth] = useState(mesActualInicial);
-
-  useEffect(() => {
-    async function cargarDatos() {
-      try {
-        setIsLoading(true);
-        const [movsData, cajitasData, mediosData] = await Promise.all([
-          dashboardService.obtenerMovimientos(),
-          dashboardService.obtenerCajitas(),
-          dashboardService.obtenerMedios(),
-        ]);
-
-        setMovimientosTotales(movsData);
-        setCajitas(cajitasData);
-        setMedios(mediosData);
-      } catch (error) {
-        console.error("Error cargando datos del dashboard:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    cargarDatos();
-  }, []);
 
   const handlePrevMonth = () => {
     const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth.split("-").map(Number);
@@ -130,7 +135,9 @@ export function useDashboard() {
 
     const exito = await dashboardService.actualizarPresupuesto(id, valor);
     if (exito) {
-      setCajitas((prev) => prev.map((c) => (c.id === id ? { ...c, budget: valor } : c)));
+      queryClient.setQueryData<CategoriaDB[]>(queryKeys.categorias, (old) =>
+        old?.map((c) => (c.id === id ? { ...c, presupuesto_mensual: valor } : c)),
+      );
     }
   };
 

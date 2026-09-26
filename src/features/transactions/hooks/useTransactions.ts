@@ -1,5 +1,13 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { transactionsService } from "../services/transactions.service";
+import {
+  categoriasQuery,
+  mediosQuery,
+  movimientoCreado,
+  movimientoEliminado,
+  movimientosQuery,
+} from "@/lib/queries";
 
 export interface CategoriaBase {
   name: string;
@@ -16,13 +24,26 @@ export interface Movimiento {
   nota: string;
 }
 
+const SIN_MOVIMIENTOS: Movimiento[] = [];
+
 export function useTransactions() {
-  const [mediosData, setMediosData] = useState<{ id: string; nombre: string }[]>([]);
-  const [categoriasData, setCategoriasData] = useState<
-    { id: string; nombre: string; tipo: "gasto" | "ingreso" }[]
-  >([]);
-  const [movimientos, setMovimientos] = useState<Movimiento[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const movimientosQ = useQuery(movimientosQuery);
+  const mediosQ = useQuery(mediosQuery);
+  const categoriasQ = useQuery(categoriasQuery);
+
+  const movimientos = movimientosQ.data ?? SIN_MOVIMIENTOS;
+  const isLoading = movimientosQ.isPending || mediosQ.isPending || categoriasQ.isPending;
+
+  // Los selectores se muestran ordenados por nombre
+  const mediosData = useMemo(
+    () => [...(mediosQ.data ?? [])].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+    [mediosQ.data],
+  );
+  const categoriasData = useMemo(
+    () => [...(categoriasQ.data ?? [])].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+    [categoriasQ.data],
+  );
 
   const [tipoSel, setTipoSel] = useState<"gasto" | "ingreso">("gasto");
   const [monto, setMonto] = useState("");
@@ -36,23 +57,6 @@ export function useTransactions() {
   const hoy = new Date();
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
   const [selectedMonth, setSelectedMonth] = useState(mesActual);
-
-  // Carga inicial: movimientos + catálogos de medios y categorías reales
-  useEffect(() => {
-    async function cargarDatos() {
-      setIsLoading(true);
-      const [movsData, mediosRes, categoriasRes] = await Promise.all([
-        transactionsService.obtenerMovimientos(),
-        transactionsService.obtenerMedios(),
-        transactionsService.obtenerCategorias(),
-      ]);
-      setMovimientos(movsData);
-      setMediosData(mediosRes);
-      setCategoriasData(categoriasRes);
-      setIsLoading(false);
-    }
-    cargarDatos();
-  }, []);
 
   const mediosDisponibles = mediosData.map((m) => m.nombre);
   const categoriasDisponibles: CategoriaBase[] = categoriasData.map((c) => ({
@@ -128,7 +132,7 @@ export function useTransactions() {
       nota,
     };
 
-    setMovimientos([nuevoMov, ...movimientos]);
+    await movimientoCreado(queryClient, nuevoMov);
 
     setMonto("");
     setNota("");
@@ -138,7 +142,7 @@ export function useTransactions() {
   async function handleDelete(id: string) {
     const exito = await transactionsService.eliminarMovimiento(id);
     if (exito) {
-      setMovimientos(movimientos.filter((m) => m.id !== id));
+      await movimientoEliminado(queryClient, id);
     }
   }
 
