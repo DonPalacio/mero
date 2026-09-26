@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { categoriesService, type Categoria as CategoriaDB } from "../services/categories.service";
+import { catalogoModificado, categoriasQuery, queryKeys } from "@/lib/queries";
 
 export interface Categoria {
   id: string;
@@ -18,24 +20,19 @@ function mapCategoria(c: CategoriaDB): Categoria {
 }
 
 export function useCategories() {
-  const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const categoriasQ = useQuery(categoriasQuery);
+  const categorias = useMemo(() => (categoriasQ.data ?? []).map(mapCategoria), [categoriasQ.data]);
+  const isLoading = categoriasQ.isPending;
+
+  const setCategorias = (fn: (prev: CategoriaDB[]) => CategoriaDB[]) =>
+    queryClient.setQueryData<CategoriaDB[]>(queryKeys.categorias, (old) => (old ? fn(old) : old));
 
   const [newCatValue, setNewCatValue] = useState("");
   const [newCatTipo, setNewCatTipo] = useState<"gasto" | "ingreso">("gasto");
   const [editingCat, setEditingCat] = useState<string | null>(null); // id
   const [renameValue, setRenameValue] = useState("");
   const [confirmDeleteCat, setConfirmDeleteCat] = useState<string | null>(null); // id
-
-  useEffect(() => {
-    async function cargarDatos() {
-      setIsLoading(true);
-      const data = await categoriesService.obtenerCategorias();
-      setCategorias(data.map(mapCategoria));
-      setIsLoading(false);
-    }
-    cargarDatos();
-  }, []);
 
   async function handleAddCat() {
     const v = newCatValue.trim();
@@ -47,7 +44,7 @@ export function useCategories() {
 
     const nueva = await categoriesService.crearCategoria(v, newCatTipo);
     if (nueva) {
-      setCategorias([...categorias, mapCategoria(nueva)]);
+      setCategorias((prev) => [...prev, nueva]);
     }
     setNewCatValue("");
     setNewCatTipo("gasto");
@@ -66,7 +63,8 @@ export function useCategories() {
 
     const exito = await categoriesService.actualizarCategoria(id, { nombre: nuevo });
     if (exito) {
-      setCategorias(categorias.map((c) => (c.id === id ? { ...c, name: nuevo } : c)));
+      setCategorias((prev) => prev.map((c) => (c.id === id ? { ...c, nombre: nuevo } : c)));
+      await catalogoModificado(queryClient);
     }
   }
 
@@ -74,7 +72,8 @@ export function useCategories() {
     setConfirmDeleteCat(null);
     const exito = await categoriesService.eliminarCategoria(id);
     if (exito) {
-      setCategorias(categorias.filter((c) => c.id !== id));
+      setCategorias((prev) => prev.filter((c) => c.id !== id));
+      await catalogoModificado(queryClient);
     }
   }
 

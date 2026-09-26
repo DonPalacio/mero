@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useRouter } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { signIn, signUp } from "../services/auth.functions";
 import { clearAccessTokenCache } from "@/lib/supabase";
 
@@ -8,6 +9,7 @@ import { clearAccessTokenCache } from "@/lib/supabase";
 // (router context `user`).
 export function useAuth() {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,6 +35,8 @@ export function useAuth() {
       } else {
         // Sesión creada: se vuelve a correr el guard, que redirige fuera de /login.
         clearAccessTokenCache();
+        // Por si la sesión anterior expiró sin pasar por logout: no reutilizar sus datos.
+        queryClient.clear();
         await router.invalidate();
       }
     } catch {

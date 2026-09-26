@@ -3,7 +3,11 @@ import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
 export const getRouter = () => {
-  const queryClient = new QueryClient();
+  // Los datos solo cambian desde esta app: las mutaciones actualizan/invalidan
+  // la caché, y refetchOnWindowFocus cubre cambios hechos desde otro dispositivo.
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { staleTime: 5 * 60 * 1000 } },
+  });
 
   const router = createRouter({
     routeTree,

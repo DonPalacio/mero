@@ -1,27 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { boxesService, type Medio } from "../services/boxes.service";
+import { catalogoModificado, mediosQuery, queryKeys } from "@/lib/queries";
+
+const SIN_MEDIOS: Medio[] = [];
 
 export function useBoxes() {
-  const [medios, setMedios] = useState<Medio[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const mediosQ = useQuery(mediosQuery);
+  const medios = mediosQ.data ?? SIN_MEDIOS;
+  const isLoading = mediosQ.isPending;
+
+  const setMedios = (fn: (prev: Medio[]) => Medio[]) =>
+    queryClient.setQueryData<Medio[]>(queryKeys.medios, (old) => (old ? fn(old) : old));
 
   const [newMedioValue, setNewMedioValue] = useState("");
   const [editingMedio, setEditingMedio] = useState<string | null>(null); // id
   const [renameMedioValue, setRenameMedioValue] = useState("");
   const [confirmDeleteMedio, setConfirmDeleteMedio] = useState<string | null>(null); // id
 
-  // 1. Cargar los datos reales al entrar a la pantalla
-  useEffect(() => {
-    async function cargarDatos() {
-      setIsLoading(true);
-      const data = await boxesService.obtenerMedios();
-      setMedios(data);
-      setIsLoading(false);
-    }
-    cargarDatos();
-  }, []);
-
-  // 2. Crear de forma asíncrona
+  // Crear de forma asíncrona
   async function handleAddMedio() {
     const v = newMedioValue.trim();
     if (!v) return;
@@ -33,7 +31,7 @@ export function useBoxes() {
     const nuevoMedio = await boxesService.crearMedio(v);
 
     if (nuevoMedio) {
-      setMedios([...medios, nuevoMedio]);
+      setMedios((prev) => [...prev, nuevoMedio]);
     }
     setNewMedioValue("");
   }
@@ -53,7 +51,8 @@ export function useBoxes() {
     const exito = await boxesService.actualizarMedio(id, { nombre: nuevo });
 
     if (exito) {
-      setMedios(medios.map((m) => (m.id === id ? { ...m, nombre: nuevo } : m)));
+      setMedios((prev) => prev.map((m) => (m.id === id ? { ...m, nombre: nuevo } : m)));
+      await catalogoModificado(queryClient);
     }
   }
 
@@ -64,7 +63,8 @@ export function useBoxes() {
     const exito = await boxesService.eliminarMedio(id);
 
     if (exito) {
-      setMedios(medios.filter((m) => m.id !== id));
+      setMedios((prev) => prev.filter((m) => m.id !== id));
+      await catalogoModificado(queryClient);
     }
   }
 

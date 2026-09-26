@@ -10,17 +10,6 @@ export interface MovimientoDB {
   nota: string;
 }
 
-export interface MedioOption {
-  id: string;
-  nombre: string;
-}
-
-export interface CategoriaOption {
-  id: string;
-  nombre: string;
-  tipo: "gasto" | "ingreso";
-}
-
 export const transactionsService = {
   // Trae los movimientos con los nombres de medio/categoría ya resueltos (join)
   async obtenerMovimientos(): Promise<MovimientoDB[]> {
@@ -30,9 +19,10 @@ export const transactionsService = {
       .order("fecha", { ascending: false })
       .order("created_at", { ascending: false });
 
+    // Se lanza el error para que React Query no cachee un [] como si fuera válido.
     if (error) {
       console.error("Error obteniendo movimientos:", error);
-      return [];
+      throw new Error(error.message);
     }
 
     return (data || []).map((m: any) => ({
@@ -44,32 +34,6 @@ export const transactionsService = {
       fecha: m.fecha,
       nota: m.descripcion || "",
     }));
-  },
-
-  async obtenerMedios(): Promise<MedioOption[]> {
-    const { data, error } = await supabase
-      .from("medios")
-      .select("id, nombre")
-      .order("nombre", { ascending: true });
-
-    if (error) {
-      console.error("Error obteniendo medios:", error);
-      return [];
-    }
-    return data || [];
-  },
-
-  async obtenerCategorias(): Promise<CategoriaOption[]> {
-    const { data, error } = await supabase
-      .from("categorias")
-      .select("id, nombre, tipo")
-      .order("nombre", { ascending: true });
-
-    if (error) {
-      console.error("Error obteniendo categorías:", error);
-      return [];
-    }
-    return data || [];
   },
 
   async crearMovimiento(params: {

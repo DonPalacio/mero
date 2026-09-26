@@ -21,7 +21,7 @@ export const boxesService = {
       .order("created_at", { ascending: true });
     if (error) {
       console.error("Error obteniendo medios:", error);
-      return [];
+      throw new Error(error.message);
     }
     return data || [];
   },
