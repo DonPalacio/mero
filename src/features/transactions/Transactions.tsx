@@ -47,7 +47,7 @@ export default function Transactions() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="col-span-1 bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-[750px] lg:h-[750px]">
+          <div className="col-span-1 bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col h-auto lg:h-[750px]">
             {/* shrink-0 evita que el título se encoja cuando hay mucho contenido abajo */}
             <h2 className="text-lg font-semibold text-card-foreground mb-4 shrink-0">
               Nuevo registro

@@ -34,10 +34,10 @@ export default function Budgets({ categorias, gastosPorCajita, onBudgetChange }:
   };
 
   return (
-    <div className="p-4 rounded-3xl border border-border bg-card flex flex-col gap-4 h-full">
+    <div className="p-4 rounded-3xl border border-border bg-card flex flex-col gap-4 h-auto lg:h-full">
       <h2 className="font-semibold text-lg text-card-foreground">Presupuestos</h2>
 
-      <div className="overflow-y-auto flex-1 pr-2 flex flex-col gap-4">
+      <div className="overflow-y-auto flex-1 pr-2 flex flex-col gap-4 lg:[&::-webkit-scrollbar]:hidden lg:[-ms-overflow-style:none] lg:[scrollbar-width:none]">
         {gastoCategorias.map((c) => {
           const spent = gastosPorCajita[c.name] || 0;
           const pct = c.budget > 0 ? Math.min((spent / c.budget) * 100, 100) : 0;
