@@ -273,7 +273,7 @@ export default function Transactions() {
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-secondary/50 transition-colors gap-3 shrink-0"
                   >
                     {/* Info principal */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       <div
                         className={cn(
                           "p-2 rounded-full shrink-0",
@@ -288,16 +288,17 @@ export default function Transactions() {
                         <span className="font-medium text-foreground text-sm truncate">
                           {mov.cajita || "Sin categoría"}
                         </span>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground truncate">
-                          <span>{mov.fecha}</span>
-                          <span>•</span>
-                          <span className="truncate">{mov.medio}</span>
+                        {/* overflow-x-auto propio: permite ver la Nota completa con scroll
+                            horizontal por registro, sin afectar el scroll-y de la lista
+                            ni ensanchar la fila (min-w-0/flex-1 arriba acotan su ancho). */}
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                          <span className="shrink-0">{mov.fecha}</span>
+                          <span className="shrink-0">•</span>
+                          <span className="shrink-0">{mov.medio}</span>
                           {mov.nota && (
                             <>
-                              <span>•</span>
-                              <span className="truncate max-w-[100px] sm:max-w-[150px]">
-                                {mov.nota}
-                              </span>
+                              <span className="shrink-0">•</span>
+                              <span className="shrink-0">{mov.nota}</span>
                             </>
                           )}
                         </div>
