@@ -39,8 +39,6 @@ bun run format      # Aplica Prettier a todo el repositorio.
 
 No existe una suite de pruebas configurada: no hay configuración de Vitest/Jest ni script `test` en `package.json`. No asumir ni intentar ejecutar pruebas inexistentes.
 
-Para cambios de código, ejecutar `bun run lint` cuando sea viable. Ejecutar `bun run build` después de cambios que afecten rutas, SSR, server functions, configuración, dependencias o integración entre módulos. Al finalizar, informar qué validaciones se ejecutaron, cuáles fallaron y cuáles no se ejecutaron.
-
 ## Aplicación y convenciones de dominio
 
 **Stack confirmado:** TanStack Start con React 19 y SSR, Vite, TanStack Router basado en archivos, TanStack Query, Supabase para Postgres/Auth, Tailwind v4 y shadcn/ui estilo `new-york`.
