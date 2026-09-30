@@ -5,6 +5,7 @@ import { useTransactions } from "./hooks/useTransactions";
 
 export default function Transactions() {
   const {
+    listRef,
     mediosDisponibles,
     categoriasDisponibles,
     movimientos,
@@ -264,12 +265,16 @@ export default function Transactions() {
             </div>
 
             {/* Contenedor con scroll interno y clases para ocultar la barra */}
-            <div className="flex flex-col gap-3 overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div
+              ref={listRef}
+              className="flex flex-col gap-3 overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            >
               {movimientosFiltrados.map((mov) => {
                 const isGasto = mov.tipo === "gasto";
                 return (
                   <div
                     key={mov.id}
+                    data-mov-row
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-secondary/50 transition-colors gap-3 shrink-0"
                   >
                     {/* Info principal */}
@@ -291,7 +296,10 @@ export default function Transactions() {
                         {/* overflow-x-auto propio: permite ver la Nota completa con scroll
                             horizontal por registro, sin afectar el scroll-y de la lista
                             ni ensanchar la fila (min-w-0/flex-1 arriba acotan su ancho). */}
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        <div
+                          data-mov-scroll
+                          className="flex items-center gap-2 text-xs text-muted-foreground overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+                        >
                           <span className="shrink-0">{mov.fecha}</span>
                           <span className="shrink-0">•</span>
                           <span className="shrink-0">{mov.medio}</span>
