@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { motivoDeFallo, type ResultadoOperacion } from "@/lib/supabase-errors";
 
 const TABLA_CATEGORIAS = "categorias";
 
@@ -26,39 +27,47 @@ export const categoriesService = {
     return data || [];
   },
 
-  crearCategoria: async (nombre: string, tipo: "gasto" | "ingreso"): Promise<Categoria | null> => {
+  // El id lo genera el cliente (generarUuid) para poder mostrar la categoría antes de que
+  // responda la BD. Devuelve el motivo del fallo para que quien llama pueda avisar con precisión.
+  crearCategoria: async (params: {
+    id: string;
+    nombre: string;
+    tipo: "gasto" | "ingreso";
+  }): Promise<ResultadoOperacion> => {
     // user_id lo asigna la BD (default auth.uid()) a partir del JWT
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from(TABLA_CATEGORIAS)
-      .insert([{ nombre, tipo, presupuesto_mensual: 0 }])
-      .select()
-      .single();
+      .insert([
+        { id: params.id, nombre: params.nombre, tipo: params.tipo, presupuesto_mensual: 0 },
+      ]);
 
     if (error) {
       console.error("Error creando categoría:", error);
-      return null;
+      return { ok: false, motivo: motivoDeFallo(error) };
     }
-    return data;
+    return { ok: true };
   },
 
+  // Devuelve el motivo del fallo para que quien llama pueda avisar con precisión.
   actualizarCategoria: async (
     id: string,
     cambios: Partial<Pick<Categoria, "nombre" | "tipo" | "color" | "icono">>,
-  ): Promise<boolean> => {
+  ): Promise<ResultadoOperacion> => {
     const { error } = await supabase.from(TABLA_CATEGORIAS).update(cambios).eq("id", id);
     if (error) {
       console.error("Error actualizando categoría:", error);
-      return false;
+      return { ok: false, motivo: motivoDeFallo(error) };
     }
-    return true;
+    return { ok: true };
   },
 
-  eliminarCategoria: async (id: string): Promise<boolean> => {
+  // Devuelve el motivo del fallo para que quien llama pueda avisar con precisión.
+  eliminarCategoria: async (id: string): Promise<ResultadoOperacion> => {
     const { error } = await supabase.from(TABLA_CATEGORIAS).delete().eq("id", id);
     if (error) {
       console.error("Error eliminando categoría:", error);
-      return false;
+      return { ok: false, motivo: motivoDeFallo(error) };
     }
-    return true;
+    return { ok: true };
   },
 };

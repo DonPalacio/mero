@@ -1,7 +1,18 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { categoriesService, type Categoria as CategoriaDB } from "../services/categories.service";
-import { catalogoModificado, categoriasQuery, queryKeys } from "@/lib/queries";
+import type { ResultadoOperacion } from "@/lib/supabase-errors";
+import {
+  agregarCategoriaOptimista,
+  catalogoRenombradoConfirmado,
+  categoriaCreadaConfirmada,
+  categoriaEliminadaConfirmada,
+  categoriasQuery,
+  quitarCategoriaOptimista,
+  renombrarCategoriaOptimista,
+} from "@/lib/queries";
+import { generarUuid } from "@/lib/utils";
 
 export interface Categoria {
   id: string;
@@ -25,14 +36,16 @@ export function useCategories() {
   const categorias = useMemo(() => (categoriasQ.data ?? []).map(mapCategoria), [categoriasQ.data]);
   const isLoading = categoriasQ.isPending;
 
-  const setCategorias = (fn: (prev: CategoriaDB[]) => CategoriaDB[]) =>
-    queryClient.setQueryData<CategoriaDB[]>(queryKeys.categorias, (old) => (old ? fn(old) : old));
-
   const [newCatValue, setNewCatValue] = useState("");
   const [newCatTipo, setNewCatTipo] = useState<"gasto" | "ingreso">("gasto");
   const [editingCat, setEditingCat] = useState<string | null>(null); // id
   const [renameValue, setRenameValue] = useState("");
   const [confirmDeleteCat, setConfirmDeleteCat] = useState<string | null>(null); // id
+
+  // Altas en curso por id (true = guardada, false = falló y se revirtió). Renombrar o eliminar
+  // una categoría recién creada espera a su alta: si no, el UPDATE/DELETE llegaría antes que el
+  // INSERT y no encontraría nada.
+  const altasPendientes = useRef(new Map<string, Promise<boolean>>());
 
   async function handleAddCat() {
     const v = newCatValue.trim();
@@ -42,12 +55,56 @@ export function useCategories() {
       return;
     }
 
-    const nueva = await categoriesService.crearCategoria(v, newCatTipo);
-    if (nueva) {
-      setCategorias((prev) => [...prev, nueva]);
-    }
+    const tipo = newCatTipo;
+    // user_id y created_at son provisionales: ninguna pantalla los lee y, al confirmarse el
+    // alta, la lista se relee con los valores reales.
+    const nueva: CategoriaDB = {
+      id: generarUuid(),
+      user_id: "",
+      nombre: v,
+      tipo,
+      presupuesto_mensual: 0,
+      color: null,
+      icono: null,
+      created_at: new Date().toISOString(),
+    };
+
+    // La categoría aparece y el campo se limpia al instante; el INSERT va en segundo plano.
+    const revertir = await agregarCategoriaOptimista(queryClient, nueva);
     setNewCatValue("");
     setNewCatTipo("gasto");
+
+    const alta = (async () => {
+      let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+      try {
+        resultado = await categoriesService.crearCategoria({ id: nueva.id, nombre: v, tipo });
+      } catch (error) {
+        console.error("Error creando categoría:", error);
+      }
+
+      if (resultado.ok) {
+        await categoriaCreadaConfirmada(queryClient);
+        return true;
+      }
+
+      await revertir();
+      // Solo se restaura lo escrito si el campo sigue en su estado inicial: no se pisa
+      // una categoría que ya se haya empezado a escribir.
+      setNewCatValue((actual) => (actual === "" ? v : actual));
+      setNewCatTipo((actual) => (actual === "gasto" ? tipo : actual));
+      // Solo se explica la causa cuando se sabe con certeza cuál fue.
+      const descripcion = {
+        duplicado: "Revisa que no exista otra con ese nombre.",
+        "sin-conexion": "Parece que no hay conexión a internet.",
+        error: undefined,
+      }[resultado.motivo];
+      toast.error("No se pudo crear la categoría", { description: descripcion });
+      return false;
+    })();
+
+    altasPendientes.current.set(nueva.id, alta);
+    await alta;
+    altasPendientes.current.delete(nueva.id);
   }
 
   function startRename(id: string, nombreActual: string) {
@@ -61,20 +118,64 @@ export function useCategories() {
     setEditingCat(null);
     if (!nuevo) return;
 
-    const exito = await categoriesService.actualizarCategoria(id, { nombre: nuevo });
-    if (exito) {
-      setCategorias((prev) => prev.map((c) => (c.id === id ? { ...c, nombre: nuevo } : c)));
-      await catalogoModificado(queryClient);
+    // Si la categoría es recién creada, se espera a que termine su alta.
+    const alta = altasPendientes.current.get(id);
+    if (alta && !(await alta)) return;
+
+    // El nombre cambia al instante (también en los movimientos cacheados); si la BD
+    // rechaza el cambio, se revierte.
+    const revertir = await renombrarCategoriaOptimista(queryClient, id, nuevo);
+
+    let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+    try {
+      resultado = await categoriesService.actualizarCategoria(id, { nombre: nuevo });
+    } catch (error) {
+      console.error("Error actualizando categoría:", error);
     }
+
+    if (resultado.ok) {
+      await catalogoRenombradoConfirmado(queryClient);
+      return;
+    }
+
+    await revertir();
+    // Solo se explica la causa cuando se sabe con certeza cuál fue.
+    const descripcion = {
+      duplicado: "Revisa que no exista otra con ese nombre.",
+      "sin-conexion": "Parece que no hay conexión a internet.",
+      error: undefined,
+    }[resultado.motivo];
+    toast.error("No se pudo renombrar la categoría", { description: descripcion });
   }
 
   async function doDeleteCat(id: string) {
     setConfirmDeleteCat(null);
-    const exito = await categoriesService.eliminarCategoria(id);
-    if (exito) {
-      setCategorias((prev) => prev.filter((c) => c.id !== id));
-      await catalogoModificado(queryClient);
+
+    // Si la categoría es recién creada, se espera a que termine su alta.
+    const alta = altasPendientes.current.get(id);
+    if (alta && !(await alta)) return;
+
+    // La categoría desaparece al instante (sus movimientos quedan sin categoría, como hace
+    // la BD); si la BD rechaza el borrado, reaparece.
+    const revertir = await quitarCategoriaOptimista(queryClient, id);
+
+    let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+    try {
+      resultado = await categoriesService.eliminarCategoria(id);
+    } catch (error) {
+      console.error("Error eliminando categoría:", error);
     }
+
+    if (resultado.ok) {
+      await categoriaEliminadaConfirmada(queryClient);
+      return;
+    }
+
+    await revertir();
+    // Solo se explica la causa cuando se sabe con certeza cuál fue.
+    toast.error("No se pudo eliminar la categoría", {
+      description: resultado.motivo === "sin-conexion" ? "No hay conexión a internet." : undefined,
+    });
   }
 
   return {

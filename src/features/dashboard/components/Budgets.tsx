@@ -30,6 +30,13 @@ export default function Budgets({ categorias, gastosPorCajita, onBudgetChange }:
   const commitChange = (id: string) => {
     const value = inputValues[id];
     if (value === undefined) return;
+    // Se suelta el valor local: el campo vuelve a mostrar el presupuesto de la caché, que ya
+    // tiene el valor nuevo (optimista) y, si la BD lo rechaza, recupera el anterior.
+    setInputValues((prev) => {
+      const resto = { ...prev };
+      delete resto[id];
+      return resto;
+    });
     onBudgetChange(id, value);
   };
 

@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { motivoDeFallo, type ResultadoOperacion } from "@/lib/supabase-errors";
 
 const TABLA_MEDIOS = "medios";
 
@@ -26,19 +27,23 @@ export const boxesService = {
     return data || [];
   },
 
-  crearMedio: async (nombre: string, saldoInicial: number = 0): Promise<Medio | null> => {
+  // El id lo genera el cliente (generarUuid) para poder mostrar la caja antes de que responda
+  // la BD. Devuelve el motivo del fallo para que quien llama pueda avisar con precisión.
+  crearMedio: async (params: {
+    id: string;
+    nombre: string;
+    saldoInicial?: number;
+  }): Promise<ResultadoOperacion> => {
     // user_id lo asigna la BD (default auth.uid()) a partir del JWT
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from(TABLA_MEDIOS)
-      .insert([{ nombre, saldo: saldoInicial }])
-      .select()
-      .single();
+      .insert([{ id: params.id, nombre: params.nombre, saldo: params.saldoInicial ?? 0 }]);
 
     if (error) {
       console.error("Error creando medio:", error);
-      return null;
+      return { ok: false, motivo: motivoDeFallo(error) };
     }
-    return data;
+    return { ok: true };
   },
 
   // Nota: "saldo" no se edita aquí a propósito, lo ajusta el trigger de la BD
@@ -46,21 +51,22 @@ export const boxesService = {
   actualizarMedio: async (
     id: string,
     cambios: Partial<Pick<Medio, "nombre" | "color" | "icono">>,
-  ): Promise<boolean> => {
+  ): Promise<ResultadoOperacion> => {
     const { error } = await supabase.from(TABLA_MEDIOS).update(cambios).eq("id", id);
     if (error) {
       console.error("Error actualizando medio:", error);
-      return false;
+      return { ok: false, motivo: motivoDeFallo(error) };
     }
-    return true;
+    return { ok: true };
   },
 
-  eliminarMedio: async (id: string): Promise<boolean> => {
+  // Devuelve el motivo del fallo para que quien llama pueda avisar con precisión.
+  eliminarMedio: async (id: string): Promise<ResultadoOperacion> => {
     const { error } = await supabase.from(TABLA_MEDIOS).delete().eq("id", id);
     if (error) {
       console.error("Error eliminando medio:", error);
-      return false;
+      return { ok: false, motivo: motivoDeFallo(error) };
     }
-    return true;
+    return { ok: true };
   },
 };

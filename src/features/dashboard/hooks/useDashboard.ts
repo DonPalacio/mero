@@ -1,21 +1,71 @@
-import { useState, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useMemo, useEffect } from "react";
+import { useQueries, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import { dashboardService, MedioSaldo } from "../services/dashboard.service";
-import { Movimiento } from "@/features/transactions/hooks/useTransactions";
+import type { MovimientoDB } from "@/features/transactions/services/transactions.service";
 import { Categoria } from "../components/Budgets";
-import type { Categoria as CategoriaDB } from "@/features/categories/services/categories.service";
-import { categoriasQuery, mediosQuery, movimientosQuery, queryKeys } from "@/lib/queries";
+import { toast } from "sonner";
+import type { ResultadoOperacion } from "@/lib/supabase-errors";
+import {
+  actualizarPresupuestoOptimista,
+  categoriasQuery,
+  mediosQuery,
+  movimientosMesQuery,
+} from "@/lib/queries";
 
-const SIN_MOVIMIENTOS: Movimiento[] = [];
+// Meses que muestra el BarChart: los que terminan en el mes seleccionado.
+const MESES_EN_GRAFICO = 6;
+
+const aClaveMes = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+// Une los movimientos de los meses pedidos. Va fuera del hook para tener una referencia
+// estable (así useQueries no recalcula el resultado en cada render). El último mes es
+// el seleccionado: solo él decide si el dashboard está cargando.
+const combinarMovimientos = (results: UseQueryResult<MovimientoDB[], Error>[]) => ({
+  movimientos: results.flatMap((r) => r.data ?? []),
+  mesSeleccionadoPendiente: results[results.length - 1]?.isPending ?? true,
+});
 
 export function useDashboard() {
   const queryClient = useQueryClient();
-  const movimientosQ = useQuery(movimientosQuery);
+
+  // Estado para el mes actual
+  const hoy = new Date();
+  const mesActualInicial = aClaveMes(hoy);
+  const [selectedMonth, setSelectedMonth] = useState(mesActualInicial);
+
+  // Los MESES_EN_GRAFICO meses que terminan en selectedMonth (el más antiguo primero),
+  // aunque algunos no tengan movimientos todavía.
+  const ultimosSeisMeses = useMemo(() => {
+    const [selYear = 0, selMonthNum = 1] = selectedMonth.split("-").map(Number);
+
+    const meses: string[] = [];
+    for (let i = MESES_EN_GRAFICO - 1; i >= 0; i--) {
+      meses.push(aClaveMes(new Date(selYear, selMonthNum - 1 - i, 1)));
+    }
+    return meses;
+  }, [selectedMonth]);
+
+  // Solo se piden esos meses (no todo el historial); cada uno se cachea por separado.
+  const movimientosQ = useQueries({
+    queries: ultimosSeisMeses.map((mes) => movimientosMesQuery(mes)),
+    combine: combinarMovimientos,
+  });
   const categoriasQ = useQuery(categoriasQuery);
   const mediosQ = useQuery(mediosQuery);
 
-  const movimientosTotales = movimientosQ.data ?? SIN_MOVIMIENTOS;
-  const isLoading = movimientosQ.isPending || categoriasQ.isPending || mediosQ.isPending;
+  // Precarga el mes siguiente (sin pasar del actual) y el que entra a la ventana al
+  // retroceder, para que navegar de mes no espere a la red.
+  useEffect(() => {
+    const [anio = 0, numMes = 1] = selectedMonth.split("-").map(Number);
+    [new Date(anio, numMes - 1 - MESES_EN_GRAFICO, 1), new Date(anio, numMes, 1)]
+      .map(aClaveMes)
+      .filter((mes) => mes <= mesActualInicial)
+      .forEach((mes) => queryClient.prefetchQuery(movimientosMesQuery(mes)));
+  }, [selectedMonth, mesActualInicial, queryClient]);
+
+  const movimientosTotales = movimientosQ.movimientos;
+  const isLoading =
+    movimientosQ.mesSeleccionadoPendiente || categoriasQ.isPending || mediosQ.isPending;
 
   const cajitas: Categoria[] = useMemo(
     () =>
@@ -32,24 +82,22 @@ export function useDashboard() {
 
   // medios.saldo lo mantiene el trigger de la BD; se refresca al crear/eliminar movimientos
   const medios: MedioSaldo[] = useMemo(
-    () =>
-      (mediosQ.data ?? []).map((m) => ({ id: m.id, name: m.nombre, saldo: Number(m.saldo) })),
+    () => (mediosQ.data ?? []).map((m) => ({ id: m.id, name: m.nombre, saldo: Number(m.saldo) })),
     [mediosQ.data],
   );
 
-  // Estado para el mes actual
-  const hoy = new Date();
-  const mesActualInicial = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
-  const [selectedMonth, setSelectedMonth] = useState(mesActualInicial);
-
   const handlePrevMonth = () => {
-    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth.split("-").map(Number);
+    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth
+      .split("-")
+      .map(Number);
     const date = new Date(year, month - 2);
     setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
   };
 
   const handleNextMonth = () => {
-    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth.split("-").map(Number);
+    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth
+      .split("-")
+      .map(Number);
     const date = new Date(year, month);
     setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
   };
@@ -101,16 +149,6 @@ export function useDashboard() {
   // algunos no tengan movimientos todavía (se muestran en 0).
   // --------------------------------------------------------
   const metricasGlobales = useMemo(() => {
-    const [selYear = hoy.getFullYear(), selMonthNum = hoy.getMonth() + 1] = selectedMonth
-      .split("-")
-      .map(Number);
-
-    const ultimosSeisMeses: string[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(selYear, selMonthNum - 1 - i, 1);
-      ultimosSeisMeses.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-    }
-
     const gastosPorMesCalc: Record<string, number> = {};
     movimientosTotales.forEach((mov) => {
       if (mov.tipo === "gasto" && mov.cajita) {
@@ -121,24 +159,39 @@ export function useDashboard() {
 
     const barLabels = ultimosSeisMeses.map((m) => {
       const [year, month] = m.split("-").map(Number);
-      const date = new Date(year ?? hoy.getFullYear(), (month ?? hoy.getMonth() + 1) - 1);
+      const date = new Date(year ?? 0, (month ?? 1) - 1);
       return date.toLocaleDateString("es-CO", { month: "short" }).slice(0, 3).toUpperCase();
     });
     const barValues = ultimosSeisMeses.map((m) => gastosPorMesCalc[m] || 0);
 
     return { barLabels, barValues };
-  }, [movimientosTotales, selectedMonth]);
+  }, [movimientosTotales, ultimosSeisMeses]);
 
   const handleBudgetChange = async (id: string, value: string) => {
     const valor = parseFloat(value);
     if (isNaN(valor) || valor < 0) return;
 
-    const exito = await dashboardService.actualizarPresupuesto(id, valor);
-    if (exito) {
-      queryClient.setQueryData<CategoriaDB[]>(queryKeys.categorias, (old) =>
-        old?.map((c) => (c.id === id ? { ...c, presupuesto_mensual: valor } : c)),
-      );
+    // Sin cambios respecto al valor guardado: no hay nada que enviar.
+    const guardado = categoriasQ.data?.find((c) => c.id === id)?.presupuesto_mensual;
+    if (guardado !== undefined && Number(guardado) === valor) return;
+
+    // El nuevo presupuesto se ve al instante; si la BD rechaza el cambio, vuelve el anterior.
+    const revertir = await actualizarPresupuestoOptimista(queryClient, id, valor);
+
+    let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+    try {
+      resultado = await dashboardService.actualizarPresupuesto(id, valor);
+    } catch (error) {
+      console.error("Error actualizando presupuesto:", error);
     }
+
+    if (resultado.ok) return;
+
+    await revertir();
+    // Solo se explica la causa cuando se sabe con certeza cuál fue.
+    toast.error("No se pudo actualizar el presupuesto", {
+      description: resultado.motivo === "sin-conexion" ? "No hay conexión a internet." : undefined,
+    });
   };
 
   return {

@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { motivoDeFallo, type ResultadoOperacion } from "@/lib/supabase-errors";
 
 export interface MedioSaldo {
   id: string;
@@ -9,8 +10,9 @@ export interface MedioSaldo {
 // Las lecturas (movimientos, categorías, medios) viven en src/lib/queries.ts,
 // compartidas con las demás pantallas.
 export const dashboardService = {
-  // Actualizar el presupuesto mensual de una categoría
-  async actualizarPresupuesto(id: string, presupuesto: number): Promise<boolean> {
+  // Actualizar el presupuesto mensual de una categoría. Devuelve el motivo del fallo para que
+  // quien llama pueda avisar con precisión.
+  async actualizarPresupuesto(id: string, presupuesto: number): Promise<ResultadoOperacion> {
     const { error } = await supabase
       .from("categorias")
       .update({ presupuesto_mensual: presupuesto })
@@ -18,8 +20,8 @@ export const dashboardService = {
 
     if (error) {
       console.error("Error actualizando presupuesto:", error);
-      return false;
+      return { ok: false, motivo: motivoDeFallo(error) };
     }
-    return true;
+    return { ok: true };
   },
 };

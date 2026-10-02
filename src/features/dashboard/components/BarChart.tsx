@@ -30,14 +30,7 @@ export default function BarChart({ labels, values }: BarChartProps) {
           </defs>
 
           {/* Línea base */}
-          <line
-            x1={0}
-            y1={h - padB}
-            x2={w}
-            y2={h - padB}
-            stroke="#2a2f3d"
-            strokeWidth={1}
-          />
+          <line x1={0} y1={h - padB} x2={w} y2={h - padB} stroke="#2a2f3d" strokeWidth={1} />
 
           {values.map((v, i) => {
             const bh = v > 0 ? (v / max) * (h - padB - padT) : 0;
@@ -72,14 +65,7 @@ export default function BarChart({ labels, values }: BarChartProps) {
                 />
 
                 {/* Punto guía cuando el mes no tiene registros aún */}
-                {v === 0 && (
-                  <circle
-                    cx={x + barWidth / 2}
-                    cy={h - padB - 3}
-                    r={2}
-                    fill="#3f4657"
-                  />
-                )}
+                {v === 0 && <circle cx={x + barWidth / 2} cy={h - padB - 3} r={2} fill="#3f4657" />}
 
                 <text
                   x={x + barWidth / 2}
