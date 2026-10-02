@@ -25,7 +25,7 @@ Este proyecto está conectado a [Lovable](https://lovable.dev).
 
 El gestor de paquetes es **Bun**. `bunfig.toml` y `bun.lock` están versionados.
 
-Existe un `package-lock.json`, pero Bun es el gestor usado para instalar y desarrollar. No borrar ninguno de los dos archivos de lock sin pedir confirmación.
+`bun.lock` es el único archivo de lock del proyecto: Vercel detecta Bun por él e instala con `bun install` y compila con `bun run build` (verificado en un despliegue de vista previa). No volver a generar un `package-lock.json`: agregar o actualizar dependencias con `bun add`/`bun install`, no con `npm`. Si ese archivo reaparece, Vercel vuelve a instalar con npm y los dos lockfiles se desincronizan. No borrar `bun.lock` sin pedir confirmación.
 
 ```bash
 bun install         # Instala dependencias.
