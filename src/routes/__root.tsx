@@ -39,7 +39,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
@@ -86,7 +86,11 @@ function PendingComponent() {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  beforeLoad: async ({ location }) => {
+  // El tipo de retorno se declara explícito: sin él, la validación de "serializable" de
+  // TanStack (SSR) lo infiere de forma circular y lo reduce a `never`.
+  beforeLoad: async ({
+    location,
+  }): Promise<{ user: { id: string; email: string | null } | null }> => {
     // La sesión vive en cookies HttpOnly: se valida en el servidor, tanto en SSR
     // como en navegaciones del cliente (server function).
     const user = await getSessionUser();
