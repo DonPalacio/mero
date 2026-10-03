@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { SITE_URL } from "@/lib/site";
 import { getSessionUserCacheado } from "@/lib/session-cache";
 import SidebarDemo from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
@@ -132,6 +133,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "Mero" },
       { property: "og:description", content: "Control de finanzas personales" },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Mero" },
+      // Ícono cuadrado de la app: no hay una imagen horizontal, por eso twitter:card es "summary".
+      { property: "og:image", content: `${SITE_URL}/icon-512.png` },
+      { property: "og:image:width", content: "512" },
+      { property: "og:image:height", content: "512" },
+      { property: "og:image:alt", content: "Logo de Mero" },
       { name: "twitter:card", content: "summary" },
       { name: "theme-color", content: "#000000" },
       { name: "color-scheme", content: "dark" },
