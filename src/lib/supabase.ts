@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { getAccessToken } from "@/features/auth/services/auth.functions";
+import { clearSessionUserCache } from "@/lib/session-cache";
 
 const supabaseUrl = import.meta.env["VITE_SUPABASE_URL"] || "";
 const supabaseKey = import.meta.env["VITE_SUPABASE_ANON_KEY"] || "";
@@ -17,7 +18,10 @@ const MARGEN_SEGUNDOS = 60;
 let cache: { token: string; exp: number } | null = null;
 let pendiente: Promise<string | null> | null = null;
 
+// También invalida la sesión recordada por el guard (session-cache.ts): login y logout ya llaman
+// a esta función antes de router.invalidate().
 export function clearAccessTokenCache() {
+  clearSessionUserCache();
   cache = null;
   pendiente = null;
 }

@@ -13,7 +13,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { getSessionUser } from "@/features/auth/services/auth.functions";
+import { getSessionUserCacheado } from "@/lib/session-cache";
 import SidebarDemo from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -103,7 +103,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   }): Promise<{ user: { id: string; email: string | null } | null }> => {
     // La sesión vive en cookies HttpOnly: se valida en el servidor, tanto en SSR
     // como en navegaciones del cliente (server function).
-    const user = await getSessionUser();
+    const user = await getSessionUserCacheado();
     const isLoginPage = location.pathname === "/login";
     // /auth/callback debe ser accesible sin sesión (confirmación de correo)
     const isPublicPage = isLoginPage || location.pathname.startsWith("/auth/");

@@ -61,7 +61,7 @@ El ruteo es basado en archivos bajo `src/routes/`.
 
 `beforeLoad` en `src/routes/__root.tsx` es el guard global de autenticación:
 
-- Llama a `getSessionUser()` en cada navegación, tanto en cliente como en SSR.
+- Llama a `getSessionUserCacheado()` (`src/lib/session-cache.ts`) en cada navegación. En SSR siempre valida contra el servidor; en el cliente recuerda el último usuario válido 30 s para evitar una petición por clic. `clearAccessTokenCache()` (login/logout) la invalida.
 - Redirige a usuarios sin sesión a `/login`.
 - Mantiene públicas `/login` y `/auth/*`.
 - Redirige fuera de `/login` a usuarios que ya tienen sesión.
