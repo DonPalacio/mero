@@ -4,7 +4,7 @@ import Transactions from "@/features/transactions/Transactions";
 export const Route = createFileRoute("/transactions")({
   head: () => ({
     meta: [
-      { title: "Transacciones · Mero" },
+      { title: "Mero | Transacciones" },
       // App privada: que ningún buscador indexe estas pantallas.
       { name: "robots", content: "noindex, nofollow" },
     ],

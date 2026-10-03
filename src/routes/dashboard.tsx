@@ -4,7 +4,7 @@ import Dashboard from "@/features/dashboard/Dashboard";
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard · Mero" },
+      { title: "Mero | Dashboard" },
       // App privada: que ningún buscador indexe estas pantallas.
       { name: "robots", content: "noindex, nofollow" },
     ],
