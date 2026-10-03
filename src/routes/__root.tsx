@@ -17,6 +17,16 @@ import { getSessionUser } from "@/features/auth/services/auth.functions";
 import SidebarDemo from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 
+// El destino de ?redirect= viene de la URL, así que solo se acepta una ruta interna: debe
+// empezar con una sola "/" y no llevar "\" ni caracteres de control (los navegadores los
+// normalizan y "/\sitio.com" o "/\t/sitio.com" terminarían en otro dominio).
+function rutaInternaSegura(destino: string | null): string {
+  if (!destino || !destino.startsWith("/") || destino.startsWith("//")) return "/";
+  // eslint-disable-next-line no-control-regex
+  if (/[\\\u0000-\u001f\u007f]/.test(destino)) return "/";
+  return destino;
+}
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -107,8 +117,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
     if (user && isLoginPage) {
       const params = new URLSearchParams(location.searchStr);
-      const redirectTo = params.get("redirect");
-      throw redirect({ href: redirectTo || "/" });
+      throw redirect({ href: rutaInternaSegura(params.get("redirect")) });
     }
 
     return { user };
