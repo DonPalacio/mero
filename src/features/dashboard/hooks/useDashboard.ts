@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
-import { useQueries, useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
-import { dashboardService, MedioSaldo } from "../services/dashboard.service";
-import type { MovimientoDB } from "@/features/transactions/services/transactions.service";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { dashboardService, MedioSaldo, type ResumenFila } from "../services/dashboard.service";
 import { Categoria } from "../components/Budgets";
 import { toast } from "sonner";
 import type { ResultadoOperacion } from "@/lib/supabase-errors";
@@ -11,16 +10,11 @@ import {
   aClaveMes,
   categoriasQuery,
   mediosQuery,
-  movimientosMesQuery,
+  resumenMensualQuery,
 } from "@/lib/queries";
 
-// Une los movimientos de los meses pedidos. Va fuera del hook para tener una referencia
-// estable (así useQueries no recalcula el resultado en cada render). El último mes es
-// el seleccionado: solo él decide si el dashboard está cargando.
-const combinarMovimientos = (results: UseQueryResult<MovimientoDB[], Error>[]) => ({
-  movimientos: results.flatMap((r) => r.data ?? []),
-  mesSeleccionadoPendiente: results[results.length - 1]?.isPending ?? true,
-});
+// Referencia estable para el memo mientras el resumen aún no llega.
+const SIN_RESUMEN: ResumenFila[] = [];
 
 export function useDashboard() {
   const queryClient = useQueryClient();
@@ -42,27 +36,23 @@ export function useDashboard() {
     return meses;
   }, [selectedMonth]);
 
-  // Solo se piden esos meses (no todo el historial); cada uno se cachea por separado.
-  const movimientosQ = useQueries({
-    queries: ultimosSeisMeses.map((mes) => movimientosMesQuery(mes)),
-    combine: combinarMovimientos,
-  });
+  // Una sola consulta agregada en la BD (resumen_mensual) con los totales de esos meses,
+  // en lugar de descargar todos sus movimientos para sumarlos aquí.
+  const resumenQ = useQuery(resumenMensualQuery(selectedMonth));
   const categoriasQ = useQuery(categoriasQuery);
   const mediosQ = useQuery(mediosQuery);
 
-  // Precarga el mes siguiente (sin pasar del actual) y el que entra a la ventana al
-  // retroceder, para que navegar de mes no espere a la red.
+  // Precarga el resumen del mes anterior y del siguiente (sin pasar del actual), para que
+  // navegar de mes no espere a la red.
   useEffect(() => {
     const [anio = 0, numMes = 1] = selectedMonth.split("-").map(Number);
-    [new Date(anio, numMes - 1 - MESES_EN_GRAFICO, 1), new Date(anio, numMes, 1)]
+    [new Date(anio, numMes - 2, 1), new Date(anio, numMes, 1)]
       .map(aClaveMes)
       .filter((mes) => mes <= mesActualInicial)
-      .forEach((mes) => queryClient.prefetchQuery(movimientosMesQuery(mes)));
+      .forEach((mes) => queryClient.prefetchQuery(resumenMensualQuery(mes)));
   }, [selectedMonth, mesActualInicial, queryClient]);
 
-  const movimientosTotales = movimientosQ.movimientos;
-  const isLoading =
-    movimientosQ.mesSeleccionadoPendiente || categoriasQ.isPending || mediosQ.isPending;
+  const isLoading = resumenQ.isPending || categoriasQ.isPending || mediosQ.isPending;
 
   const cajitas: Categoria[] = useMemo(
     () =>
@@ -100,29 +90,41 @@ export function useDashboard() {
   };
 
   // --------------------------------------------------------
-  // CÁLCULOS DEL MES SELECCIONADO (Summary, PieChart, Presupuestos)
-  // Solo cuentan los movimientos QUE TIENEN CATEGORÍA (traspasos sin
-  // categoría quedan afuera a propósito).
+  // CÁLCULOS A PARTIR DEL RESUMEN (Summary, PieChart, Presupuestos, BarChart)
+  // La BD ya sumó por mes, tipo y categoría, y solo cuenta los movimientos QUE TIENEN
+  // CATEGORÍA (traspasos sin categoría quedan afuera a propósito). Aquí cada categoría
+  // se traduce a su nombre; una que ya no existe en la lista se ignora.
   // --------------------------------------------------------
-  const movimientosDelMes = movimientosTotales.filter((m) => m.fecha.startsWith(selectedMonth));
+  const nombrePorCategoria = useMemo(
+    () => new Map((categoriasQ.data ?? []).map((c) => [c.id, c.nombre])),
+    [categoriasQ.data],
+  );
 
-  const gastosPorCajita = movimientosDelMes
-    .filter((m) => m.tipo === "gasto" && m.cajita)
-    .reduce(
-      (acumulador, mov) => {
-        acumulador[mov.cajita] = (acumulador[mov.cajita] || 0) + mov.monto;
-        return acumulador;
-      },
-      {} as Record<string, number>,
-    );
+  const { gastosPorCajita, ingresosTotales, gastosTotales, gastosPorMes } = useMemo(() => {
+    const gastosPorCajita: Record<string, number> = {};
+    const gastosPorMes: Record<string, number> = {};
+    let ingresosTotales = 0;
+    let gastosTotales = 0;
 
-  const ingresosTotales = movimientosDelMes
-    .filter((m) => m.tipo === "ingreso" && m.cajita)
-    .reduce((sum, m) => sum + m.monto, 0);
+    for (const fila of resumenQ.data ?? SIN_RESUMEN) {
+      const nombre = nombrePorCategoria.get(fila.categoriaId);
+      if (!nombre) continue;
 
-  const gastosTotales = movimientosDelMes
-    .filter((m) => m.tipo === "gasto" && m.cajita)
-    .reduce((sum, m) => sum + m.monto, 0);
+      if (fila.tipo === "gasto") {
+        gastosPorMes[fila.mes] = (gastosPorMes[fila.mes] || 0) + fila.total;
+      }
+      if (fila.mes !== selectedMonth) continue;
+
+      if (fila.tipo === "ingreso") {
+        ingresosTotales += fila.total;
+      } else {
+        gastosTotales += fila.total;
+        gastosPorCajita[nombre] = (gastosPorCajita[nombre] || 0) + fila.total;
+      }
+    }
+
+    return { gastosPorCajita, ingresosTotales, gastosTotales, gastosPorMes };
+  }, [resumenQ.data, nombrePorCategoria, selectedMonth]);
 
   const saldoDisponible = ingresosTotales - gastosTotales;
 
@@ -146,23 +148,15 @@ export function useDashboard() {
   // algunos no tengan movimientos todavía (se muestran en 0).
   // --------------------------------------------------------
   const metricasGlobales = useMemo(() => {
-    const gastosPorMesCalc: Record<string, number> = {};
-    movimientosTotales.forEach((mov) => {
-      if (mov.tipo === "gasto" && mov.cajita) {
-        const mesMov = mov.fecha.substring(0, 7);
-        gastosPorMesCalc[mesMov] = (gastosPorMesCalc[mesMov] || 0) + mov.monto;
-      }
-    });
-
     const barLabels = ultimosSeisMeses.map((m) => {
       const [year, month] = m.split("-").map(Number);
       const date = new Date(year ?? 0, (month ?? 1) - 1);
       return date.toLocaleDateString("es-CO", { month: "short" }).slice(0, 3).toUpperCase();
     });
-    const barValues = ultimosSeisMeses.map((m) => gastosPorMesCalc[m] || 0);
+    const barValues = ultimosSeisMeses.map((m) => gastosPorMes[m] || 0);
 
     return { barLabels, barValues };
-  }, [movimientosTotales, ultimosSeisMeses]);
+  }, [gastosPorMes, ultimosSeisMeses]);
 
   const handleBudgetChange = async (id: string, value: string) => {
     const valor = parseFloat(value);
