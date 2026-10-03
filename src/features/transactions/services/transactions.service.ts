@@ -61,14 +61,11 @@ export const transactionsService = {
     }));
   },
 
-  // Meses ("YYYY-MM") que tienen al menos un movimiento desde `desde` ("YYYY-MM-DD").
-  // Solo trae la columna fecha: es una lista liviana para armar el selector de meses.
+  // Meses ("YYYY-MM") que tienen al menos un movimiento desde `desde` ("YYYY-MM-DD"), más
+  // reciente primero. Los resuelve la función SQL meses_con_movimientos (con RLS): así no se
+  // descargan todas las fechas ni se tropieza con el tope de filas de PostgREST.
   async obtenerMesesConMovimientos(desde: string): Promise<string[]> {
-    const { data, error } = await supabase
-      .from("movimientos")
-      .select("fecha")
-      .gte("fecha", desde)
-      .order("fecha", { ascending: false });
+    const { data, error } = await supabase.rpc("meses_con_movimientos", { desde });
 
     // Se lanza el error para que React Query no cachee un [] como si fuera válido.
     if (error) {
@@ -76,7 +73,7 @@ export const transactionsService = {
       throw new Error(error.message);
     }
 
-    return Array.from(new Set((data ?? []).map((m) => m.fecha.substring(0, 7))));
+    return (data ?? []) as string[];
   },
 
   // El id lo genera el cliente (generarUuid) para poder mostrar la fila antes de que
