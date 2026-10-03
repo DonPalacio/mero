@@ -29,7 +29,7 @@ export const transactionsService = {
   async obtenerMovimientos(mes?: string): Promise<MovimientoDB[]> {
     let consulta = supabase
       .from("movimientos")
-      .select("*, medios(nombre), categorias(nombre)")
+      .select("id, tipo, monto, fecha, descripcion, medios(nombre), categorias(nombre)")
       .order("fecha", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -50,7 +50,9 @@ export const transactionsService = {
       throw new Error(error.message);
     }
 
-    return (data || []).map((m: MovimientoFila) => ({
+    // Con un select explícito supabase-js infiere los joins como arreglos, pero al ser
+    // relaciones a-uno PostgREST devuelve un objeto (o null): MovimientoFila describe la forma real.
+    return ((data || []) as unknown as MovimientoFila[]).map((m) => ({
       id: m.id,
       tipo: m.tipo,
       monto: Number(m.monto),

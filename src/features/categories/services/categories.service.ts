@@ -2,23 +2,23 @@ import { supabase } from "@/lib/supabase";
 import { motivoDeFallo, type ResultadoOperacion } from "@/lib/supabase-errors";
 
 const TABLA_CATEGORIAS = "categorias";
+// Solo las columnas que usa la app (no user_id, fechas ni columnas de sincronización).
+const SELECT_CATEGORIAS = "id, nombre, tipo, presupuesto_mensual, color, icono";
 
 export interface Categoria {
   id: string;
-  user_id: string;
   nombre: string;
   tipo: "gasto" | "ingreso";
   presupuesto_mensual: number;
   color: string | null;
   icono: string | null;
-  created_at: string;
 }
 
 export const categoriesService = {
   obtenerCategorias: async (): Promise<Categoria[]> => {
     const { data, error } = await supabase
       .from(TABLA_CATEGORIAS)
-      .select("*")
+      .select(SELECT_CATEGORIAS)
       .order("created_at", { ascending: true });
     if (error) {
       console.error("Error obteniendo categorías:", error);

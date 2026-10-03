@@ -123,8 +123,7 @@ export async function movimientoEliminadoConfirmado(qc: QueryClient) {
 }
 
 // Alta optimista de una categoría: aparece al instante al final de la lista (la BD las ordena
-// por creación). Los campos que completa la BD (user_id, created_at) llevan valores
-// provisionales; ninguna pantalla los lee y categoriaCreadaConfirmada los refresca.
+// por creación). La BD completa los demás campos y categoriaCreadaConfirmada relee la lista.
 // Devuelve `revertir`, que quita solo esa fila (por su id) y vuelve a leer la lista.
 export async function agregarCategoriaOptimista(qc: QueryClient, nueva: CategoriaDB) {
   await qc.cancelQueries({ queryKey: queryKeys.categorias, exact: true });
@@ -195,8 +194,7 @@ export function catalogoRenombradoConfirmado(qc: QueryClient) {
 }
 
 // Alta optimista de un medio: aparece al instante al final de la lista (la BD los ordena por
-// creación). Los campos que completa la BD (user_id, created_at, updated_at) llevan valores
-// provisionales; ninguna pantalla los lee y medioCreadoConfirmado los refresca.
+// creación). La BD completa los demás campos y medioCreadoConfirmado relee la lista.
 // Devuelve `revertir`, que quita solo esa fila (por su id) y vuelve a leer la lista.
 export async function agregarMedioOptimista(qc: QueryClient, nuevo: MedioDB) {
   await qc.cancelQueries({ queryKey: queryKeys.medios, exact: true });

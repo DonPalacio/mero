@@ -41,18 +41,14 @@ export function useBoxes() {
       return; // Ya existe visualmente
     }
 
-    // user_id y las fechas son provisionales: ninguna pantalla los lee y, al confirmarse el
-    // alta, la lista se relee con los valores reales. El saldo de una caja nueva es 0.
-    const ahora = new Date().toISOString();
+    // Al confirmarse el alta, la lista se relee con los valores reales de la BD.
+    // El saldo de una caja nueva es 0.
     const nuevo: Medio = {
       id: generarUuid(),
-      user_id: "",
       nombre: v,
       saldo: 0,
       color: null,
       icono: null,
-      created_at: ahora,
-      updated_at: ahora,
     };
 
     // La caja aparece y el campo se limpia al instante; el INSERT va en segundo plano.

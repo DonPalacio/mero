@@ -2,23 +2,22 @@ import { supabase } from "@/lib/supabase";
 import { motivoDeFallo, type ResultadoOperacion } from "@/lib/supabase-errors";
 
 const TABLA_MEDIOS = "medios";
+// Solo las columnas que usa la app (no user_id, fechas ni columnas de sincronización).
+const SELECT_MEDIOS = "id, nombre, saldo, color, icono";
 
 export interface Medio {
   id: string;
-  user_id: string;
   nombre: string;
   saldo: number;
   color: string | null;
   icono: string | null;
-  created_at: string;
-  updated_at: string;
 }
 
 export const boxesService = {
   obtenerMedios: async (): Promise<Medio[]> => {
     const { data, error } = await supabase
       .from(TABLA_MEDIOS)
-      .select("*")
+      .select(SELECT_MEDIOS)
       .order("created_at", { ascending: true });
     if (error) {
       console.error("Error obteniendo medios:", error);

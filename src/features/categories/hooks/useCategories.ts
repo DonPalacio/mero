@@ -56,17 +56,14 @@ export function useCategories() {
     }
 
     const tipo = newCatTipo;
-    // user_id y created_at son provisionales: ninguna pantalla los lee y, al confirmarse el
-    // alta, la lista se relee con los valores reales.
+    // Al confirmarse el alta, la lista se relee con los valores reales de la BD.
     const nueva: CategoriaDB = {
       id: generarUuid(),
-      user_id: "",
       nombre: v,
       tipo,
       presupuesto_mensual: 0,
       color: null,
       icono: null,
-      created_at: new Date().toISOString(),
     };
 
     // La categoría aparece y el campo se limpia al instante; el INSERT va en segundo plano.
