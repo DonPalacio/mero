@@ -4,6 +4,8 @@ import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { precargarPantalla } from "@/lib/queries";
 
 interface Links {
   label: string;
@@ -149,12 +151,17 @@ export const MobileSidebar = ({ className, children, ...props }: React.Component
 export const SidebarLink = ({ link, className, ...props }: { link: Links; className?: string }) => {
   const { open, animate, setOpen } = useSidebar();
   const routerState = useRouterState();
+  const queryClient = useQueryClient();
   const isActive = routerState.location.pathname === link.href;
 
   return (
     <Link
       to={link.href}
       onClick={() => setOpen(false)}
+      // Los datos de la pantalla se piden antes del clic: al abrirla ya están en caché.
+      onMouseEnter={() => precargarPantalla(queryClient, link.href)}
+      onFocus={() => precargarPantalla(queryClient, link.href)}
+      onTouchStart={() => precargarPantalla(queryClient, link.href)}
       className={cn(
         "flex items-center justify-start gap-2 group/sidebar py-2",
         isActive && "opacity-100",

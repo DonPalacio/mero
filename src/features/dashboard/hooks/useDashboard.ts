@@ -6,16 +6,13 @@ import { Categoria } from "../components/Budgets";
 import { toast } from "sonner";
 import type { ResultadoOperacion } from "@/lib/supabase-errors";
 import {
+  MESES_EN_GRAFICO,
   actualizarPresupuestoOptimista,
+  aClaveMes,
   categoriasQuery,
   mediosQuery,
   movimientosMesQuery,
 } from "@/lib/queries";
-
-// Meses que muestra el BarChart: los que terminan en el mes seleccionado.
-const MESES_EN_GRAFICO = 6;
-
-const aClaveMes = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
 // Une los movimientos de los meses pedidos. Va fuera del hook para tener una referencia
 // estable (así useQueries no recalcula el resultado en cada render). El último mes es

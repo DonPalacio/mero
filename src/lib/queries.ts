@@ -54,6 +54,44 @@ export const categoriasQuery = queryOptions({
   queryFn: categoriesService.obtenerCategorias,
 });
 
+// Meses que muestra el BarChart del dashboard: los que terminan en el mes seleccionado.
+export const MESES_EN_GRAFICO = 6;
+
+export const aClaveMes = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+
+// Pide por adelantado lo que va a leer una pantalla, para que al abrirla los datos ya estén
+// en caché (el Sidebar lo llama al pasar el cursor, enfocar o tocar un enlace). Usa las mismas
+// consultas que las pantallas: prefetchQuery respeta el staleTime, no repite lo que ya está
+// fresco ni lanza errores (si falla, la pantalla simplemente lo pedirá al abrirse).
+export function precargarPantalla(qc: QueryClient, ruta: string) {
+  const hoy = new Date();
+  const mesActual = aClaveMes(hoy);
+
+  switch (ruta) {
+    case "/dashboard":
+      // Los meses que lee el BarChart: los MESES_EN_GRAFICO que terminan en el actual.
+      for (let i = 0; i < MESES_EN_GRAFICO; i++) {
+        const mes = aClaveMes(new Date(hoy.getFullYear(), hoy.getMonth() - i, 1));
+        void qc.prefetchQuery(movimientosMesQuery(mes));
+      }
+      void qc.prefetchQuery(categoriasQuery);
+      void qc.prefetchQuery(mediosQuery);
+      break;
+    case "/transactions":
+      void qc.prefetchQuery(movimientosMesQuery(mesActual));
+      void qc.prefetchQuery(categoriasQuery);
+      void qc.prefetchQuery(mediosQuery);
+      break;
+    case "/boxes":
+      void qc.prefetchQuery(mediosQuery);
+      break;
+    case "/categories":
+      void qc.prefetchQuery(categoriasQuery);
+      break;
+  }
+}
+
 // medios.saldo lo recalcula el trigger de la BD con cada movimiento: no se puede deducir en
 // el cliente, hay que volver a leerlo (ver movimientoCreadoConfirmado y las del borrado).
 
