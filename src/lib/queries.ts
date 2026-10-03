@@ -4,6 +4,7 @@ import {
   type MovimientoDB,
 } from "@/features/transactions/services/transactions.service";
 import { boxesService, type Medio as MedioDB } from "@/features/boxes/services/boxes.service";
+import { dashboardService } from "@/features/dashboard/services/dashboard.service";
 import {
   categoriesService,
   type Categoria as CategoriaDB,
@@ -20,6 +21,10 @@ export const queryKeys = {
   // Lista de meses con movimientos para el selector. Raíz propia (no cuelga de
   // "movimientos") para no mezclarse con las cachés de movimientos por mes.
   mesesConMovimientos: (desde: string) => ["mesesConMovimientos", desde] as const,
+  // Totales del dashboard (resumen_mensual). Una clave por mes en que termina la ventana de
+  // MESES_EN_GRAFICO; la raíz sirve de prefijo para invalidarlas todas.
+  resumenMensual: ["resumenMensual"] as const,
+  resumenMensualHasta: (mes: string) => ["resumenMensual", mes] as const,
   medios: ["medios"] as const,
   categorias: ["categorias"] as const,
 };
@@ -42,6 +47,25 @@ export const mesesConMovimientosQuery = (desde: string) =>
 // desaparecer un mes de la lista: se invalida por prefijo, sin importar `desde`.
 function mesesConMovimientosCambiaron(qc: QueryClient) {
   return qc.invalidateQueries({ queryKey: ["mesesConMovimientos"] });
+}
+
+// Totales (por mes, tipo y categoría) de los MESES_EN_GRAFICO meses que terminan en `mes`
+// ("YYYY-MM"), calculados en la BD. Alimentan el dashboard.
+export const resumenMensualQuery = (mes: string) =>
+  queryOptions({
+    queryKey: queryKeys.resumenMensualHasta(mes),
+    queryFn: () => {
+      const [anio = 0, numMes = 1] = mes.split("-").map(Number);
+      const desde = `${aClaveMes(new Date(anio, numMes - MESES_EN_GRAFICO, 1))}-01`;
+      const hasta = `${aClaveMes(new Date(anio, numMes, 1))}-01`;
+      return dashboardService.obtenerResumenMensual(desde, hasta);
+    },
+  });
+
+// Crear o borrar movimientos (o borrar un medio/categoría) cambia los totales del dashboard.
+// Se marcan por revisar todos los resúmenes: el dashboard los vuelve a pedir al abrirse.
+function resumenMensualCambio(qc: QueryClient) {
+  return qc.invalidateQueries({ queryKey: queryKeys.resumenMensual });
 }
 
 export const mediosQuery = queryOptions({
@@ -70,11 +94,8 @@ export function precargarPantalla(qc: QueryClient, ruta: string) {
 
   switch (ruta) {
     case "/dashboard":
-      // Los meses que lee el BarChart: los MESES_EN_GRAFICO que terminan en el actual.
-      for (let i = 0; i < MESES_EN_GRAFICO; i++) {
-        const mes = aClaveMes(new Date(hoy.getFullYear(), hoy.getMonth() - i, 1));
-        void qc.prefetchQuery(movimientosMesQuery(mes));
-      }
+      // El resumen de los MESES_EN_GRAFICO meses que terminan en el actual (una sola consulta).
+      void qc.prefetchQuery(resumenMensualQuery(mesActual));
       void qc.prefetchQuery(categoriasQuery);
       void qc.prefetchQuery(mediosQuery);
       break;
@@ -126,6 +147,7 @@ export async function movimientoCreadoConfirmado(qc: QueryClient, nuevo: Movimie
       exact: true,
     }),
     mesesConMovimientosCambiaron(qc),
+    resumenMensualCambio(qc),
     qc.invalidateQueries({ queryKey: queryKeys.medios }),
   ]);
 }
@@ -156,6 +178,7 @@ export async function quitarMovimientoOptimista(qc: QueryClient, id: string) {
 export async function movimientoEliminadoConfirmado(qc: QueryClient) {
   await Promise.all([
     mesesConMovimientosCambiaron(qc),
+    resumenMensualCambio(qc),
     qc.invalidateQueries({ queryKey: queryKeys.medios }),
   ]);
 }
@@ -326,6 +349,7 @@ export async function quitarMedioOptimista(qc: QueryClient, id: string) {
 export async function medioEliminadoConfirmado(qc: QueryClient) {
   await Promise.all([
     mesesConMovimientosCambiaron(qc),
+    resumenMensualCambio(qc),
     qc.invalidateQueries({ queryKey: queryKeys.movimientos, refetchType: "none" }),
   ]);
 }
@@ -394,9 +418,13 @@ export async function actualizarPresupuestoOptimista(
   };
 }
 
-// Una vez la BD confirma el borrado, las cachés ya reflejan los movimientos sin categoría:
-// no hace falta volver a pedirlos ahora. Solo se marcan como por revisar (sin refetch).
-// La lista de meses no cambia: ningún movimiento desaparece.
+// Una vez la BD confirma el borrado, las cachés de movimientos ya reflejan que quedaron sin
+// categoría: no hace falta volver a pedirlas ahora, solo se marcan como por revisar (sin
+// refetch). Los totales del dashboard sí cambian (esos movimientos dejan de contar), así que
+// sus resúmenes también se marcan. La lista de meses no cambia: ningún movimiento desaparece.
 export function categoriaEliminadaConfirmada(qc: QueryClient) {
-  return qc.invalidateQueries({ queryKey: queryKeys.movimientos, refetchType: "none" });
+  return Promise.all([
+    qc.invalidateQueries({ queryKey: queryKeys.movimientos, refetchType: "none" }),
+    resumenMensualCambio(qc),
+  ]);
 }
