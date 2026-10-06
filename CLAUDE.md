@@ -48,7 +48,7 @@ bun run build
 
 El proyecto está conectado a Lovable, que sincroniza cada commit pusheado a la rama conectada.
 
-- Lee `docs/constitution.md` y la spec activa en `docs/specs/`antes de toca código.
+- Lee `docs/constitution.md` y la spec activa en `docs/specs/` antes de tocar código.
 - No modifiques archivos dentro de `docs/specs/` salvo petición explícita.
 - Nunca `git push --force`, `git rebase`, `git commit --amend` ni squash sobre commits ya pusheados.
 - No reescribir el historial de la rama conectada.
