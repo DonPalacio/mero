@@ -1,130 +1,125 @@
-# CLAUDE.md
+# CLAUDE.md - Mero
 
-Guía para Claude Code al trabajar en este repositorio.
+## ¿Qué es el proyecto?
 
-## Restricciones no negociables
+Mero es una app de finanzas personales en español, instalable como PWA, donde cada usuario registra ingresos y gastos por medio (caja o cuenta) y categoría, y ve un dashboard con totales mensuales, gráficos y presupuestos. Es una aplicación full-stack con SSR en TanStack Start (React 19, Vite, Nitro) que organiza el código por features (routes/, features/<x>/{hooks,services}, lib/queries.ts como fuente única del caché de TanStack Query). Usa Supabase (Postgres con RLS por user_id y un trigger que mantiene medios.saldo), con la sesión en cookies HttpOnly manejadas por el servidor y el navegador accediendo a datos con un token de vida corta en memoria. La interfaz usa Tailwind v4 y shadcn/ui, y el proyecto se despliega en Vercel con CSP y cabeceras de seguridad, con GitHub Actions como CI (lint, tsc, build) y Bun como gestor de paquetes.
 
-### Integración con Lovable y Git
+## Comandos
 
-Este proyecto está conectado a [Lovable](https://lovable.dev).
-
-- Nunca ejecutar `git push --force`, `git rebase`, ni `git commit --amend` o squash sobre commits que ya fueron pusheados a la rama conectada.
-- No reescribir el historial de la rama conectada: Lovable sincroniza cada commit pusheado y una reescritura puede hacer que el usuario pierda el historial del proyecto.
-- Mantener la rama conectada en estado funcional en cada commit pusheado.
-
-### Datos, seguridad y autenticación
-
-- Nunca crear otro cliente con `createClient()` para Supabase.
-- Nunca usar `supabase.auth.*` en el cliente de navegador.
-- Nunca exponer, persistir en el navegador ni registrar refresh tokens.
-- Nunca escribir `medios.saldo` directamente desde la aplicación: el trigger `actualizar_saldo_medio` de la base de datos es su única fuente de actualización.
-- No quitar ni omitir `createCsrfMiddleware` en `src/start.ts`. Definir ese archivo desactiva el middleware CSRF automático de TanStack Start.
-- No editar manualmente `src/routeTree.gen.ts`; lo genera el plugin de TanStack Router.
-
-## Comandos y validación
-
-El gestor de paquetes es **Bun**. `bunfig.toml` y `bun.lock` están versionados.
-
-`bun.lock` es el único archivo de lock del proyecto: Vercel detecta Bun por él e instala con `bun install` y compila con `bun run build` (verificado en un despliegue de vista previa). No volver a generar un `package-lock.json`: agregar o actualizar dependencias con `bun add`/`bun install`, no con `npm`. Si ese archivo reaparece, Vercel vuelve a instalar con npm y los dos lockfiles se desincronizan. No borrar `bun.lock` sin pedir confirmación.
+Gestor de paquetes: **Bun**. `bun.lock` es el único lockfile.
 
 ```bash
-bun install         # Instala dependencias.
-bun run dev         # Inicia el servidor de desarrollo Vite.
-bun run build       # Ejecuta el build de producción con Vite.
-bun run build:dev   # Ejecuta el build en modo desarrollo.
-bun run preview     # Previsualiza un build de producción.
-bun run lint        # Ejecuta ESLint.
-bun run format      # Aplica Prettier a todo el repositorio.
+bun install            # Instala dependencias.
+bun run dev            # Servidor de desarrollo (Vite).
+bun run build          # Build de producción (el que ejecuta Vercel).
+bun run build:dev      # Build en modo desarrollo.
+bun run preview        # Previsualiza un build de producción.
+bun run lint           # Ejecuta ESLint.
+bun run format         # Aplica Prettier a todo el repositorio.
+bunx tsc --noEmit      # Chequeo de tipos (no es script de package.json; lo ejecuta el CI).
+bun add <paquete>      # Agrega o actualiza dependencias. Nunca con npm.
 ```
 
-No existe una suite de pruebas configurada: no hay configuración de Vitest/Jest ni script `test` en `package.json`. No asumir ni intentar ejecutar pruebas inexistentes.
+### Validación (CI)
 
-## Aplicación y convenciones de dominio
+El CI corre en cada PR y en cada push a `main`:
 
-**Stack confirmado:** TanStack Start con React 19 y SSR, Vite, TanStack Router basado en archivos, TanStack Query, Supabase para Postgres/Auth, Tailwind v4 y shadcn/ui estilo `new-york`.
+```bash
+bun install --frozen-lockfile
+bun run lint
+bunx tsc --noEmit
+bun run build
+```
 
-- Los componentes de shadcn/ui se encuentran en `src/components/ui`.
-- El dominio usa español: `movimientos` equivale a transactions; `medios`, a cajas/cuentas; y `categorias`, a categories.
-- Mantener el naming y el lenguaje de dominio existentes; no introducir nomenclatura inglesa paralela para entidades ya establecidas.
-- `@/*` resuelve a `src/*`; consultar `tsconfig.json` y `components.json`.
+## Estilos y convenciones
 
-Antes de crear una ruta, hook, servicio, query o mutación, inspeccionar los patrones equivalentes existentes y extenderlos en lugar de introducir una estructura paralela.
+- **Formato:** Prettier (100 columnas, comillas dobles, punto y coma, `trailingComma: "all"`) a través de ESLint. Se aplica con `bun run format`.
+- **TypeScript:** `strict`, con `noUncheckedIndexedAccess` y `exactOptionalPropertyTypes`. Los imports usan el alias `@/*` y, dentro de una feature, rutas relativas.
+- **Idioma:** dominio, UI, toasts y comentarios en español. Los comentarios explican el *por qué*. Nombres fijos: `movimientos`, `medios`, `categorias`.
+- **Feature:** `<Feature>.tsx` (solo UI), `hooks/use<Feature>.ts` (estado y caché) y `services/<feature>.service.ts` (objeto literal con funciones `async` en español).
+- **Servicios:** las lecturas lanzan error (lo maneja React Query) y las escrituras devuelven `{ ok, motivo }`.
+- **Caché:** las claves y queries viven solo en `src/lib/queries.ts`. Tras mutar se usan sus helpers, con actualización optimista y `toast.error("No se pudo …")` si falla.
+- **UI:** Tailwind v4 con tokens semánticos (`bg-card`, `text-muted-foreground`) y shadcn/ui en `src/components/ui`. Iconos con Tabler en las pantallas y Lucide solo en `ui/`. Toasts con `sonner`.
+- **Servidor:** `*.server.ts` o `@tanstack/react-start/server-only`. Nunca `server-only`.
 
-## Rutas y autorización
+## Reglas
 
-El ruteo es basado en archivos bajo `src/routes/`.
+### Git y Lovable
+
+El proyecto está conectado a Lovable, que sincroniza cada commit pusheado a la rama conectada.
+
+- Lee `docs/constitution.md` y la spec activa en `docs/specs/` antes de tocar código.
+- No modifiques archivos dentro de `docs/specs/` salvo petición explícita.
+- Nunca `git push --force`, `git rebase`, `git commit --amend` ni squash sobre commits ya pusheados.
+- No reescribir el historial de la rama conectada.
+- Mantener la rama conectada funcional en cada commit pusheado.
+
+### Seguridad y autenticación
+
+- Nunca crear otro cliente con `createClient()` para Supabase. Solo existen `src/lib/supabase.ts` (navegador, datos) y `src/lib/supabase-server.ts` (servidor, sesión).
+- Nunca usar `supabase.auth.*` en el navegador.
+- Nunca exponer, persistir en el navegador ni registrar refresh tokens. El access token vive solo en memoria.
+- Los flujos de `auth.functions.ts` son `createServerFn({ method: "POST" })` a propósito: no cambiarlos a `GET`.
+- No quitar `createCsrfMiddleware` ni el `requestMiddleware` de `src/start.ts`. Definir ese archivo desactiva el CSRF automático.
+- No relajar la CSP ni las cabeceras de `vercel.json` sin avisar.
+
+### Base de datos
+
+- Nunca escribir `medios.saldo` desde la app: solo lo actualiza el trigger `actualizar_saldo_medio`.
+- `categorias`, `medios` y `movimientos` usan RLS con `auth.uid() = user_id`. Toda tabla nueva debe llevar RLS y `user_id`.
+- Todo cambio de esquema va en un archivo nuevo de `supabase/migrations/`. Las migraciones existentes no se editan.
+
+### Caché
+
+- No crear `setQueryData` ni `invalidateQueries` en línea para `movimientos`, `medios` o `categorias`: usar los helpers de `src/lib/queries.ts`.
+
+### Rutas
 
 - Consultar `src/routes/README.md` antes de crear o renombrar rutas.
-- Usar `$id` para segmentos dinámicos, `{-$cat}` para opcionales, `$` para splats y `_layout` para rutas de layout.
-- `__root.tsx` es el único shell/layout global de la aplicación. Nunca crear `src/pages/` ni rutas con convenciones de Next.js o Remix.
-- `src/routeTree.gen.ts` se genera automáticamente; nunca editarlo manualmente.
+- Nunca crear `src/pages/` ni convenciones de Next.js o Remix. `__root.tsx` es el único shell.
+- Nunca editar `src/routeTree.gen.ts`.
+- Toda ruta pública nueva de primer nivel se agrega a `isPublicPage` en `__root.tsx`.
 
-`beforeLoad` en `src/routes/__root.tsx` es el guard global de autenticación:
+### Dependencias y configuración
 
-- Llama a `getSessionUserCacheado()` (`src/lib/session-cache.ts`) en cada navegación. En SSR siempre valida contra el servidor; en el cliente recuerda el último usuario válido 30 s para evitar una petición por clic. `clearAccessTokenCache()` (login/logout) la invalida.
-- Redirige a usuarios sin sesión a `/login`.
-- Mantiene públicas `/login` y `/auth/*`.
-- Redirige fuera de `/login` a usuarios que ya tienen sesión.
-- Toda nueva ruta pública de primer nivel debe agregarse a la verificación `isPublicPage` de `__root.tsx`.
+- Solo Bun. Nunca `npm` ni un `package-lock.json`. No borrar `bun.lock` sin confirmar.
+- `vite.config.ts` se mantiene mínimo: `@lovable.dev/vite-tanstack-config` ya trae los plugins.
+- No quitar `inlineDynamicImports: true` de `nitro.config.ts`.
+- Conservar el manejo de errores de `src/server.ts`.
+- No importar `server-only`: ESLint lo prohíbe.
 
-## Features y acceso a datos
+### Pruebas
 
-### Estructura de features
+- No existe suite de pruebas. No asumirlas ni intentar ejecutarlas.
 
-Cada feature de dominio vive en `src/features/<feature>/` y sigue este patrón:
+## Al terminar cualquier tarea
 
-- `<Feature>.tsx`: pantalla o componente principal.
-- `hooks/use<Feature>.ts`: estado local de UI, coordinación con el servicio y actualización de caché.
-- `services/<feature>.service.ts`: wrapper delgado de consultas a Supabase, como un objeto literal de funciones `async`.
+1. **Explicar primero lo realizado**, antes de ejecutar cualquier verificación, respondiendo:
+   - **Cómo:** qué se hizo y con qué enfoque (archivos y piezas tocadas).
+   - **Por qué:** la razón de ese enfoque y las alternativas descartadas, si las hubo.
+   - **Para qué:** el problema que resuelve o el resultado que se espera.
 
-Los servicios devuelven datos o `null`/`false` en caso de error, registran el error con `console.error` y no lanzan excepciones, excepto cuando el caller realmente necesite manejar una excepción.
+2. **Validar** (lo mismo que ejecuta el CI) y corregir lo que falle:
+   ```bash
+   bun run lint
+   bunx tsc --noEmit
+   bun run build
+   ```
+   Si algo falla, no darlo por terminado.
 
-### Supabase
+3. **Probar a mano** el flujo afectado con `bun run dev`, porque no hay pruebas automáticas. Si el cambio toca saldos, comprobar que `medios.saldo` se actualiza tras crear, editar y borrar un movimiento.
 
-Hay dos clientes y cada uno tiene un único propósito:
+4. **Revisar el diff**: sin código muerto, sin `console.log` de depuración y sin cambios fuera del alcance de la tarea. Los archivos generados (`routeTree.gen.ts`) no se tocan a mano.
 
-- `src/lib/supabase.ts`: cliente del navegador para datos mediante PostgREST/Realtime. No expone `supabase.auth.*`. Solicita un access token de vida corta al servidor mediante `getAccessToken()` y lo conserva solamente en memoria.
-- `src/lib/supabase-server.ts`: cliente exclusivo del servidor mediante `createSupabaseServerClient`, usado por server functions y SSR. Gestiona la sesión con cookies HttpOnly mediante `@supabase/ssr`.
+5. **Cambios de base de datos**: dejarlos en un archivo nuevo de `supabase/migrations/`. Avisar que hay que aplicarlo en Supabase, porque no se aplica solo.
 
-Los flujos de autenticación están en `src/features/auth/services/auth.functions.ts`:
+6. **Dependencias**: si se agregó alguna, usar `bun add` y confirmar que `bun.lock` quedó actualizado.
 
-- `getSessionUser`
-- `getAccessToken`
-- `signIn`
-- `signUp`
-- `signOut`
-- `exchangeCode`, para confirmación de correo mediante PKCE
+7. **Git**:
+   - Commit y push solo si se piden.
+   - Mensajes de commit en español, siguiendo el estilo del historial (`feat(db):`, `perf(dashboard):`, `feat(security):`).
+   - Nunca reescribir commits ya pusheados.
 
-Todos son handlers `createServerFn({ method: "POST" })` intencionalmente. No cambiar estos flujos a `GET`: las respuestas pueden incluir tokens y no deben cachearse.
+8. **Informar el resultado de las verificaciones**: qué se validó, qué se probó a mano y qué no pudo verificarse. Si algo falló, mostrar la salida real.
 
-### Esquema, RLS y saldo
-
-Para reconstruir Supabase de desarrollo, aplicar primero `supabase/schema_base.sql` y luego `supabase/migrations/*.sql`.
-
-- Las tablas `categorias`, `medios` y `movimientos` usan RLS restringido a `auth.uid() = user_id`.
-- `medios.saldo` es un valor derivado, mantenido exclusivamente por el trigger `actualizar_saldo_medio` en inserts, updates y deletes de `movimientos`.
-- Tras mutar un movimiento, actualizar/refetchear datos de `medios` mediante los helpers de caché. No actualizar `saldo` directamente desde la aplicación.
-
-### React Query
-
-`src/lib/queries.ts` es la única fuente de verdad de query keys y query options para `movimientos`, `medios` y `categorias`.
-
-- Dashboard, movimientos, cajas y categorías comparten esas claves para reutilizar datos en navegación.
-- El `staleTime` es de 5 minutos y está configurado en `src/router.tsx`.
-- Después de mutaciones, usar los helpers exportados por `src/lib/queries.ts`: `movimientoCreado`, `movimientoEliminado` y `catalogoModificado`.
-- No crear `setQueryData` ni `invalidateQueries` ad hoc o en línea para estos recursos; los helpers preservan la consistencia de `medios.saldo`, que se deriva en la base de datos.
-
-## SSR, despliegue y servidor
-
-Leer los comentarios inline antes de modificar cualquiera de estos archivos.
-
-- `vite.config.ts` debe permanecer mínimo. `@lovable.dev/vite-tanstack-config` ya configura TanStack Devtools, `tanstackStart`, `viteReact`, `tailwindcss`, `tsConfigPaths`, `nitro`, inyección de variables `VITE_*`, alias `@`, deduplicación de React/TanStack, error logger y detección de sandbox. No agregar esos plugins manualmente: duplicarlos rompe la configuración.
-- `nitro.config.ts` configura `inlineDynamicImports: true` para empaquetar SSR en un único archivo. No eliminarlo: evita un ciclo de módulos entre `createServerFn`, `@tanstack/react-router` y React que causaba `__commonJSMin is not a function` en la primera petición de Vercel.
-- `src/server.ts` envuelve el server entry de TanStack Start para detectar respuestas donde h3 absorbe silenciosamente un error y devuelve un JSON 500 genérico. En ese caso, se renderiza `src/lib/error-page.ts`. Conservar este comportamiento.
-- `src/start.ts` define `requestMiddleware` con manejo de errores y `createCsrfMiddleware`. Mantener ambos mecanismos.
-
-## Convenciones de código de servidor
-
-`eslint.config.js` prohíbe importar `server-only`, que es una convención de Next.js y no se utiliza en este proyecto.
-
-Para marcar código exclusivo de servidor, usar archivos `*.server.ts` o `@tanstack/react-start/server-only`.
+9. **Actualizar este `CLAUDE.md`** si la tarea cambió una convención, un comando o una restricción.
