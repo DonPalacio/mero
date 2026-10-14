@@ -25,6 +25,9 @@ export function formatearRendimiento(monto: number): string {
 export interface PlanEdicionMedio {
   nombreCambio: boolean;
   tasaCambio: boolean;
+  // true cuando la caja ya rinde y el usuario movió el inicio hacia atrás (la BD acredita los
+  // días anteriores). Mover el inicio hacia adelante no es un cambio: ya está acreditado.
+  desdeCambio: boolean;
   // true cuando la caja pasa de no rendir a rendir: solo entonces tiene sentido la fecha de inicio.
   activando: boolean;
 }
@@ -32,15 +35,24 @@ export interface PlanEdicionMedio {
 // Decide qué cambió al confirmar la edición de una caja. Pura: no lee ni escribe nada fuera de
 // sus argumentos, así el hook solo ejecuta los efectos (red y caché) que ella indica.
 export function planearEdicionMedio(
-  actual: { nombre: string; tasa_ea: number | null },
+  actual: { nombre: string; tasa_ea: number | null; rendimiento_desde: string | null },
   nombreEscrito: string,
   tasaNueva: number | null,
+  desdeEscrito: string,
 ): PlanEdicionMedio {
   const tasaCambio = tasaNueva !== actual.tasa_ea;
+  const activando = tasaCambio && tasaNueva !== null && actual.tasa_ea === null;
   return {
     nombreCambio: nombreEscrito.trim() !== actual.nombre,
     tasaCambio,
-    activando: tasaCambio && tasaNueva !== null && actual.tasa_ea === null,
+    // Las fechas ISO "YYYY-MM-DD" se ordenan igual como texto que como fecha.
+    desdeCambio:
+      !activando &&
+      tasaNueva !== null &&
+      actual.rendimiento_desde !== null &&
+      desdeEscrito !== "" &&
+      desdeEscrito < actual.rendimiento_desde,
+    activando,
   };
 }
 

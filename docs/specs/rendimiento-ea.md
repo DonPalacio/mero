@@ -18,6 +18,8 @@ igual que lo hace un banco con rendimiento diario (p. ej. Nu al 9,30 % E.A.).
 4. **Activación:** una caja sin tasa (`null` o 0) no rinde. Al activarla el usuario puede elegir
    una fecha de inicio (no futura); sin fecha, el primer rendimiento es el del día de activación.
    Al crear una caja también se puede escribir la tasa en el mismo formulario; rinde desde ese día.
+   Con la tasa ya activa, la fecha de inicio solo se puede mover hacia atrás: se acreditan los días
+   anteriores que faltaban, sin duplicar los ya acreditados. Hacia adelante no tiene efecto.
    Los días atrasados desde esa fecha se acreditan de una vez.
 5. **Quién escribe:** solo la base de datos. El cliente solo puede cambiar `tasa_ea` y
    `rendimiento_desde`; `saldo`, `rendimiento_hasta` y la tabla `rendimientos` no son escribibles.
@@ -31,6 +33,9 @@ igual que lo hace un banco con rendimiento diario (p. ej. Nu al 9,30 % E.A.).
    tiene tasa se pregunta si también se elimina el dinero generado por el E.A. La BD borra su historial en `rendimientos` y resta la suma del saldo en una sola transacción
    (`reiniciar_rendimientos`). La tasa y el avance diario se conservan: no se vuelve a acreditar
    hacia atrás. Borrar una caja ya elimina su historial (`ON DELETE CASCADE`).
+10. **Dashboard:** los pesos generados por E.A. en el mes seleccionado se suman a "Ingresos del
+   mes" (y por tanto a "Queda"), con el detalle "incl. $X por E.A.". "Gastos del mes" no cambia.
+   No son movimientos: los suma la función `rendimientos_mensuales`.
 
 ## Fuera de alcance
 

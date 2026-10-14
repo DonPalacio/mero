@@ -13,6 +13,7 @@ export default function Dashboard() {
     cajitas,
     gastosPorCajita,
     ingresosTotales,
+    rendimientosDelMes,
     gastosTotales,
     saldoDisponible,
     isLoading,
@@ -41,6 +42,7 @@ export default function Dashboard() {
               onPrev={handlePrevMonth}
               onNext={handleNextMonth}
               ingresos={ingresosTotales}
+              rendimientos={rendimientosDelMes}
               gastos={gastosTotales}
               queda={saldoDisponible}
               cmpText="Datos en tiempo real"

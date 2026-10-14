@@ -3,7 +3,7 @@ import { motivoDeFallo, type ResultadoOperacion } from "@/lib/supabase-errors";
 
 const TABLA_MEDIOS = "medios";
 // Solo las columnas que usa la app (no user_id, fechas ni columnas de sincronización).
-const SELECT_MEDIOS = "id, nombre, saldo, color, icono, tasa_ea";
+const SELECT_MEDIOS = "id, nombre, saldo, color, icono, tasa_ea, rendimiento_desde";
 
 export interface Medio {
   id: string;
@@ -13,6 +13,8 @@ export interface Medio {
   icono: string | null;
   // % E.A. escrito por el usuario; null = la caja no rinde (ver docs/specs/rendimiento-ea.md).
   tasa_ea: number | null;
+  // Primer día que rinde ("YYYY-MM-DD"); null si la caja no rinde. Lo fija la BD.
+  rendimiento_desde: string | null;
 }
 
 export const boxesService = {

@@ -15,6 +15,12 @@ export interface ResumenFila {
   total: number;
 }
 
+// Pesos acreditados por E.A. en un mes (suma de la tabla `rendimientos`).
+export interface RendimientoMes {
+  mes: string; // "YYYY-MM"
+  total: number;
+}
+
 // Forma de la fila que devuelve la función SQL resumen_mensual.
 interface ResumenFilaDB {
   mes: string;
@@ -41,6 +47,23 @@ export const dashboardService = {
       mes: f.mes,
       tipo: f.tipo,
       categoriaId: f.categoria_id,
+      total: Number(f.total),
+    }));
+  },
+
+  // Pesos generados por E.A. por mes en [desde, hasta) ("YYYY-MM-DD"). Los suma la función SQL
+  // rendimientos_mensuales (con RLS). No son movimientos: se suman aparte a los ingresos.
+  async obtenerRendimientosMensuales(desde: string, hasta: string): Promise<RendimientoMes[]> {
+    const { data, error } = await supabase.rpc("rendimientos_mensuales", { desde, hasta });
+
+    // Se lanza el error para que React Query no cachee un [] como si fuera válido.
+    if (error) {
+      console.error("Error obteniendo los rendimientos mensuales:", error);
+      throw new Error(error.message);
+    }
+
+    return ((data ?? []) as { mes: string; total: number | string }[]).map((f) => ({
+      mes: f.mes,
       total: Number(f.total),
     }));
   },

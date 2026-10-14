@@ -10,6 +10,7 @@ import {
   aClaveMes,
   categoriasQuery,
   mediosQuery,
+  rendimientosMensualesQuery,
   resumenMensualQuery,
 } from "@/lib/queries";
 
@@ -41,6 +42,9 @@ export function useDashboard() {
   const resumenQ = useQuery(resumenMensualQuery(selectedMonth));
   const categoriasQ = useQuery(categoriasQuery);
   const mediosQ = useQuery(mediosQuery);
+  // Pesos generados por E.A. en el mes. No bloquea la pantalla: mientras llega (o si la BD aún
+  // no tiene la función) cuenta como 0 y los ingresos se ven igual que antes.
+  const rendimientosQ = useQuery(rendimientosMensualesQuery(selectedMonth));
 
   // Precarga el resumen del mes anterior y del siguiente (sin pasar del actual), para que
   // navegar de mes no espere a la red.
@@ -49,7 +53,10 @@ export function useDashboard() {
     [new Date(anio, numMes - 2, 1), new Date(anio, numMes, 1)]
       .map(aClaveMes)
       .filter((mes) => mes <= mesActualInicial)
-      .forEach((mes) => queryClient.prefetchQuery(resumenMensualQuery(mes)));
+      .forEach((mes) => {
+        queryClient.prefetchQuery(resumenMensualQuery(mes));
+        queryClient.prefetchQuery(rendimientosMensualesQuery(mes));
+      });
   }, [selectedMonth, mesActualInicial, queryClient]);
 
   const isLoading = resumenQ.isPending || categoriasQ.isPending || mediosQ.isPending;
@@ -126,7 +133,14 @@ export function useDashboard() {
     return { gastosPorCajita, ingresosTotales, gastosTotales, gastosPorMes };
   }, [resumenQ.data, nombrePorCategoria, selectedMonth]);
 
-  const saldoDisponible = ingresosTotales - gastosTotales;
+  // Los rendimientos E.A. no son movimientos (no tienen categoría): se suman aparte, y como
+  // son ingresos del mes también suben "Queda". Los gastos no cambian.
+  const rendimientosDelMes = useMemo(
+    () => rendimientosQ.data?.find((f) => f.mes === selectedMonth)?.total ?? 0,
+    [rendimientosQ.data, selectedMonth],
+  );
+  const ingresosDelMes = ingresosTotales + rendimientosDelMes;
+  const saldoDisponible = ingresosDelMes - gastosTotales;
 
   // --------------------------------------------------------
   // SALDO POR MEDIO: viene directo de medios.saldo (lo calcula el
@@ -191,7 +205,8 @@ export function useDashboard() {
     handleNextMonth,
     cajitas,
     gastosPorCajita,
-    ingresosTotales,
+    ingresosTotales: ingresosDelMes,
+    rendimientosDelMes,
     gastosTotales,
     saldoDisponible,
     isLoading,

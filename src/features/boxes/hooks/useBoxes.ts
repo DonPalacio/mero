@@ -70,6 +70,8 @@ export function useBoxes() {
       color: null,
       icono: null,
       tasa_ea: tasa,
+      // La BD lo fija al crear (hoy); se completa al releer la lista.
+      rendimiento_desde: null,
     };
 
     // La caja aparece y los campos se limpian al instante; el INSERT va en segundo plano.
@@ -114,7 +116,8 @@ export function useBoxes() {
     setEditingMedio(medio.id);
     setRenameMedioValue(medio.nombre);
     setTasaValue(medio.tasa_ea === null ? "" : String(medio.tasa_ea).replace(".", ","));
-    setDesdeValue(fechaLocalISO());
+    // Si ya rinde, se muestra desde cuándo; si no, el día de hoy por defecto.
+    setDesdeValue(medio.rendimiento_desde ?? fechaLocalISO());
     setConfirmDeleteMedio(null);
   }
 
@@ -184,10 +187,12 @@ export function useBoxes() {
       return; // se queda en edición para corregirlo
     }
 
-    const plan = planearEdicionMedio(medio, renameMedioValue, tasa);
+    const plan = planearEdicionMedio(medio, renameMedioValue, tasa, desdeValue);
 
     setEditingMedio(null);
-    if (plan.tasaCambio) await doChangeTasa(id, tasa, plan.activando ? desdeValue : null);
+    if (plan.tasaCambio || plan.desdeCambio) {
+      await doChangeTasa(id, tasa, plan.activando || plan.desdeCambio ? desdeValue : null);
+    }
     if (plan.nombreCambio) await doRenameMedio(id);
   }
 

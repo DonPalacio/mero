@@ -1,4 +1,5 @@
 import { fmt, monthLabelText } from "@/lib/utils";
+import { formatearRendimiento } from "@/lib/rendimiento";
 
 interface Medio {
   name: string;
@@ -9,9 +10,10 @@ interface SummaryProps {
   onPrev: () => void;
   onNext: () => void;
   ingresos: number;
+  // Parte de los ingresos que viene del E.A. de las cajas (ya incluida en `ingresos`).
+  rendimientos?: number;
   gastos: number;
   queda: number;
-  cmpText: string;
   cmpColor: string;
   medios?: Medio[];
   saldosPorMedio?: Record<string, number>;
@@ -22,9 +24,9 @@ export default function Summary({
   onPrev,
   onNext,
   ingresos,
+  rendimientos = 0,
   gastos,
   queda,
-  cmpText,
   cmpColor,
   medios,
   saldosPorMedio,
@@ -62,9 +64,6 @@ export default function Summary({
           <span className="text-xs text-muted-foreground">Queda</span>
           <span className={`text-xl font-bold ${queda < 0 ? "text-red-500" : "text-foreground"}`}>
             {fmt(queda)}
-          </span>
-          <span className="text-xs" style={{ color: cmpColor }}>
-            {cmpText}
           </span>
         </div>
       </div>

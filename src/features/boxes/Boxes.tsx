@@ -141,9 +141,10 @@ export default function Boxes() {
                       />
                     </div>
 
-                    {/* Solo al activar la tasa: desde qué día se acredita (los atrasados se
-                        acreditan de una vez) */}
-                    {m.tasa_ea === null && tasaValue.trim() !== "" && (
+                    {/* Desde qué día rinde. Al activar la tasa se elige libremente; si la caja ya
+                        rinde solo se puede mover hacia atrás (los días anteriores se acreditan
+                        de una vez; los ya acreditados no cambian). */}
+                    {tasaValue.trim() !== "" && (
                       <div className="flex items-center gap-2">
                         <label
                           htmlFor={`desde-medio-${m.id}`}
@@ -155,7 +156,7 @@ export default function Boxes() {
                           id={`desde-medio-${m.id}`}
                           name={`desde-medio-${m.id}`}
                           type="date"
-                          max={fechaLocalISO()}
+                          max={m.rendimiento_desde ?? fechaLocalISO()}
                           value={desdeValue}
                           className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
                           onChange={(e) => setDesdeValue(e.target.value)}

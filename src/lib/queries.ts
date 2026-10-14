@@ -25,6 +25,9 @@ export const queryKeys = {
   // MESES_EN_GRAFICO; la raíz sirve de prefijo para invalidarlas todas.
   resumenMensual: ["resumenMensual"] as const,
   resumenMensualHasta: (mes: string) => ["resumenMensual", mes] as const,
+  // Pesos generados por E.A. en un mes ("YYYY-MM"); la raíz sirve de prefijo para invalidarlos todos.
+  rendimientosMensuales: ["rendimientosMensuales"] as const,
+  rendimientosMensualesMes: (mes: string) => ["rendimientosMensuales", mes] as const,
   medios: ["medios"] as const,
   categorias: ["categorias"] as const,
 };
@@ -62,6 +65,24 @@ export const resumenMensualQuery = (mes: string) =>
     },
   });
 
+// Pesos acreditados por E.A. en un solo mes ("YYYY-MM"), calculados en la BD. El dashboard los
+// suma a los ingresos del mes; no son movimientos, por eso no salen de resumenMensualQuery.
+export const rendimientosMensualesQuery = (mes: string) =>
+  queryOptions({
+    queryKey: queryKeys.rendimientosMensualesMes(mes),
+    queryFn: () => {
+      const [anio = 0, numMes = 1] = mes.split("-").map(Number);
+      const desde = `${mes}-01`;
+      const hasta = `${aClaveMes(new Date(anio, numMes, 1))}-01`;
+      return dashboardService.obtenerRendimientosMensuales(desde, hasta);
+    },
+  });
+
+// Cambiar una tasa, reiniciar rendimientos o borrar una caja cambia lo acreditado por E.A.
+function rendimientosMensualesCambiaron(qc: QueryClient) {
+  return qc.invalidateQueries({ queryKey: queryKeys.rendimientosMensuales });
+}
+
 // Crear o borrar movimientos (o borrar un medio/categoría) cambia los totales del dashboard.
 // Se marcan por revisar todos los resúmenes: el dashboard los vuelve a pedir al abrirse.
 function resumenMensualCambio(qc: QueryClient) {
@@ -96,6 +117,7 @@ export function precargarPantalla(qc: QueryClient, ruta: string) {
     case "/dashboard":
       // El resumen de los MESES_EN_GRAFICO meses que terminan en el actual (una sola consulta).
       void qc.prefetchQuery(resumenMensualQuery(mesActual));
+      void qc.prefetchQuery(rendimientosMensualesQuery(mesActual));
       void qc.prefetchQuery(categoriasQuery);
       void qc.prefetchQuery(mediosQuery);
       break;
@@ -335,9 +357,12 @@ export async function actualizarTasaMedioOptimista(
 }
 
 // Una vez la BD confirma un cambio de tasa o el reinicio de rendimientos, el saldo del medio
-// pudo cambiar: se relee la lista. Los totales del dashboard no incluyen rendimientos.
+// pudo cambiar (se relee la lista) y también lo acreditado por E.A. en los ingresos del mes.
 export function rendimientoMedioConfirmado(qc: QueryClient) {
-  return qc.invalidateQueries({ queryKey: queryKeys.medios, exact: true });
+  return Promise.all([
+    qc.invalidateQueries({ queryKey: queryKeys.medios, exact: true }),
+    rendimientosMensualesCambiaron(qc),
+  ]);
 }
 
 // Borrado optimista de un medio: la BD borra también sus movimientos (on delete cascade),
@@ -380,6 +405,8 @@ export async function medioEliminadoConfirmado(qc: QueryClient) {
   await Promise.all([
     mesesConMovimientosCambiaron(qc),
     resumenMensualCambio(qc),
+    // Sus rendimientos también se borran en cascada.
+    rendimientosMensualesCambiaron(qc),
     qc.invalidateQueries({ queryKey: queryKeys.movimientos, refetchType: "none" }),
   ]);
 }
