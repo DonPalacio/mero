@@ -14,18 +14,18 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { SITE_URL } from "@/lib/site";
-import { getSessionUserCacheado } from "@/lib/session-cache";
+import { getCachedSessionUser } from "@/lib/session-cache";
 import SidebarDemo from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 
 // El destino de ?redirect= viene de la URL, así que solo se acepta una ruta interna: debe
 // empezar con una sola "/" y no llevar "\" ni caracteres de control (los navegadores los
 // normalizan y "/\sitio.com" o "/\t/sitio.com" terminarían en otro dominio).
-function rutaInternaSegura(destino: string | null): string {
-  if (!destino || !destino.startsWith("/") || destino.startsWith("//")) return "/";
+function safeInternalPath(destination: string | null): string {
+  if (!destination || !destination.startsWith("/") || destination.startsWith("//")) return "/";
   // eslint-disable-next-line no-control-regex
-  if (/[\\\u0000-\u001f\u007f]/.test(destino)) return "/";
-  return destino;
+  if (/[\\\u0000-\u001f\u007f]/.test(destination)) return "/";
+  return destination;
 }
 
 function NotFoundComponent() {
@@ -104,7 +104,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   }): Promise<{ user: { id: string; email: string | null } | null }> => {
     // La sesión vive en cookies HttpOnly: se valida en el servidor, tanto en SSR
     // como en navegaciones del cliente (server function).
-    const user = await getSessionUserCacheado();
+    const user = await getCachedSessionUser();
     const isLoginPage = location.pathname === "/login";
     // /auth/callback debe ser accesible sin sesión (confirmación de correo)
     const isPublicPage = isLoginPage || location.pathname.startsWith("/auth/");
@@ -118,7 +118,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
     if (user && isLoginPage) {
       const params = new URLSearchParams(location.searchStr);
-      throw redirect({ href: rutaInternaSegura(params.get("redirect")) });
+      throw redirect({ href: safeInternalPath(params.get("redirect")) });
     }
 
     return { user };

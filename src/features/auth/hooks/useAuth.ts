@@ -13,7 +13,7 @@ export function useAuth() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [modo, setModo] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +24,7 @@ export function useAuth() {
 
     try {
       const res =
-        modo === "login"
+        mode === "login"
           ? await signIn({ data: { email, password } })
           : await signUp({ data: { email, password } });
 
@@ -51,8 +51,8 @@ export function useAuth() {
     setEmail,
     password,
     setPassword,
-    modo,
-    setModo,
+    mode,
+    setMode,
     msg,
     setMsg,
     loading,

@@ -36,7 +36,7 @@ export default function BarChart({ labels, values }: BarChartProps) {
             const bh = v > 0 ? (v / max) * (h - padB - padT) : 0;
             const x = i * bw + (bw - barWidth) / 2;
             const y = h - padB - bh;
-            const esActual = i === lastIndex;
+            const isCurrent = i === lastIndex;
 
             return (
               <g key={i}>
@@ -48,7 +48,7 @@ export default function BarChart({ labels, values }: BarChartProps) {
                     textAnchor="middle"
                     fontSize={9}
                     fontWeight={600}
-                    fill={esActual ? "#7aa2ff" : "#8b93a1"}
+                    fill={isCurrent ? "#7aa2ff" : "#8b93a1"}
                   >
                     {v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v.toLocaleString("es-CO")}
                   </text>
@@ -60,7 +60,7 @@ export default function BarChart({ labels, values }: BarChartProps) {
                   width={barWidth}
                   height={bh}
                   rx={6}
-                  fill={esActual ? "url(#barActual)" : "url(#barMuted)"}
+                  fill={isCurrent ? "url(#barActual)" : "url(#barMuted)"}
                   style={{ transition: "height 0.35s ease, y 0.35s ease" }}
                 />
 
@@ -72,8 +72,8 @@ export default function BarChart({ labels, values }: BarChartProps) {
                   y={h - 10}
                   textAnchor="middle"
                   fontSize={9}
-                  fontWeight={esActual ? 700 : 400}
-                  fill={esActual ? "#e2e5eb" : "#8b93a1"}
+                  fontWeight={isCurrent ? 700 : 400}
+                  fill={isCurrent ? "#e2e5eb" : "#8b93a1"}
                   className="pointer-events-none"
                 >
                   {labels[i]}

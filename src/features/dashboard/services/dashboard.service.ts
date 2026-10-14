@@ -1,31 +1,31 @@
 import { supabase } from "@/lib/supabase";
-import { motivoDeFallo, type ResultadoOperacion } from "@/lib/supabase-errors";
+import { failureReason, type OperationResult } from "@/lib/supabase-errors";
 
-export interface MedioSaldo {
+export interface BoxBalance {
   id: string;
   name: string;
-  saldo: number;
+  balance: number;
 }
 
 // Total de movimientos de un mes, tipo y categoría (los que tienen categoría).
-export interface ResumenFila {
-  mes: string; // "YYYY-MM"
-  tipo: "gasto" | "ingreso";
-  categoriaId: string;
+export interface SummaryRow {
+  month: string; // "YYYY-MM"
+  type: "expense" | "income";
+  categoryId: string;
   total: number;
 }
 
-// Pesos acreditados por E.A. en un mes (suma de la tabla `rendimientos`).
-export interface RendimientoMes {
-  mes: string; // "YYYY-MM"
+// Pesos acreditados por E.A. en un mes (suma de la tabla `yields`).
+export interface MonthYield {
+  month: string; // "YYYY-MM"
   total: number;
 }
 
-// Forma de la fila que devuelve la función SQL resumen_mensual.
-interface ResumenFilaDB {
-  mes: string;
-  tipo: "gasto" | "ingreso";
-  categoria_id: string;
+// Forma de la fila que devuelve la función SQL monthly_summary.
+interface SummaryRowDB {
+  month: string;
+  type: "expense" | "income";
+  category_id: string;
   total: number | string;
 }
 
@@ -33,9 +33,12 @@ interface ResumenFilaDB {
 // compartidas con las demás pantallas.
 export const dashboardService = {
   // Totales por mes, tipo y categoría en [desde, hasta) ("YYYY-MM-DD"). Los suma la función
-  // SQL resumen_mensual (con RLS): así el dashboard no descarga todos los movimientos.
-  async obtenerResumenMensual(desde: string, hasta: string): Promise<ResumenFila[]> {
-    const { data, error } = await supabase.rpc("resumen_mensual", { desde, hasta });
+  // SQL monthly_summary (con RLS): así el dashboard no descarga todos los movimientos.
+  async getMonthlySummary(fromDate: string, untilDate: string): Promise<SummaryRow[]> {
+    const { data, error } = await supabase.rpc("monthly_summary", {
+      from_date: fromDate,
+      until_date: untilDate,
+    });
 
     // Se lanza el error para que React Query no cachee un [] como si fuera válido.
     if (error) {
@@ -43,18 +46,21 @@ export const dashboardService = {
       throw new Error(error.message);
     }
 
-    return ((data ?? []) as ResumenFilaDB[]).map((f) => ({
-      mes: f.mes,
-      tipo: f.tipo,
-      categoriaId: f.categoria_id,
+    return ((data ?? []) as SummaryRowDB[]).map((f) => ({
+      month: f.month,
+      type: f.type,
+      categoryId: f.category_id,
       total: Number(f.total),
     }));
   },
 
   // Pesos generados por E.A. por mes en [desde, hasta) ("YYYY-MM-DD"). Los suma la función SQL
-  // rendimientos_mensuales (con RLS). No son movimientos: se suman aparte a los ingresos.
-  async obtenerRendimientosMensuales(desde: string, hasta: string): Promise<RendimientoMes[]> {
-    const { data, error } = await supabase.rpc("rendimientos_mensuales", { desde, hasta });
+  // monthly_yields (con RLS). No son movimientos: se suman aparte a los ingresos.
+  async getMonthlyYields(fromDate: string, untilDate: string): Promise<MonthYield[]> {
+    const { data, error } = await supabase.rpc("monthly_yields", {
+      from_date: fromDate,
+      until_date: untilDate,
+    });
 
     // Se lanza el error para que React Query no cachee un [] como si fuera válido.
     if (error) {
@@ -62,23 +68,23 @@ export const dashboardService = {
       throw new Error(error.message);
     }
 
-    return ((data ?? []) as { mes: string; total: number | string }[]).map((f) => ({
-      mes: f.mes,
+    return ((data ?? []) as { month: string; total: number | string }[]).map((f) => ({
+      month: f.month,
       total: Number(f.total),
     }));
   },
 
   // Actualizar el presupuesto mensual de una categoría. Devuelve el motivo del fallo para que
   // quien llama pueda avisar con precisión.
-  async actualizarPresupuesto(id: string, presupuesto: number): Promise<ResultadoOperacion> {
+  async updateBudget(id: string, budget: number): Promise<OperationResult> {
     const { error } = await supabase
-      .from("categorias")
-      .update({ presupuesto_mensual: presupuesto })
+      .from("categories")
+      .update({ monthly_budget: budget })
       .eq("id", id);
 
     if (error) {
       console.error("Error actualizando presupuesto:", error);
-      return { ok: false, motivo: motivoDeFallo(error) };
+      return { ok: false, reason: failureReason(error) };
     }
     return { ok: true };
   },

@@ -1,6 +1,6 @@
 import { getSessionUser } from "@/features/auth/services/auth.functions";
 
-type UsuarioSesion = Awaited<ReturnType<typeof getSessionUser>>;
+type SessionUser = Awaited<ReturnType<typeof getSessionUser>>;
 
 // Cada navegación del cliente valida la sesión con una petición al servidor (getSessionUser).
 // Para no repetirla en cada clic, el último usuario válido se recuerda unos segundos EN EL
@@ -8,27 +8,27 @@ type UsuarioSesion = Awaited<ReturnType<typeof getSessionUser>>;
 // cada consulta lleva su propio JWT. En el servidor (SSR) nunca se usa: allí siempre se valida.
 const TTL_MS = 30_000;
 
-let cache: { usuario: NonNullable<UsuarioSesion>; hasta: number } | null = null;
+let cache: { sessionUser: NonNullable<SessionUser>; untilDate: number } | null = null;
 // Sube con cada invalidación: una respuesta que llega después de un login/logout no debe
 // volver a guardar al usuario anterior.
-let generacion = 0;
+let generation = 0;
 
 export function clearSessionUserCache() {
   cache = null;
-  generacion++;
+  generation++;
 }
 
-export async function getSessionUserCacheado(): Promise<UsuarioSesion> {
+export async function getCachedSessionUser(): Promise<SessionUser> {
   if (typeof window === "undefined") return getSessionUser();
 
-  if (cache && cache.hasta > Date.now()) return cache.usuario;
+  if (cache && cache.untilDate > Date.now()) return cache.sessionUser;
 
-  const generacionAlPedir = generacion;
-  const usuario = await getSessionUser();
+  const generationAtRequest = generation;
+  const sessionUser = await getSessionUser();
   // Solo se recuerda a un usuario con sesión: sin sesión se vuelve a preguntar siempre,
   // para que iniciar sesión se note al instante.
-  if (usuario && generacionAlPedir === generacion) {
-    cache = { usuario, hasta: Date.now() + TTL_MS };
+  if (sessionUser && generationAtRequest === generation) {
+    cache = { sessionUser, untilDate: Date.now() + TTL_MS };
   }
-  return usuario;
+  return sessionUser;
 }

@@ -1,196 +1,196 @@
 import { useState, useMemo, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { categoriesService, type Categoria as CategoriaDB } from "../services/categories.service";
-import type { ResultadoOperacion } from "@/lib/supabase-errors";
+import { categoriesService, type Category as CategoryRow } from "../services/categories.service";
+import type { OperationResult } from "@/lib/supabase-errors";
 import {
-  agregarCategoriaOptimista,
-  catalogoRenombradoConfirmado,
-  categoriaCreadaConfirmada,
-  categoriaEliminadaConfirmada,
-  categoriasQuery,
-  quitarCategoriaOptimista,
-  renombrarCategoriaOptimista,
+  addCategoryOptimistic,
+  catalogRenamedConfirmed,
+  categoryCreatedConfirmed,
+  categoryDeletedConfirmed,
+  categoriesQuery,
+  removeCategoryOptimistic,
+  renameCategoryOptimistic,
 } from "@/lib/queries";
-import { generarUuid } from "@/lib/utils";
+import { generateUuid } from "@/lib/utils";
 
-export interface Categoria {
+export interface Category {
   id: string;
   name: string;
-  tipo: "gasto" | "ingreso";
+  type: "expense" | "income";
   budget: number;
 }
 
-function mapCategoria(c: CategoriaDB): Categoria {
+function mapCategory(c: CategoryRow): Category {
   return {
     id: c.id,
-    name: c.nombre,
-    tipo: c.tipo,
-    budget: Number(c.presupuesto_mensual),
+    name: c.name,
+    type: c.type,
+    budget: Number(c.monthly_budget),
   };
 }
 
 export function useCategories() {
   const queryClient = useQueryClient();
-  const categoriasQ = useQuery(categoriasQuery);
-  const categorias = useMemo(() => (categoriasQ.data ?? []).map(mapCategoria), [categoriasQ.data]);
-  const isLoading = categoriasQ.isPending;
+  const categoriesQ = useQuery(categoriesQuery);
+  const categories = useMemo(() => (categoriesQ.data ?? []).map(mapCategory), [categoriesQ.data]);
+  const isLoading = categoriesQ.isPending;
 
-  const [newCatValue, setNewCatValue] = useState("");
-  const [newCatTipo, setNewCatTipo] = useState<"gasto" | "ingreso">("gasto");
-  const [editingCat, setEditingCat] = useState<string | null>(null); // id
+  const [newCategoryValue, setNewCategoryValue] = useState("");
+  const [newCategoryType, setNewCategoryType] = useState<"expense" | "income">("expense");
+  const [editingCategory, setEditingCategory] = useState<string | null>(null); // id
   const [renameValue, setRenameValue] = useState("");
-  const [confirmDeleteCat, setConfirmDeleteCat] = useState<string | null>(null); // id
+  const [confirmDeleteCategory, setConfirmDeleteCategory] = useState<string | null>(null); // id
 
   // Altas en curso por id (true = guardada, false = falló y se revirtió). Renombrar o eliminar
   // una categoría recién creada espera a su alta: si no, el UPDATE/DELETE llegaría antes que el
   // INSERT y no encontraría nada.
-  const altasPendientes = useRef(new Map<string, Promise<boolean>>());
+  const pendingCreations = useRef(new Map<string, Promise<boolean>>());
 
-  async function handleAddCat() {
-    const v = newCatValue.trim();
+  async function handleAddCategory() {
+    const v = newCategoryValue.trim();
     if (!v) return;
-    if (categorias.some((c) => c.name === v)) {
-      setNewCatValue("");
+    if (categories.some((c) => c.name === v)) {
+      setNewCategoryValue("");
       return;
     }
 
-    const tipo = newCatTipo;
+    const type = newCategoryType;
     // Al confirmarse el alta, la lista se relee con los valores reales de la BD.
-    const nueva: CategoriaDB = {
-      id: generarUuid(),
-      nombre: v,
-      tipo,
-      presupuesto_mensual: 0,
+    const newValue: CategoryRow = {
+      id: generateUuid(),
+      name: v,
+      type,
+      monthly_budget: 0,
       color: null,
-      icono: null,
+      icon: null,
     };
 
     // La categoría aparece y el campo se limpia al instante; el INSERT va en segundo plano.
-    const revertir = await agregarCategoriaOptimista(queryClient, nueva);
-    setNewCatValue("");
-    setNewCatTipo("gasto");
+    const revert = await addCategoryOptimistic(queryClient, newValue);
+    setNewCategoryValue("");
+    setNewCategoryType("expense");
 
-    const alta = (async () => {
-      let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+    const creation = (async () => {
+      let result: OperationResult = { ok: false, reason: "error" };
       try {
-        resultado = await categoriesService.crearCategoria({ id: nueva.id, nombre: v, tipo });
+        result = await categoriesService.createCategory({ id: newValue.id, name: v, type });
       } catch (error) {
         console.error("Error creando categoría:", error);
       }
 
-      if (resultado.ok) {
-        await categoriaCreadaConfirmada(queryClient);
+      if (result.ok) {
+        await categoryCreatedConfirmed(queryClient);
         return true;
       }
 
-      await revertir();
+      await revert();
       // Solo se restaura lo escrito si el campo sigue en su estado inicial: no se pisa
       // una categoría que ya se haya empezado a escribir.
-      setNewCatValue((actual) => (actual === "" ? v : actual));
-      setNewCatTipo((actual) => (actual === "gasto" ? tipo : actual));
+      setNewCategoryValue((current) => (current === "" ? v : current));
+      setNewCategoryType((current) => (current === "expense" ? type : current));
       // Solo se explica la causa cuando se sabe con certeza cuál fue.
-      const descripcion = {
-        duplicado: "Revisa que no exista otra con ese nombre.",
-        "sin-conexion": "Parece que no hay conexión a internet.",
+      const description = {
+        duplicate: "Revisa que no exista otra con ese nombre.",
+        offline: "Parece que no hay conexión a internet.",
         error: undefined,
-      }[resultado.motivo];
-      toast.error("No se pudo crear la categoría", { description: descripcion });
+      }[result.reason];
+      toast.error("No se pudo crear la categoría", { description: description });
       return false;
     })();
 
-    altasPendientes.current.set(nueva.id, alta);
-    await alta;
-    altasPendientes.current.delete(nueva.id);
+    pendingCreations.current.set(newValue.id, creation);
+    await creation;
+    pendingCreations.current.delete(newValue.id);
   }
 
-  function startRename(id: string, nombreActual: string) {
-    setEditingCat(id);
-    setRenameValue(nombreActual);
-    setConfirmDeleteCat(null);
+  function startRename(id: string, currentName: string) {
+    setEditingCategory(id);
+    setRenameValue(currentName);
+    setConfirmDeleteCategory(null);
   }
 
   async function doRename(id: string) {
-    const nuevo = renameValue.trim();
-    setEditingCat(null);
-    if (!nuevo) return;
+    const newValue = renameValue.trim();
+    setEditingCategory(null);
+    if (!newValue) return;
 
     // Si la categoría es recién creada, se espera a que termine su alta.
-    const alta = altasPendientes.current.get(id);
-    if (alta && !(await alta)) return;
+    const creation = pendingCreations.current.get(id);
+    if (creation && !(await creation)) return;
 
     // El nombre cambia al instante (también en los movimientos cacheados); si la BD
     // rechaza el cambio, se revierte.
-    const revertir = await renombrarCategoriaOptimista(queryClient, id, nuevo);
+    const revert = await renameCategoryOptimistic(queryClient, id, newValue);
 
-    let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+    let result: OperationResult = { ok: false, reason: "error" };
     try {
-      resultado = await categoriesService.actualizarCategoria(id, { nombre: nuevo });
+      result = await categoriesService.updateCategory(id, { name: newValue });
     } catch (error) {
       console.error("Error actualizando categoría:", error);
     }
 
-    if (resultado.ok) {
-      await catalogoRenombradoConfirmado(queryClient);
+    if (result.ok) {
+      await catalogRenamedConfirmed(queryClient);
       return;
     }
 
-    await revertir();
+    await revert();
     // Solo se explica la causa cuando se sabe con certeza cuál fue.
-    const descripcion = {
-      duplicado: "Revisa que no exista otra con ese nombre.",
-      "sin-conexion": "Parece que no hay conexión a internet.",
+    const description = {
+      duplicate: "Revisa que no exista otra con ese nombre.",
+      offline: "Parece que no hay conexión a internet.",
       error: undefined,
-    }[resultado.motivo];
-    toast.error("No se pudo renombrar la categoría", { description: descripcion });
+    }[result.reason];
+    toast.error("No se pudo renombrar la categoría", { description: description });
   }
 
-  async function doDeleteCat(id: string) {
-    setConfirmDeleteCat(null);
+  async function doDeleteCategory(id: string) {
+    setConfirmDeleteCategory(null);
 
     // Si la categoría es recién creada, se espera a que termine su alta.
-    const alta = altasPendientes.current.get(id);
-    if (alta && !(await alta)) return;
+    const creation = pendingCreations.current.get(id);
+    if (creation && !(await creation)) return;
 
     // La categoría desaparece al instante (sus movimientos quedan sin categoría, como hace
     // la BD); si la BD rechaza el borrado, reaparece.
-    const revertir = await quitarCategoriaOptimista(queryClient, id);
+    const revert = await removeCategoryOptimistic(queryClient, id);
 
-    let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+    let result: OperationResult = { ok: false, reason: "error" };
     try {
-      resultado = await categoriesService.eliminarCategoria(id);
+      result = await categoriesService.deleteCategory(id);
     } catch (error) {
       console.error("Error eliminando categoría:", error);
     }
 
-    if (resultado.ok) {
-      await categoriaEliminadaConfirmada(queryClient);
+    if (result.ok) {
+      await categoryDeletedConfirmed(queryClient);
       return;
     }
 
-    await revertir();
+    await revert();
     // Solo se explica la causa cuando se sabe con certeza cuál fue.
     toast.error("No se pudo eliminar la categoría", {
-      description: resultado.motivo === "sin-conexion" ? "No hay conexión a internet." : undefined,
+      description: result.reason === "offline" ? "No hay conexión a internet." : undefined,
     });
   }
 
   return {
-    categorias,
+    categories,
     isLoading,
-    newCatValue,
-    setNewCatValue,
-    newCatTipo,
-    setNewCatTipo,
-    editingCat,
-    setEditingCat,
+    newCategoryValue,
+    setNewCategoryValue,
+    newCategoryType,
+    setNewCategoryType,
+    editingCategory,
+    setEditingCategory,
     renameValue,
     setRenameValue,
-    confirmDeleteCat,
-    setConfirmDeleteCat,
-    handleAddCat,
+    confirmDeleteCategory,
+    setConfirmDeleteCategory,
+    handleAddCategory,
     startRename,
     doRename,
-    doDeleteCat,
+    doDeleteCategory,
   };
 }

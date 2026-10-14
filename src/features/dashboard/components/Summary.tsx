@@ -1,7 +1,7 @@
 import { fmt, monthLabelText } from "@/lib/utils";
-import { formatearRendimiento } from "@/lib/rendimiento";
+import { formatYield } from "@/lib/yield";
 
-interface Medio {
+interface Box {
   name: string;
 }
 
@@ -9,27 +9,27 @@ interface SummaryProps {
   selectedMonth: string; // formato "YYYY-MM"
   onPrev: () => void;
   onNext: () => void;
-  ingresos: number;
+  income: number;
   // Parte de los ingresos que viene del E.A. de las cajas (ya incluida en `ingresos`).
-  rendimientos?: number;
-  gastos: number;
-  queda: number;
+  yields?: number;
+  expenses: number;
+  remaining: number;
   cmpColor: string;
-  medios?: Medio[];
-  saldosPorMedio?: Record<string, number>;
+  boxes?: Box[];
+  balancesByBox?: Record<string, number>;
 }
 
 export default function Summary({
   selectedMonth,
   onPrev,
   onNext,
-  ingresos,
-  rendimientos = 0,
-  gastos,
-  queda,
+  income,
+  yields = 0,
+  expenses,
+  remaining,
   cmpColor,
-  medios,
-  saldosPorMedio,
+  boxes,
+  balancesByBox,
 }: SummaryProps) {
   return (
     <div className="rounded-3xl bg-card border border-border p-4 flex flex-col gap-4 w-full h-full">
@@ -54,31 +54,33 @@ export default function Summary({
       <div className="grid grid-cols-3 gap-3">
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">Ingresos del mes</span>
-          <span className="text-xl font-bold text-foreground">{fmt(ingresos)}</span>
+          <span className="text-xl font-bold text-foreground">{fmt(income)}</span>
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">Gastos del mes</span>
-          <span className="text-xl font-bold text-foreground">{fmt(gastos)}</span>
+          <span className="text-xl font-bold text-foreground">{fmt(expenses)}</span>
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">Queda</span>
-          <span className={`text-xl font-bold ${queda < 0 ? "text-red-500" : "text-foreground"}`}>
-            {fmt(queda)}
+          <span
+            className={`text-xl font-bold ${remaining < 0 ? "text-red-500" : "text-foreground"}`}
+          >
+            {fmt(remaining)}
           </span>
         </div>
       </div>
 
-      {medios && medios.length > 0 && (
+      {boxes && boxes.length > 0 && (
         <div className="flex flex-col gap-2 flex-1 min-h-0">
           <h3 className="text-foreground font-semibold text-sm">Saldo por medio</h3>
           <div className="flex flex-col gap-1 flex-1">
-            {medios.map((m) => {
-              const saldo = saldosPorMedio?.[m.name] || 0;
+            {boxes.map((m) => {
+              const balance = balancesByBox?.[m.name] || 0;
               return (
                 <div key={m.name} className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{m.name}</span>
-                  <span className={saldo < 0 ? "text-red-500" : "text-foreground"}>
-                    {fmt(saldo)}
+                  <span className={balance < 0 ? "text-red-500" : "text-foreground"}>
+                    {fmt(balance)}
                   </span>
                 </div>
               );

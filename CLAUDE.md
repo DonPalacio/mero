@@ -2,7 +2,7 @@
 
 ## ¿Qué es el proyecto?
 
-Mero es una app de finanzas personales en español, instalable como PWA, donde cada usuario registra ingresos y gastos por medio (caja o cuenta) y categoría, y ve un dashboard con totales mensuales, gráficos y presupuestos. Es una aplicación full-stack con SSR en TanStack Start (React 19, Vite, Nitro) que organiza el código por features (routes/, features/<x>/{hooks,services}, lib/queries.ts como fuente única del caché de TanStack Query). Usa Supabase (Postgres con RLS por user_id y un trigger que mantiene medios.saldo), con la sesión en cookies HttpOnly manejadas por el servidor y el navegador accediendo a datos con un token de vida corta en memoria. La interfaz usa Tailwind v4 y shadcn/ui, y el proyecto se despliega en Vercel con CSP y cabeceras de seguridad, con GitHub Actions como CI (lint, tsc, build) y Bun como gestor de paquetes.
+Mero es una app de finanzas personales en español, instalable como PWA, donde cada usuario registra ingresos y gastos por medio (caja o cuenta) y categoría, y ve un dashboard con totales mensuales, gráficos y presupuestos. Es una aplicación full-stack con SSR en TanStack Start (React 19, Vite, Nitro) que organiza el código por features (routes/, features/<x>/{hooks,services}, lib/queries.ts como fuente única del caché de TanStack Query). Usa Supabase (Postgres con RLS por user_id y un trigger que mantiene boxes.balance), con la sesión en cookies HttpOnly manejadas por el servidor y el navegador accediendo a datos con un token de vida corta en memoria. La interfaz usa Tailwind v4 y shadcn/ui, y el proyecto se despliega en Vercel con CSP y cabeceras de seguridad, con GitHub Actions como CI (lint, tsc, build) y Bun como gestor de paquetes.
 
 ## Comandos
 
@@ -35,8 +35,8 @@ bun run build
 
 - **Formato:** Prettier (100 columnas, comillas dobles, punto y coma, `trailingComma: "all"`) a través de ESLint. Se aplica con `bun run format`.
 - **TypeScript:** `strict`, con `noUncheckedIndexedAccess` y `exactOptionalPropertyTypes`. Los imports usan el alias `@/*` y, dentro de una feature, rutas relativas.
-- **Idioma:** dominio, UI, toasts y comentarios en español. Los comentarios explican el *por qué*. Nombres fijos: `movimientos`, `medios`, `categorias`.
-- **Feature:** `<Feature>.tsx` (solo UI), `hooks/use<Feature>.ts` (estado y caché) y `services/<feature>.service.ts` (objeto literal con funciones `async` en español).
+- **Idioma:** la nomenclatura (variables, funciones, tipos, archivos, tablas, columnas, funciones SQL y valores de dato) va en **inglés**. UI, toasts, mensajes de error y comentarios van en español; los comentarios explican el *por qué*. Nombres del dominio: `transactions`, `boxes` (cajas), `categories`, `yields`.
+- **Feature:** `<Feature>.tsx` (solo UI), `hooks/use<Feature>.ts` (estado y caché) y `services/<feature>.service.ts` (objeto literal con funciones `async` en inglés (`getBoxes`, `createBox`)).
 - **Servicios:** las lecturas lanzan error (lo maneja React Query) y las escrituras devuelven `{ ok, motivo }`.
 - **Caché:** las claves y queries viven solo en `src/lib/queries.ts`. Tras mutar se usan sus helpers, con actualización optimista y `toast.error("No se pudo …")` si falla.
 - **UI:** Tailwind v4 con tokens semánticos (`bg-card`, `text-muted-foreground`) y shadcn/ui en `src/components/ui`. Iconos con Tabler en las pantallas y Lucide solo en `ui/`. Toasts con `sonner`.
@@ -65,13 +65,13 @@ El proyecto está conectado a Lovable, que sincroniza cada commit pusheado a la 
 
 ### Base de datos
 
-- Nunca escribir `medios.saldo` desde la app: solo lo actualiza el trigger `actualizar_saldo_medio`.
-- `categorias`, `medios` y `movimientos` usan RLS con `auth.uid() = user_id`. Toda tabla nueva debe llevar RLS y `user_id`.
+- Nunca escribir `boxes.balance` desde la app: solo lo actualiza el trigger `update_box_balance`.
+- `categories`, `boxes`, `transactions` y `yields` usan RLS con `auth.uid() = user_id`. Toda tabla nueva debe llevar RLS y `user_id`.
 - Todo cambio de esquema va en un archivo nuevo de `supabase/migrations/`. Las migraciones existentes no se editan.
 
 ### Caché
 
-- No crear `setQueryData` ni `invalidateQueries` en línea para `movimientos`, `medios` o `categorias`: usar los helpers de `src/lib/queries.ts`.
+- No crear `setQueryData` ni `invalidateQueries` en línea para `transactions`, `boxes` o `categories`: usar los helpers de `src/lib/queries.ts`.
 
 ### Rutas
 
@@ -107,7 +107,7 @@ El proyecto está conectado a Lovable, que sincroniza cada commit pusheado a la 
    ```
    Si algo falla, no darlo por terminado.
 
-3. **Probar a mano** el flujo afectado con `bun run dev`, porque no hay pruebas automáticas. Si el cambio toca saldos, comprobar que `medios.saldo` se actualiza tras crear, editar y borrar un movimiento.
+3. **Probar a mano** el flujo afectado con `bun run dev`, porque no hay pruebas automáticas. Si el cambio toca saldos, comprobar que `boxes.balance` se actualiza tras crear, editar y borrar un movimiento.
 
 4. **Revisar el diff**: sin código muerto, sin `console.log` de depuración y sin cambios fuera del alcance de la tarea. Los archivos generados (`routeTree.gen.ts`) no se tocan a mano.
 

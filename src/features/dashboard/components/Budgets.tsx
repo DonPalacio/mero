@@ -1,26 +1,26 @@
 import React, { useState } from "react";
 import { fmt, cn } from "@/lib/utils";
 
-export interface Categoria {
+export interface Category {
   id: string;
   name: string;
-  tipo: string;
+  type: string;
   budget: number;
 }
 
 interface BudgetsProps {
-  categorias: Categoria[];
-  gastosPorCajita: Record<string, number>;
+  categories: Category[];
+  expensesByCategory: Record<string, number>;
   onBudgetChange: (id: string, value: string) => void;
 }
 
-export default function Budgets({ categorias, gastosPorCajita, onBudgetChange }: BudgetsProps) {
+export default function Budgets({ categories, expensesByCategory, onBudgetChange }: BudgetsProps) {
   // Estado local para permitir escribir libremente antes de guardar
   const [inputValues, setInputValues] = useState<Record<string, string>>({});
 
-  const gastoCategorias = categorias.filter((c) => c.tipo === "gasto");
+  const expenseCategories = categories.filter((c) => c.type === "expense");
 
-  const getValue = (c: Categoria) =>
+  const getValue = (c: Category) =>
     inputValues[c.id] !== undefined ? inputValues[c.id] : String(c.budget);
 
   const handleChange = (id: string, value: string) => {
@@ -33,9 +33,9 @@ export default function Budgets({ categorias, gastosPorCajita, onBudgetChange }:
     // Se suelta el valor local: el campo vuelve a mostrar el presupuesto de la caché, que ya
     // tiene el valor nuevo (optimista) y, si la BD lo rechaza, recupera el anterior.
     setInputValues((prev) => {
-      const resto = { ...prev };
-      delete resto[id];
-      return resto;
+      const rest = { ...prev };
+      delete rest[id];
+      return rest;
     });
     onBudgetChange(id, value);
   };
@@ -45,8 +45,8 @@ export default function Budgets({ categorias, gastosPorCajita, onBudgetChange }:
       <h2 className="font-semibold text-lg text-card-foreground">Presupuestos</h2>
 
       <div className="overflow-y-auto flex-1 pr-2 flex flex-col gap-4 lg:[&::-webkit-scrollbar]:hidden lg:[-ms-overflow-style:none] lg:[scrollbar-width:none]">
-        {gastoCategorias.map((c) => {
-          const spent = gastosPorCajita[c.name] || 0;
+        {expenseCategories.map((c) => {
+          const spent = expensesByCategory[c.name] || 0;
           const pct = c.budget > 0 ? Math.min((spent / c.budget) * 100, 100) : 0;
 
           let colorClass = "bg-primary";

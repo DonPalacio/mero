@@ -1,33 +1,33 @@
 import React from "react";
 import { IconEdit, IconTrash, IconCheck, IconX, IconPlus } from "@tabler/icons-react";
 import { useBoxes } from "./hooks/useBoxes";
-import { fechaLocalISO, fmt } from "@/lib/utils";
-import { formatearRendimiento, rendimientoDiarioEstimado } from "@/lib/rendimiento";
+import { localISODate, fmt } from "@/lib/utils";
+import { formatYield, estimatedDailyYield } from "@/lib/yield";
 
 export default function Boxes() {
   const {
-    medios,
-    newMedioValue,
-    setNewMedioValue,
-    newTasaValue,
-    setNewTasaValue,
-    editingMedio,
-    setEditingMedio,
-    renameMedioValue,
-    setRenameMedioValue,
-    confirmDeleteMedio,
-    setConfirmDeleteMedio,
-    confirmResetMedio,
-    setConfirmResetMedio,
-    doResetRendimientos,
-    tasaValue,
-    setTasaValue,
-    desdeValue,
-    setDesdeValue,
-    handleAddMedio,
-    startEditMedio,
-    doSaveMedio,
-    doDeleteMedio,
+    boxes,
+    newBoxValue,
+    setNewBoxValue,
+    newEaRateValue,
+    setNewEaRateValue,
+    editingBox,
+    setEditingBox,
+    renameBoxValue,
+    setRenameBoxValue,
+    confirmDeleteBox,
+    setConfirmDeleteBox,
+    confirmResetBox,
+    setConfirmResetBox,
+    doResetYields,
+    eaRateValue,
+    setEaRateValue,
+    fromValue,
+    setFromValue,
+    handleAddBox,
+    startEditBox,
+    doSaveBox,
+    doDeleteBox,
   } = useBoxes();
 
   return (
@@ -45,18 +45,18 @@ export default function Boxes() {
           <div className="flex flex-col gap-2">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <input
-                id="new-medio-input"
-                name="new-medio-input"
+                id="new-box-input"
+                name="new-box-input"
                 type="text"
                 placeholder="Nueva caja"
                 className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                value={newMedioValue}
-                onChange={(e) => setNewMedioValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddMedio()}
+                value={newBoxValue}
+                onChange={(e) => setNewBoxValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddBox()}
                 autoComplete="off"
               />
               <button
-                onClick={handleAddMedio}
+                onClick={handleAddBox}
                 className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 <IconPlus className="h-5 w-5" />
@@ -64,15 +64,15 @@ export default function Boxes() {
             </div>
             {/* Rendimiento E.A. de la caja nueva: opcional, vacío = no rinde */}
             <input
-              id="new-medio-tasa-input"
-              name="new-medio-tasa-input"
+              id="new-box-ea-rate-input"
+              name="new-box-ea-rate-input"
               type="text"
               inputMode="decimal"
               placeholder="Rendimiento E.A. % (ej: 9,30)"
               className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              value={newTasaValue}
-              onChange={(e) => setNewTasaValue(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAddMedio()}
+              value={newEaRateValue}
+              onChange={(e) => setNewEaRateValue(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddBox()}
               autoComplete="off"
             />
           </div>
@@ -80,10 +80,10 @@ export default function Boxes() {
 
         {/* Lista de Medios (Grid adaptativo: 1 col celular, 2 tablet, 3 PC) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {medios.map((m) => {
-            const isEditing = editingMedio === m.id;
-            const isConfirming = confirmDeleteMedio === m.id;
-            const isResetting = confirmResetMedio === m.id;
+          {boxes.map((m) => {
+            const isEditing = editingBox === m.id;
+            const isConfirming = confirmDeleteBox === m.id;
+            const isResetting = confirmResetBox === m.id;
 
             return (
               <div
@@ -95,24 +95,24 @@ export default function Boxes() {
                   <div className="flex w-full flex-col gap-2">
                     <div className="flex w-full items-center gap-2">
                       <input
-                        id={`rename-medio-${m.id}`}
-                        name={`rename-medio-${m.id}`}
+                        id={`rename-box-${m.id}`}
+                        name={`rename-box-${m.id}`}
                         type="text"
-                        value={renameMedioValue}
+                        value={renameBoxValue}
                         className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                        onChange={(e) => setRenameMedioValue(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && doSaveMedio(m.id)}
+                        onChange={(e) => setRenameBoxValue(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && doSaveBox(m.id)}
                         autoComplete="off"
                         autoFocus
                       />
                       <button
-                        onClick={() => doSaveMedio(m.id)}
+                        onClick={() => doSaveBox(m.id)}
                         className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full transition-colors"
                       >
                         <IconCheck className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => setEditingMedio(null)}
+                        onClick={() => setEditingBox(null)}
                         className="p-2 text-muted-foreground hover:bg-secondary rounded-full transition-colors"
                       >
                         <IconX className="h-4 w-4" />
@@ -122,21 +122,21 @@ export default function Boxes() {
                     {/* Rendimiento E.A.: vacío = la caja no rinde */}
                     <div className="flex items-center gap-2">
                       <label
-                        htmlFor={`tasa-medio-${m.id}`}
+                        htmlFor={`ea-rate-box-${m.id}`}
                         className="text-xs text-muted-foreground shrink-0"
                       >
                         Rendimiento E.A. (%)
                       </label>
                       <input
-                        id={`tasa-medio-${m.id}`}
-                        name={`tasa-medio-${m.id}`}
+                        id={`ea-rate-box-${m.id}`}
+                        name={`ea-rate-box-${m.id}`}
                         type="text"
                         inputMode="decimal"
                         placeholder="Ej: 9,30"
-                        value={tasaValue}
+                        value={eaRateValue}
                         className="flex h-9 w-28 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                        onChange={(e) => setTasaValue(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && doSaveMedio(m.id)}
+                        onChange={(e) => setEaRateValue(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && doSaveBox(m.id)}
                         autoComplete="off"
                       />
                     </div>
@@ -144,22 +144,22 @@ export default function Boxes() {
                     {/* Desde qué día rinde. Al activar la tasa se elige libremente; si la caja ya
                         rinde solo se puede mover hacia atrás (los días anteriores se acreditan
                         de una vez; los ya acreditados no cambian). */}
-                    {tasaValue.trim() !== "" && (
+                    {eaRateValue.trim() !== "" && (
                       <div className="flex items-center gap-2">
                         <label
-                          htmlFor={`desde-medio-${m.id}`}
+                          htmlFor={`from-box-${m.id}`}
                           className="text-xs text-muted-foreground shrink-0"
                         >
                           Rinde desde
                         </label>
                         <input
-                          id={`desde-medio-${m.id}`}
-                          name={`desde-medio-${m.id}`}
+                          id={`from-box-${m.id}`}
+                          name={`from-box-${m.id}`}
                           type="date"
-                          max={m.rendimiento_desde ?? fechaLocalISO()}
-                          value={desdeValue}
+                          max={m.yield_from ?? localISODate()}
+                          value={fromValue}
                           className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                          onChange={(e) => setDesdeValue(e.target.value)}
+                          onChange={(e) => setFromValue(e.target.value)}
                         />
                       </div>
                     )}
@@ -168,20 +168,20 @@ export default function Boxes() {
                   /* MODO CONFIRMACIÓN DE BORRADO */
                   <div className="flex w-full items-center justify-between">
                     <span className="text-sm font-medium text-destructive">
-                      ¿Deseas eliminar la caja "{m.nombre}"?
+                      ¿Deseas eliminar la caja "{m.name}"?
                     </span>
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => doDeleteMedio(m.id)}
+                        onClick={() => doDeleteBox(m.id)}
                         className="text-xs font-medium bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md hover:bg-destructive/90 transition-colors"
                       >
                         Sí, eliminar
                       </button>
                       <button
                         onClick={() => {
-                          setConfirmDeleteMedio(null);
+                          setConfirmDeleteBox(null);
                           // La caja se conserva: si rinde por E.A., se ofrece quitar solo ese dinero.
-                          if (m.tasa_ea !== null) setConfirmResetMedio(m.id);
+                          if (m.ea_rate !== null) setConfirmResetBox(m.id);
                         }}
                         className="text-xs font-medium bg-secondary text-secondary-foreground px-3 py-1.5 rounded-md hover:bg-secondary/80 transition-colors"
                       >
@@ -193,17 +193,17 @@ export default function Boxes() {
                   /* MODO CONFIRMACIÓN DE REINICIO DE RENDIMIENTOS */
                   <div className="flex w-full items-center justify-between gap-2">
                     <span className="text-sm font-medium text-foreground">
-                      ¿Eliminar también el dinero generado por el E.A. de "{m.nombre}"?
+                      ¿Eliminar también el dinero generado por el E.A. de "{m.name}"?
                     </span>
                     <div className="flex items-center gap-2 shrink-0">
                       <button
-                        onClick={() => doResetRendimientos(m.id)}
+                        onClick={() => doResetYields(m.id)}
                         className="text-xs font-medium bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md hover:bg-destructive/90 transition-colors"
                       >
                         Sí, eliminarlo
                       </button>
                       <button
-                        onClick={() => setConfirmResetMedio(null)}
+                        onClick={() => setConfirmResetBox(null)}
                         className="text-xs font-medium bg-secondary text-secondary-foreground px-3 py-1.5 rounded-md hover:bg-secondary/80 transition-colors"
                       >
                         No
@@ -215,27 +215,26 @@ export default function Boxes() {
                   <>
                     <div className="min-w-0 pr-2">
                       <span className="block font-medium text-card-foreground truncate">
-                        {m.nombre}
+                        {m.name}
                       </span>
-                      <span className="block text-sm text-muted-foreground">{fmt(m.saldo)}</span>
-                      {m.tasa_ea !== null && (
+                      <span className="block text-sm text-muted-foreground">{fmt(m.balance)}</span>
+                      {m.ea_rate !== null && (
                         <span className="block text-xs text-muted-foreground">
-                          {m.tasa_ea.toLocaleString("es-CO")}% E.A. · ≈{" "}
-                          {formatearRendimiento(rendimientoDiarioEstimado(m.saldo, m.tasa_ea))} al
-                          día
+                          {m.ea_rate.toLocaleString("es-CO")}% E.A. · ≈{" "}
+                          {formatYield(estimatedDailyYield(m.balance, m.ea_rate))} al día
                         </span>
                       )}
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <button
-                        onClick={() => startEditMedio(m)}
+                        onClick={() => startEditBox(m)}
                         className="p-2 text-muted-foreground hover:text-primary hover:bg-secondary rounded-full transition-colors"
                         title="Editar"
                       >
                         <IconEdit className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => setConfirmDeleteMedio(m.id)}
+                        onClick={() => setConfirmDeleteBox(m.id)}
                         className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
                         title="Eliminar"
                       >
@@ -248,7 +247,7 @@ export default function Boxes() {
             );
           })}
 
-          {medios.length === 0 && (
+          {boxes.length === 0 && (
             <div className="col-span-full p-8 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
               No tienes medios creados aún. Agrega uno arriba.
             </div>

@@ -13,42 +13,42 @@ const supabaseKey = import.meta.env["VITE_SUPABASE_ANON_KEY"] || "";
 // Este cliente pide al servidor un access token de vida corta y lo guarda
 // solo en memoria. `supabase.auth.*` no está disponible en este cliente.
 
-const MARGEN_SEGUNDOS = 60;
+const MARGIN_SECONDS = 60;
 
 let cache: { token: string; exp: number } | null = null;
-let pendiente: Promise<string | null> | null = null;
+let pending: Promise<string | null> | null = null;
 
 // También invalida la sesión recordada por el guard (session-cache.ts): login y logout ya llaman
 // a esta función antes de router.invalidate().
 export function clearAccessTokenCache() {
   clearSessionUserCache();
   cache = null;
-  pendiente = null;
+  pending = null;
 }
 
-async function resolverToken(): Promise<string | null> {
+async function resolveToken(): Promise<string | null> {
   // En el servidor (SSR) este módulo también se evalúa y supabase-js pide el
   // token al crear el cliente. Allí no hay sesión de navegador: se omite.
   if (typeof window === "undefined") return null;
 
-  const ahora = Math.floor(Date.now() / 1000);
-  if (cache && cache.exp - MARGEN_SEGUNDOS > ahora) return cache.token;
+  const currentMoment = Math.floor(Date.now() / 1000);
+  if (cache && cache.exp - MARGIN_SECONDS > currentMoment) return cache.token;
 
-  if (!pendiente) {
-    pendiente = getAccessToken()
+  if (!pending) {
+    pending = getAccessToken()
       .then((res) => {
         cache = res ? { token: res.accessToken, exp: res.expiresAt } : null;
         return res?.accessToken ?? null;
       })
       .finally(() => {
-        pendiente = null;
+        pending = null;
       });
   }
-  return pendiente;
+  return pending;
 }
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
-  accessToken: resolverToken,
+  accessToken: resolveToken,
 });
 
 // Limpieza única: sesiones antiguas guardadas por supabase-js en localStorage

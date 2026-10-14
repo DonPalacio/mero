@@ -1,87 +1,87 @@
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { dashboardService, MedioSaldo, type ResumenFila } from "../services/dashboard.service";
-import { Categoria } from "../components/Budgets";
+import { dashboardService, BoxBalance, type SummaryRow } from "../services/dashboard.service";
+import { Category } from "../components/Budgets";
 import { toast } from "sonner";
-import type { ResultadoOperacion } from "@/lib/supabase-errors";
+import type { OperationResult } from "@/lib/supabase-errors";
 import {
-  MESES_EN_GRAFICO,
-  actualizarPresupuestoOptimista,
-  aClaveMes,
-  categoriasQuery,
-  mediosQuery,
-  rendimientosMensualesQuery,
-  resumenMensualQuery,
+  CHART_MONTHS,
+  updateBudgetOptimistic,
+  toMonthKey,
+  categoriesQuery,
+  boxesQuery,
+  monthlyYieldsQuery,
+  monthlySummaryQuery,
 } from "@/lib/queries";
 
 // Referencia estable para el memo mientras el resumen aún no llega.
-const SIN_RESUMEN: ResumenFila[] = [];
+const NO_SUMMARY: SummaryRow[] = [];
 
 export function useDashboard() {
   const queryClient = useQueryClient();
 
   // Estado para el mes actual
-  const hoy = new Date();
-  const mesActualInicial = aClaveMes(hoy);
-  const [selectedMonth, setSelectedMonth] = useState(mesActualInicial);
+  const today = new Date();
+  const initialCurrentMonth = toMonthKey(today);
+  const [selectedMonth, setSelectedMonth] = useState(initialCurrentMonth);
 
-  // Los MESES_EN_GRAFICO meses que terminan en selectedMonth (el más antiguo primero),
+  // Los CHART_MONTHS meses que terminan en selectedMonth (el más antiguo primero),
   // aunque algunos no tengan movimientos todavía.
-  const ultimosSeisMeses = useMemo(() => {
+  const lastSixMonths = useMemo(() => {
     const [selYear = 0, selMonthNum = 1] = selectedMonth.split("-").map(Number);
 
-    const meses: string[] = [];
-    for (let i = MESES_EN_GRAFICO - 1; i >= 0; i--) {
-      meses.push(aClaveMes(new Date(selYear, selMonthNum - 1 - i, 1)));
+    const months: string[] = [];
+    for (let i = CHART_MONTHS - 1; i >= 0; i--) {
+      months.push(toMonthKey(new Date(selYear, selMonthNum - 1 - i, 1)));
     }
-    return meses;
+    return months;
   }, [selectedMonth]);
 
-  // Una sola consulta agregada en la BD (resumen_mensual) con los totales de esos meses,
+  // Una sola consulta agregada en la BD (monthly_summary) con los totales de esos meses,
   // en lugar de descargar todos sus movimientos para sumarlos aquí.
-  const resumenQ = useQuery(resumenMensualQuery(selectedMonth));
-  const categoriasQ = useQuery(categoriasQuery);
-  const mediosQ = useQuery(mediosQuery);
+  const summaryQ = useQuery(monthlySummaryQuery(selectedMonth));
+  const categoriesQ = useQuery(categoriesQuery);
+  const boxesQ = useQuery(boxesQuery);
   // Pesos generados por E.A. en el mes. No bloquea la pantalla: mientras llega (o si la BD aún
   // no tiene la función) cuenta como 0 y los ingresos se ven igual que antes.
-  const rendimientosQ = useQuery(rendimientosMensualesQuery(selectedMonth));
+  const yieldsQ = useQuery(monthlyYieldsQuery(selectedMonth));
 
   // Precarga el resumen del mes anterior y del siguiente (sin pasar del actual), para que
   // navegar de mes no espere a la red.
   useEffect(() => {
-    const [anio = 0, numMes = 1] = selectedMonth.split("-").map(Number);
-    [new Date(anio, numMes - 2, 1), new Date(anio, numMes, 1)]
-      .map(aClaveMes)
-      .filter((mes) => mes <= mesActualInicial)
-      .forEach((mes) => {
-        queryClient.prefetchQuery(resumenMensualQuery(mes));
-        queryClient.prefetchQuery(rendimientosMensualesQuery(mes));
+    const [yearNumber = 0, monthNumber = 1] = selectedMonth.split("-").map(Number);
+    [new Date(yearNumber, monthNumber - 2, 1), new Date(yearNumber, monthNumber, 1)]
+      .map(toMonthKey)
+      .filter((month) => month <= initialCurrentMonth)
+      .forEach((month) => {
+        queryClient.prefetchQuery(monthlySummaryQuery(month));
+        queryClient.prefetchQuery(monthlyYieldsQuery(month));
       });
-  }, [selectedMonth, mesActualInicial, queryClient]);
+  }, [selectedMonth, initialCurrentMonth, queryClient]);
 
-  const isLoading = resumenQ.isPending || categoriasQ.isPending || mediosQ.isPending;
+  const isLoading = summaryQ.isPending || categoriesQ.isPending || boxesQ.isPending;
 
-  const cajitas: Categoria[] = useMemo(
+  const categories: Category[] = useMemo(
     () =>
-      [...(categoriasQ.data ?? [])]
-        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      [...(categoriesQ.data ?? [])]
+        .sort((a, b) => a.name.localeCompare(b.name))
         .map((c) => ({
           id: c.id,
-          name: c.nombre,
-          tipo: c.tipo,
-          budget: Number(c.presupuesto_mensual),
+          name: c.name,
+          type: c.type,
+          budget: Number(c.monthly_budget),
         })),
-    [categoriasQ.data],
+    [categoriesQ.data],
   );
 
-  // medios.saldo lo mantiene el trigger de la BD; se refresca al crear/eliminar movimientos
-  const medios: MedioSaldo[] = useMemo(
-    () => (mediosQ.data ?? []).map((m) => ({ id: m.id, name: m.nombre, saldo: Number(m.saldo) })),
-    [mediosQ.data],
+  // boxes.balance lo mantiene el trigger de la BD; se refresca al crear/eliminar movimientos
+  const boxes: BoxBalance[] = useMemo(
+    () => (boxesQ.data ?? []).map((m) => ({ id: m.id, name: m.name, balance: Number(m.balance) })),
+    [boxesQ.data],
   );
 
   const handlePrevMonth = () => {
-    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth
+    const [year = today.getFullYear(), month = today.getMonth() + 1] = selectedMonth
       .split("-")
       .map(Number);
     const date = new Date(year, month - 2);
@@ -89,7 +89,7 @@ export function useDashboard() {
   };
 
   const handleNextMonth = () => {
-    const [year = hoy.getFullYear(), month = hoy.getMonth() + 1] = selectedMonth
+    const [year = today.getFullYear(), month = today.getMonth() + 1] = selectedMonth
       .split("-")
       .map(Number);
     const date = new Date(year, month);
@@ -102,56 +102,56 @@ export function useDashboard() {
   // CATEGORÍA (traspasos sin categoría quedan afuera a propósito). Aquí cada categoría
   // se traduce a su nombre; una que ya no existe en la lista se ignora.
   // --------------------------------------------------------
-  const nombrePorCategoria = useMemo(
-    () => new Map((categoriasQ.data ?? []).map((c) => [c.id, c.nombre])),
-    [categoriasQ.data],
+  const nameByCategory = useMemo(
+    () => new Map((categoriesQ.data ?? []).map((c) => [c.id, c.name])),
+    [categoriesQ.data],
   );
 
-  const { gastosPorCajita, ingresosTotales, gastosTotales, gastosPorMes } = useMemo(() => {
-    const gastosPorCajita: Record<string, number> = {};
-    const gastosPorMes: Record<string, number> = {};
-    let ingresosTotales = 0;
-    let gastosTotales = 0;
+  const { expensesByCategory, totalIncome, totalExpenses, expensesByMonth } = useMemo(() => {
+    const expensesByCategory: Record<string, number> = {};
+    const expensesByMonth: Record<string, number> = {};
+    let totalIncome = 0;
+    let totalExpenses = 0;
 
-    for (const fila of resumenQ.data ?? SIN_RESUMEN) {
-      const nombre = nombrePorCategoria.get(fila.categoriaId);
-      if (!nombre) continue;
+    for (const row of summaryQ.data ?? NO_SUMMARY) {
+      const name = nameByCategory.get(row.categoryId);
+      if (!name) continue;
 
-      if (fila.tipo === "gasto") {
-        gastosPorMes[fila.mes] = (gastosPorMes[fila.mes] || 0) + fila.total;
+      if (row.type === "expense") {
+        expensesByMonth[row.month] = (expensesByMonth[row.month] || 0) + row.total;
       }
-      if (fila.mes !== selectedMonth) continue;
+      if (row.month !== selectedMonth) continue;
 
-      if (fila.tipo === "ingreso") {
-        ingresosTotales += fila.total;
+      if (row.type === "income") {
+        totalIncome += row.total;
       } else {
-        gastosTotales += fila.total;
-        gastosPorCajita[nombre] = (gastosPorCajita[nombre] || 0) + fila.total;
+        totalExpenses += row.total;
+        expensesByCategory[name] = (expensesByCategory[name] || 0) + row.total;
       }
     }
 
-    return { gastosPorCajita, ingresosTotales, gastosTotales, gastosPorMes };
-  }, [resumenQ.data, nombrePorCategoria, selectedMonth]);
+    return { expensesByCategory, totalIncome, totalExpenses, expensesByMonth };
+  }, [summaryQ.data, nameByCategory, selectedMonth]);
 
   // Los rendimientos E.A. no son movimientos (no tienen categoría): se suman aparte, y como
   // son ingresos del mes también suben "Queda". Los gastos no cambian.
-  const rendimientosDelMes = useMemo(
-    () => rendimientosQ.data?.find((f) => f.mes === selectedMonth)?.total ?? 0,
-    [rendimientosQ.data, selectedMonth],
+  const monthYields = useMemo(
+    () => yieldsQ.data?.find((f) => f.month === selectedMonth)?.total ?? 0,
+    [yieldsQ.data, selectedMonth],
   );
-  const ingresosDelMes = ingresosTotales + rendimientosDelMes;
-  const saldoDisponible = ingresosDelMes - gastosTotales;
+  const monthIncome = totalIncome + monthYields;
+  const availableBalance = monthIncome - totalExpenses;
 
   // --------------------------------------------------------
-  // SALDO POR MEDIO: viene directo de medios.saldo (lo calcula el
+  // SALDO POR MEDIO: viene directo de boxes.balance (lo calcula el
   // trigger de la BD con TODOS los movimientos, tengan o no categoría).
   // Así se ven todos los medios creados, incluso sin movimientos.
   // --------------------------------------------------------
-  const listaMedios = medios.map((m) => ({ name: m.name }));
-  const saldosPorMedio = medios.reduce(
-    (acumulador, m) => {
-      acumulador[m.name] = m.saldo;
-      return acumulador;
+  const boxList = boxes.map((m) => ({ name: m.name }));
+  const balancesByBox = boxes.reduce(
+    (accumulator, m) => {
+      accumulator[m.name] = m.balance;
+      return accumulator;
     },
     {} as Record<string, number>,
   );
@@ -161,41 +161,41 @@ export function useDashboard() {
   // selectedMonth (el mes que estás navegando en Summary), aunque
   // algunos no tengan movimientos todavía (se muestran en 0).
   // --------------------------------------------------------
-  const metricasGlobales = useMemo(() => {
-    const barLabels = ultimosSeisMeses.map((m) => {
+  const globalMetrics = useMemo(() => {
+    const barLabels = lastSixMonths.map((m) => {
       const [year, month] = m.split("-").map(Number);
       const date = new Date(year ?? 0, (month ?? 1) - 1);
       return date.toLocaleDateString("es-CO", { month: "short" }).slice(0, 3).toUpperCase();
     });
-    const barValues = ultimosSeisMeses.map((m) => gastosPorMes[m] || 0);
+    const barValues = lastSixMonths.map((m) => expensesByMonth[m] || 0);
 
     return { barLabels, barValues };
-  }, [gastosPorMes, ultimosSeisMeses]);
+  }, [expensesByMonth, lastSixMonths]);
 
   const handleBudgetChange = async (id: string, value: string) => {
-    const valor = parseFloat(value);
-    if (isNaN(valor) || valor < 0) return;
+    const parsedValue = parseFloat(value);
+    if (isNaN(parsedValue) || parsedValue < 0) return;
 
     // Sin cambios respecto al valor guardado: no hay nada que enviar.
-    const guardado = categoriasQ.data?.find((c) => c.id === id)?.presupuesto_mensual;
-    if (guardado !== undefined && Number(guardado) === valor) return;
+    const saved = categoriesQ.data?.find((c) => c.id === id)?.monthly_budget;
+    if (saved !== undefined && Number(saved) === parsedValue) return;
 
     // El nuevo presupuesto se ve al instante; si la BD rechaza el cambio, vuelve el anterior.
-    const revertir = await actualizarPresupuestoOptimista(queryClient, id, valor);
+    const revert = await updateBudgetOptimistic(queryClient, id, parsedValue);
 
-    let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+    let result: OperationResult = { ok: false, reason: "error" };
     try {
-      resultado = await dashboardService.actualizarPresupuesto(id, valor);
+      result = await dashboardService.updateBudget(id, parsedValue);
     } catch (error) {
       console.error("Error actualizando presupuesto:", error);
     }
 
-    if (resultado.ok) return;
+    if (result.ok) return;
 
-    await revertir();
+    await revert();
     // Solo se explica la causa cuando se sabe con certeza cuál fue.
     toast.error("No se pudo actualizar el presupuesto", {
-      description: resultado.motivo === "sin-conexion" ? "No hay conexión a internet." : undefined,
+      description: result.reason === "offline" ? "No hay conexión a internet." : undefined,
     });
   };
 
@@ -203,17 +203,17 @@ export function useDashboard() {
     selectedMonth,
     handlePrevMonth,
     handleNextMonth,
-    cajitas,
-    gastosPorCajita,
-    ingresosTotales: ingresosDelMes,
-    rendimientosDelMes,
-    gastosTotales,
-    saldoDisponible,
+    categories,
+    expensesByCategory,
+    totalIncome: monthIncome,
+    monthYields,
+    totalExpenses,
+    availableBalance,
     isLoading,
     handleBudgetChange,
-    saldosPorMedio,
-    listaMedios,
-    barLabels: metricasGlobales.barLabels,
-    barValues: metricasGlobales.barValues,
+    balancesByBox,
+    boxList,
+    barLabels: globalMetrics.barLabels,
+    barValues: globalMetrics.barValues,
   };
 }

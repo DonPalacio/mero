@@ -1,14 +1,14 @@
 import { fmt } from "@/lib/utils";
 
 interface PieChartProps {
-  gastosPorCajita: Record<string, number>;
+  expensesByCategory: Record<string, number>;
 }
 
 const SHADES = ["#5b8def", "#4a76c9", "#6d9bf5", "#3d6bc7", "#8ab0f8", "#2f5aa8", "#a9c4fb"];
 
-export default function PieChart({ gastosPorCajita }: PieChartProps) {
-  const labels = Object.keys(gastosPorCajita);
-  const values = Object.values(gastosPorCajita);
+export default function PieChart({ expensesByCategory }: PieChartProps) {
+  const labels = Object.keys(expensesByCategory);
+  const values = Object.values(expensesByCategory);
 
   const total = values.reduce((a, b) => a + b, 0);
 
@@ -28,7 +28,7 @@ export default function PieChart({ gastosPorCajita }: PieChartProps) {
 
   if (total > 0) {
     labels.forEach((label, i) => {
-      const frac = (gastosPorCajita[label] ?? 0) / total;
+      const frac = (expensesByCategory[label] ?? 0) / total;
       const len = frac * circ;
 
       segments.push(
@@ -76,7 +76,7 @@ export default function PieChart({ gastosPorCajita }: PieChartProps) {
         )}
 
         {labels.map((label, i) => {
-          const pct = total ? (((gastosPorCajita[label] ?? 0) / total) * 100).toFixed(1) : "0";
+          const pct = total ? (((expensesByCategory[label] ?? 0) / total) * 100).toFixed(1) : "0";
 
           return (
             <div className="flex items-center justify-between text-sm" key={label}>

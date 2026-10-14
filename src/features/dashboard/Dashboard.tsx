@@ -10,16 +10,16 @@ export default function Dashboard() {
     selectedMonth,
     handlePrevMonth,
     handleNextMonth,
-    cajitas,
-    gastosPorCajita,
-    ingresosTotales,
-    rendimientosDelMes,
-    gastosTotales,
-    saldoDisponible,
+    categories,
+    expensesByCategory,
+    totalIncome,
+    monthYields,
+    totalExpenses,
+    availableBalance,
     isLoading,
     handleBudgetChange,
-    saldosPorMedio,
-    listaMedios,
+    balancesByBox,
+    boxList,
     barLabels,
     barValues,
   } = useDashboard();
@@ -41,19 +41,18 @@ export default function Dashboard() {
               selectedMonth={selectedMonth}
               onPrev={handlePrevMonth}
               onNext={handleNextMonth}
-              ingresos={ingresosTotales}
-              rendimientos={rendimientosDelMes}
-              gastos={gastosTotales}
-              queda={saldoDisponible}
-              cmpText="Datos en tiempo real"
+              income={totalIncome}
+              yields={monthYields}
+              expenses={totalExpenses}
+              remaining={availableBalance}
               cmpColor="#3fb27f"
-              medios={listaMedios}
-              saldosPorMedio={saldosPorMedio}
+              boxes={boxList}
+              balancesByBox={balancesByBox}
             />
           </div>
 
           <div className="col-span-1 lg:col-span-2 lg:row-span-3 lg:col-start-3 lg:row-start-1">
-            <PieChart gastosPorCajita={gastosPorCajita} />
+            <PieChart expensesByCategory={expensesByCategory} />
           </div>
 
           <div className="col-span-1 lg:col-span-2 lg:row-span-3 lg:col-start-5 lg:row-start-1">
@@ -62,8 +61,8 @@ export default function Dashboard() {
 
           <div className="col-span-1 lg:col-span-6 lg:row-span-2 lg:col-start-1 lg:row-start-4 lg:min-h-0">
             <Budgets
-              categorias={cajitas}
-              gastosPorCajita={gastosPorCajita}
+              categories={categories}
+              expensesByCategory={expensesByCategory}
               onBudgetChange={handleBudgetChange}
             />
           </div>

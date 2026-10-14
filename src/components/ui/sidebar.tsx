@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { precargarPantalla } from "@/lib/queries";
+import { prefetchScreen } from "@/lib/queries";
 
 interface Links {
   label: string;
@@ -159,9 +159,9 @@ export const SidebarLink = ({ link, className, ...props }: { link: Links; classN
       to={link.href}
       onClick={() => setOpen(false)}
       // Los datos de la pantalla se piden antes del clic: al abrirla ya están en caché.
-      onMouseEnter={() => precargarPantalla(queryClient, link.href)}
-      onFocus={() => precargarPantalla(queryClient, link.href)}
-      onTouchStart={() => precargarPantalla(queryClient, link.href)}
+      onMouseEnter={() => prefetchScreen(queryClient, link.href)}
+      onFocus={() => prefetchScreen(queryClient, link.href)}
+      onTouchStart={() => prefetchScreen(queryClient, link.href)}
       className={cn(
         "flex items-center justify-start gap-2 group/sidebar py-2",
         isActive && "opacity-100",

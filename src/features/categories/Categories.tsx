@@ -5,21 +5,21 @@ import { useCategories } from "./hooks/useCategories";
 
 export default function Categories() {
   const {
-    categorias,
-    newCatValue,
-    setNewCatValue,
-    newCatTipo,
-    setNewCatTipo,
-    editingCat,
-    setEditingCat,
+    categories,
+    newCategoryValue,
+    setNewCategoryValue,
+    newCategoryType,
+    setNewCategoryType,
+    editingCategory,
+    setEditingCategory,
     renameValue,
     setRenameValue,
-    confirmDeleteCat,
-    setConfirmDeleteCat,
-    handleAddCat,
+    confirmDeleteCategory,
+    setConfirmDeleteCategory,
+    handleAddCategory,
     startRename,
     doRename,
-    doDeleteCat,
+    doDeleteCategory,
   } = useCategories();
 
   return (
@@ -40,22 +40,22 @@ export default function Categories() {
               <button
                 className={cn(
                   "flex-1 px-4 py-1.5 text-sm font-medium rounded-full transition-colors",
-                  newCatTipo === "gasto"
+                  newCategoryType === "expense"
                     ? "text-destructive"
                     : "text-muted-foreground hover:text-foreground",
                 )}
-                onClick={() => setNewCatTipo("gasto")}
+                onClick={() => setNewCategoryType("expense")}
               >
                 Gasto
               </button>
               <button
                 className={cn(
                   "flex-1 px-4 py-1.5 text-sm font-medium rounded-xl transition-colors",
-                  newCatTipo === "ingreso"
+                  newCategoryType === "income"
                     ? "text-emerald-600 dark:text-emerald-500"
                     : "text-muted-foreground hover:text-foreground",
                 )}
-                onClick={() => setNewCatTipo("ingreso")}
+                onClick={() => setNewCategoryType("income")}
               >
                 Ingreso
               </button>
@@ -69,13 +69,13 @@ export default function Categories() {
                 type="text"
                 placeholder="Nombre (ej. Restaurante)"
                 className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                value={newCatValue}
-                onChange={(e) => setNewCatValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddCat()}
+                value={newCategoryValue}
+                onChange={(e) => setNewCategoryValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
                 autoComplete="off"
               />
               <button
-                onClick={handleAddCat}
+                onClick={handleAddCategory}
                 className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 <IconPlus className="h-5 w-5" />
@@ -86,10 +86,10 @@ export default function Categories() {
 
         {/* Lista de Categorías (Grid adaptativo) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categorias.map((c) => {
-            const isEditing = editingCat === c.id;
-            const isConfirming = confirmDeleteCat === c.id;
-            const isIngreso = c.tipo === "ingreso";
+          {categories.map((c) => {
+            const isEditing = editingCategory === c.id;
+            const isConfirming = confirmDeleteCategory === c.id;
+            const isIncome = c.type === "income";
 
             return (
               <div
@@ -100,7 +100,7 @@ export default function Categories() {
                 <div
                   className={cn(
                     "absolute left-0 top-0 bottom-0 w-1",
-                    isIngreso ? "bg-emerald-500" : "bg-destructive",
+                    isIncome ? "bg-emerald-500" : "bg-destructive",
                   )}
                 />
 
@@ -122,7 +122,7 @@ export default function Categories() {
                         <IconCheck className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => setEditingCat(null)}
+                        onClick={() => setEditingCategory(null)}
                         className="p-1.5 text-muted-foreground hover:bg-secondary rounded-full transition-colors shrink-0"
                       >
                         <IconX className="h-4 w-4" />
@@ -136,13 +136,13 @@ export default function Categories() {
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
                         <button
-                          onClick={() => doDeleteCat(c.id)}
+                          onClick={() => doDeleteCategory(c.id)}
                           className="text-xs font-medium bg-destructive text-destructive-foreground px-2.5 py-1.5 rounded-md hover:bg-destructive/90 transition-colors"
                         >
                           Sí
                         </button>
                         <button
-                          onClick={() => setConfirmDeleteCat(null)}
+                          onClick={() => setConfirmDeleteCategory(null)}
                           className="text-xs font-medium bg-secondary text-secondary-foreground px-2.5 py-1.5 rounded-md hover:bg-secondary/80 transition-colors"
                         >
                           No
@@ -155,7 +155,7 @@ export default function Categories() {
                       <div className="flex flex-col truncate pr-2">
                         <span className="font-medium text-card-foreground truncate">{c.name}</span>
                         <span className="text-xs text-muted-foreground capitalize mt-0.5">
-                          {c.tipo}
+                          {isIncome ? "Ingreso" : "Gasto"}
                         </span>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
@@ -167,7 +167,7 @@ export default function Categories() {
                           <IconEdit className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => setConfirmDeleteCat(c.id)}
+                          onClick={() => setConfirmDeleteCategory(c.id)}
                           className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
                           title="Eliminar"
                         >
@@ -181,7 +181,7 @@ export default function Categories() {
             );
           })}
 
-          {categorias.length === 0 && (
+          {categories.length === 0 && (
             <div className="col-span-full p-8 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl mt-4">
               No tienes categorías creadas aún. Agrega una arriba.
             </div>

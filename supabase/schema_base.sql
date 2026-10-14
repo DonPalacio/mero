@@ -8,6 +8,10 @@
 --   2) supabase/migrations/20260925_sync_columns.sql
 --
 -- NO ejecutar en producción: ahí las tablas ya existen.
+-- NOTA: este archivo conserva la nomenclatura ORIGINAL en español (estado histórico).
+-- El estado actual (nombres en inglés) se obtiene aplicando todas las migraciones, en
+-- particular supabase/migrations/20261018_english_naming.sql.
+--
 -- ============================================================================
 
 -- 1) Tablas -----------------------------------------------------------------------

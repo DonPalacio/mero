@@ -1,40 +1,41 @@
 import React from "react";
 import { IconTrash, IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
-import { cn, fmt } from "@/lib/utils";
+import { cn, fmt, formatTypedAmount } from "@/lib/utils";
 import { useTransactions } from "./hooks/useTransactions";
 
 export default function Transactions() {
   const {
     listRef,
-    mediosDisponibles,
-    categoriasDisponibles,
-    movimientos,
-    tipoSel,
-    setTipoSel,
-    monto,
-    setMonto,
-    selectedCat,
-    setSelectedCat,
-    selectedMedio,
-    setSelectedMedio,
-    fecha,
-    setFecha,
-    nota,
-    setNota,
-    fMsg,
-    filtroCategoria,
-    setFiltroCategoria,
+    availableBoxes,
+    availableCategories,
+    transactions,
+    selectedType,
+    setSelectedType,
+    amount,
+    setAmount,
+    selectedCategory,
+    setSelectedCategory,
+    selectedBox,
+    setSelectedBox,
+    date,
+    setDate,
+    note,
+    setNote,
+    formMessage,
+    categoryFilter,
+    setCategoryFilter,
     selectedMonth,
     setSelectedMonth,
     monthOptions,
-    categoriasFiltradas,
+    filteredCategories,
     handleSubmit,
     handleDelete,
   } = useTransactions();
 
-  const movimientosFiltrados = movimientos.filter(
-    (mov) =>
-      (!filtroCategoria || mov.cajita === filtroCategoria) && mov.fecha.startsWith(selectedMonth),
+  const filteredTransactions = transactions.filter(
+    (transaction) =>
+      (!categoryFilter || transaction.category === categoryFilter) &&
+      transaction.date.startsWith(selectedMonth),
   );
 
   return (
@@ -65,13 +66,13 @@ export default function Transactions() {
                   type="button"
                   className={cn(
                     "flex-1 px-4 py-2 text-sm font-medium rounded-full transition-colors",
-                    tipoSel === "gasto"
+                    selectedType === "expense"
                       ? "text-destructive"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                   onClick={() => {
-                    setTipoSel("gasto");
-                    setSelectedCat(null);
+                    setSelectedType("expense");
+                    setSelectedCategory(null);
                   }}
                 >
                   Gasto
@@ -80,13 +81,13 @@ export default function Transactions() {
                   type="button"
                   className={cn(
                     "flex-1 px-4 py-2 text-sm font-medium rounded-full transition-colors",
-                    tipoSel === "ingreso"
+                    selectedType === "income"
                       ? "text-emerald-600 dark:text-emerald-500"
                       : "text-muted-foreground hover:text-foreground",
                   )}
                   onClick={() => {
-                    setTipoSel("ingreso");
-                    setSelectedCat(null);
+                    setSelectedType("income");
+                    setSelectedCategory(null);
                   }}
                 >
                   Ingreso
@@ -102,14 +103,17 @@ export default function Transactions() {
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                     $
                   </span>
+                  {/* Texto y no number: el campo muestra el monto con formato (punto de miles y
+                      coma decimal) mientras se escribe, hasta 3 decimales. */}
                   <input
                     id="transaction-amount"
                     name="transaction-amount"
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0"
                     className="flex h-11 w-full rounded-full border border-input bg-zinc-800 pl-7 pr-3 py-2 text-lg font-medium focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={monto}
-                    onChange={(e) => setMonto(e.target.value)}
+                    value={amount}
+                    onChange={(e) => setAmount(formatTypedAmount(e.target.value, amount))}
                     autoComplete="off"
                   />
                 </div>
@@ -119,17 +123,17 @@ export default function Transactions() {
               <div className="flex flex-col gap-1.5 shrink-0">
                 <span className="text-sm font-medium text-foreground">Categoría</span>
                 <div className="flex flex-wrap gap-2">
-                  {categoriasFiltradas.map((c) => {
-                    const isActive = selectedCat === c.name;
+                  {filteredCategories.map((c) => {
+                    const isActive = selectedCategory === c.name;
                     return (
                       <button
                         key={c.name}
                         type="button"
-                        onClick={() => setSelectedCat(isActive ? null : c.name)}
+                        onClick={() => setSelectedCategory(isActive ? null : c.name)}
                         className={cn(
                           "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
                           isActive
-                            ? tipoSel === "gasto"
+                            ? selectedType === "expense"
                               ? "bg-destructive border-destructive text-destructive-foreground"
                               : "bg-emerald-600 border-emerald-600 text-white"
                             : "bg-zinc-800 border-border text-muted-foreground hover:bg-zinc-700",
@@ -139,7 +143,7 @@ export default function Transactions() {
                       </button>
                     );
                   })}
-                  {categoriasFiltradas.length === 0 && (
+                  {filteredCategories.length === 0 && (
                     <span className="text-xs text-muted-foreground italic">
                       No hay categorías para este tipo.
                     </span>
@@ -151,13 +155,13 @@ export default function Transactions() {
               <div className="flex flex-col gap-1.5 shrink-0">
                 <span className="text-sm font-medium text-foreground">Medio de pago</span>
                 <div className="flex flex-wrap gap-2">
-                  {mediosDisponibles.map((m) => {
-                    const isActive = selectedMedio === m;
+                  {availableBoxes.map((m) => {
+                    const isActive = selectedBox === m;
                     return (
                       <button
                         key={m}
                         type="button"
-                        onClick={() => setSelectedMedio(isActive ? null : m)}
+                        onClick={() => setSelectedBox(isActive ? null : m)}
                         className={cn(
                           "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
                           isActive
@@ -183,8 +187,8 @@ export default function Transactions() {
                     name="transaction-date"
                     type="date"
                     className="flex h-10 w-full rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring scheme-dark"
-                    value={fecha}
-                    onChange={(e) => setFecha(e.target.value)}
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
                     autoComplete="off"
                   />
                 </div>
@@ -198,15 +202,17 @@ export default function Transactions() {
                     type="text"
                     placeholder="Opcional..."
                     className="flex h-10 w-full rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                    value={nota}
-                    onChange={(e) => setNota(e.target.value)}
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
                     autoComplete="off"
                   />
                 </div>
               </div>
 
-              {fMsg && (
-                <p className="text-sm text-destructive font-medium text-center shrink-0">{fMsg}</p>
+              {formMessage && (
+                <p className="text-sm text-destructive font-medium text-center shrink-0">
+                  {formMessage}
+                </p>
               )}
 
               <button
@@ -249,13 +255,11 @@ export default function Transactions() {
                   id="category-select"
                   name="category-select"
                   className="h-9 w-full sm:w-48 rounded-xl border border-input bg-zinc-800 px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                  value={filtroCategoria || ""}
-                  onChange={(e) =>
-                    setFiltroCategoria(e.target.value === "" ? null : e.target.value)
-                  }
+                  value={categoryFilter || ""}
+                  onChange={(e) => setCategoryFilter(e.target.value === "" ? null : e.target.value)}
                 >
                   <option value="">Todas las categorías</option>
-                  {categoriasDisponibles.map((c) => (
+                  {availableCategories.map((c) => (
                     <option key={`filter-${c.name}`} value={c.name}>
                       {c.name}
                     </option>
@@ -269,12 +273,12 @@ export default function Transactions() {
               ref={listRef}
               className="flex flex-col gap-3 overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
-              {movimientosFiltrados.map((mov) => {
-                const isGasto = mov.tipo === "gasto";
+              {filteredTransactions.map((transaction) => {
+                const isExpense = transaction.type === "expense";
                 return (
                   <div
-                    key={mov.id}
-                    data-mov-row
+                    key={transaction.id}
+                    data-tx-row
                     className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl border border-border/50 hover:bg-secondary/50 transition-colors gap-3 shrink-0"
                   >
                     {/* Info principal */}
@@ -282,31 +286,31 @@ export default function Transactions() {
                       <div
                         className={cn(
                           "p-2 rounded-full shrink-0",
-                          isGasto
+                          isExpense
                             ? "bg-destructive/10 text-destructive"
                             : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
                         )}
                       >
-                        {isGasto ? <IconTrendingDown size={20} /> : <IconTrendingUp size={20} />}
+                        {isExpense ? <IconTrendingDown size={20} /> : <IconTrendingUp size={20} />}
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className="font-medium text-foreground text-sm truncate">
-                          {mov.cajita || "Sin categoría"}
+                          {transaction.category || "Sin categoría"}
                         </span>
                         {/* overflow-x-auto propio: permite ver la Nota completa con scroll
                             horizontal por registro, sin afectar el scroll-y de la lista
                             ni ensanchar la fila (min-w-0/flex-1 arriba acotan su ancho). */}
                         <div
-                          data-mov-scroll
+                          data-tx-scroll
                           className="flex items-center gap-2 text-xs text-muted-foreground overflow-x-auto whitespace-nowrap [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                         >
-                          <span className="shrink-0">{mov.fecha}</span>
+                          <span className="shrink-0">{transaction.date}</span>
                           <span className="shrink-0">•</span>
-                          <span className="shrink-0">{mov.medio}</span>
-                          {mov.nota && (
+                          <span className="shrink-0">{transaction.box}</span>
+                          {transaction.note && (
                             <>
                               <span className="shrink-0">•</span>
-                              <span className="shrink-0">{mov.nota}</span>
+                              <span className="shrink-0">{transaction.note}</span>
                             </>
                           )}
                         </div>
@@ -318,14 +322,14 @@ export default function Transactions() {
                       <span
                         className={cn(
                           "font-semibold whitespace-nowrap",
-                          isGasto ? "text-foreground" : "text-emerald-600 dark:text-emerald-400",
+                          isExpense ? "text-foreground" : "text-emerald-600 dark:text-emerald-400",
                         )}
                       >
-                        {isGasto ? "-" : "+"}
-                        {fmt(mov.monto)}
+                        {isExpense ? "-" : "+"}
+                        {fmt(transaction.amount)}
                       </span>
                       <button
-                        onClick={() => handleDelete(mov.id)}
+                        onClick={() => handleDelete(transaction.id)}
                         className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
                         title="Eliminar"
                       >
@@ -337,10 +341,10 @@ export default function Transactions() {
               })}
 
               {/* Mensaje de vacío dinámico según los filtros */}
-              {movimientosFiltrados.length === 0 && (
+              {filteredTransactions.length === 0 && (
                 <div className="py-10 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl shrink-0">
-                  {filtroCategoria
-                    ? `No hay transacciones registradas para "${filtroCategoria}" en este mes.`
+                  {categoryFilter
+                    ? `No hay transacciones registradas para "${categoryFilter}" en este mes.`
                     : "No hay transacciones registradas en este mes."}
                 </div>
               )}

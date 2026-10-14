@@ -2,53 +2,53 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { transactionsService } from "../services/transactions.service";
 import {
-  agregarMovimientoOptimista,
-  categoriasQuery,
-  mediosQuery,
-  movimientoCreadoConfirmado,
-  movimientoEliminadoConfirmado,
-  mesesConMovimientosQuery,
-  movimientosMesQuery,
-  quitarMovimientoOptimista,
+  addTransactionOptimistic,
+  categoriesQuery,
+  boxesQuery,
+  transactionCreatedConfirmed,
+  transactionDeletedConfirmed,
+  monthsWithTransactionsQuery,
+  monthTransactionsQuery,
+  removeTransactionOptimistic,
 } from "@/lib/queries";
 import { toast } from "sonner";
-import type { ResultadoOperacion } from "@/lib/supabase-errors";
-import { fechaLocalISO, generarUuid } from "@/lib/utils";
+import type { OperationResult } from "@/lib/supabase-errors";
+import { localISODate, generateUuid, parseAmount } from "@/lib/utils";
 
 // Reenvía el gesto de scroll horizontal desde cualquier punto de una fila
 // del historial (ícono, monto, botón de eliminar) hacia la franja de texto
 // de esa fila (data-mov-scroll), que es la única que realmente se desplaza.
 // Así el scroll-x "se siente" disponible en todo el registro sin mover el
 // ícono, el monto ni el botón, y sin tocar el diseño de Transactions.tsx.
-function encontrarScrollDeLaFila(
+function findRowScroll(
   target: EventTarget | null,
   // El mouse no tiene equivalente nativo a "arrastrar para desplazar" (a
   // diferencia del touch), así que para clic-y-arrastrar sí debe activarse
   // aunque el gesto empiece encima del propio texto.
-  { permitirDentroDelTexto = false } = {},
+  { allowInsideText = false } = {},
 ): HTMLElement | null {
   if (!(target instanceof Element)) return null;
-  const fila = target.closest("[data-mov-row]");
-  const scrollEl = fila?.querySelector<HTMLElement>("[data-mov-scroll]") ?? null;
+  const row = target.closest("[data-tx-row]");
+  const scrollEl = row?.querySelector<HTMLElement>("[data-tx-scroll]") ?? null;
   if (!scrollEl) return null;
-  if (!permitirDentroDelTexto && scrollEl.contains(target)) return null; // ya lo maneja el navegador
+  if (!allowInsideText && scrollEl.contains(target)) return null; // ya lo maneja el navegador
   if (scrollEl.scrollWidth <= scrollEl.clientWidth) return null; // nada que desplazar
   return scrollEl;
 }
 
-function useReenvioScrollHorizontalPorFila() {
+function useRowHorizontalScrollForwarding() {
   const listRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const lista = listRef.current;
-    if (!lista) return;
+    const list = listRef.current;
+    if (!list) return;
 
     function onWheel(e: WheelEvent) {
       // Solo gestos horizontales explícitos (trackpad o Shift+rueda); una
       // rueda vertical normal debe seguir moviendo la lista, no la fila.
       const delta = e.deltaX !== 0 ? e.deltaX : e.shiftKey ? e.deltaY : 0;
       if (delta === 0) return;
-      const scrollEl = encontrarScrollDeLaFila(e.target);
+      const scrollEl = findRowScroll(e.target);
       if (!scrollEl) return;
       scrollEl.scrollLeft += delta;
       e.preventDefault();
@@ -65,7 +65,7 @@ function useReenvioScrollHorizontalPorFila() {
     function onTouchStart(e: TouchEvent) {
       const t = e.touches[0];
       if (!t) return;
-      touch.scrollEl = encontrarScrollDeLaFila(e.target);
+      touch.scrollEl = findRowScroll(e.target);
       touch.x = touch.lastX = t.clientX;
       touch.y = t.clientY;
       touch.locked = null;
@@ -113,7 +113,7 @@ function useReenvioScrollHorizontalPorFila() {
       dragging: false,
     };
 
-    function cancelarClicSiguiente(e: MouseEvent) {
+    function cancelNextClick(e: MouseEvent) {
       // Evita que el mismo gesto de arrastre dispare un clic al soltar
       // (por ejemplo, sobre el botón Eliminar).
       e.stopPropagation();
@@ -132,7 +132,7 @@ function useReenvioScrollHorizontalPorFila() {
 
     function onMouseUp() {
       if (mouse.dragging) {
-        document.addEventListener("click", cancelarClicSiguiente, { capture: true, once: true });
+        document.addEventListener("click", cancelNextClick, { capture: true, once: true });
       }
       mouse.scrollEl = null;
       mouse.dragging = false;
@@ -142,7 +142,7 @@ function useReenvioScrollHorizontalPorFila() {
 
     function onMouseDown(e: MouseEvent) {
       if (e.button !== 0) return; // solo clic principal
-      const scrollEl = encontrarScrollDeLaFila(e.target, { permitirDentroDelTexto: true });
+      const scrollEl = findRowScroll(e.target, { allowInsideText: true });
       if (!scrollEl) return;
       mouse.scrollEl = scrollEl;
       mouse.startX = e.clientX;
@@ -154,135 +154,139 @@ function useReenvioScrollHorizontalPorFila() {
 
     // passive:false es necesario para poder cancelar el scroll vertical de la
     // página mientras se arrastra horizontalmente dentro de una fila.
-    lista.addEventListener("wheel", onWheel, { passive: false });
-    lista.addEventListener("touchstart", onTouchStart, { passive: true });
-    lista.addEventListener("touchmove", onTouchMove, { passive: false });
-    lista.addEventListener("touchend", onTouchEnd);
-    lista.addEventListener("touchcancel", onTouchEnd);
-    lista.addEventListener("mousedown", onMouseDown);
+    list.addEventListener("wheel", onWheel, { passive: false });
+    list.addEventListener("touchstart", onTouchStart, { passive: true });
+    list.addEventListener("touchmove", onTouchMove, { passive: false });
+    list.addEventListener("touchend", onTouchEnd);
+    list.addEventListener("touchcancel", onTouchEnd);
+    list.addEventListener("mousedown", onMouseDown);
 
     return () => {
-      lista.removeEventListener("wheel", onWheel);
-      lista.removeEventListener("touchstart", onTouchStart);
-      lista.removeEventListener("touchmove", onTouchMove);
-      lista.removeEventListener("touchend", onTouchEnd);
-      lista.removeEventListener("touchcancel", onTouchEnd);
-      lista.removeEventListener("mousedown", onMouseDown);
+      list.removeEventListener("wheel", onWheel);
+      list.removeEventListener("touchstart", onTouchStart);
+      list.removeEventListener("touchmove", onTouchMove);
+      list.removeEventListener("touchend", onTouchEnd);
+      list.removeEventListener("touchcancel", onTouchEnd);
+      list.removeEventListener("mousedown", onMouseDown);
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
-      document.removeEventListener("click", cancelarClicSiguiente, { capture: true });
+      document.removeEventListener("click", cancelNextClick, { capture: true });
     };
   }, []);
 
   return listRef;
 }
 
-export interface CategoriaBase {
+export interface CategoryBase {
   name: string;
-  tipo: "gasto" | "ingreso";
+  type: "expense" | "income";
 }
 
-export interface Movimiento {
+export interface Transaction {
   id: string;
-  tipo: "gasto" | "ingreso";
-  monto: number;
-  cajita: string;
-  medio: string;
-  fecha: string;
-  nota: string;
+  type: "expense" | "income";
+  amount: number;
+  category: string;
+  box: string;
+  date: string;
+  note: string;
 }
 
-const SIN_MOVIMIENTOS: Movimiento[] = [];
+const NO_TRANSACTIONS: Transaction[] = [];
 
 // Ventana de historial (en meses, hacia atrás desde el actual) en la que se buscan
 // los meses con movimientos para el selector. No se muestra: solo acota la búsqueda.
-const MESES_DE_HISTORIAL = 24;
+const HISTORY_MONTHS = 24;
 
 export function useTransactions() {
-  const listRef = useReenvioScrollHorizontalPorFila();
+  const listRef = useRowHorizontalScrollForwarding();
 
-  const hoy = new Date();
-  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
-  const [selectedMonth, setSelectedMonth] = useState(mesActual);
+  const today = new Date();
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}`;
+  const [selectedMonth, setSelectedMonth] = useState(currentMonth);
 
   const queryClient = useQueryClient();
   // Solo se pide el mes que se está viendo; cada mes se cachea por separado.
-  const movimientosQ = useQuery(movimientosMesQuery(selectedMonth));
-  const mediosQ = useQuery(mediosQuery);
-  const categoriasQ = useQuery(categoriasQuery);
+  const transactionsQ = useQuery(monthTransactionsQuery(selectedMonth));
+  const boxesQ = useQuery(boxesQuery);
+  const categoriesQ = useQuery(categoriesQuery);
 
   // Primer día de la ventana de historial: desde ahí se buscan los meses con movimientos.
-  const [anioActual = 0, numMesActual = 1] = mesActual.split("-").map(Number);
-  const inicioVentana = new Date(anioActual, numMesActual - MESES_DE_HISTORIAL, 1);
-  const desde = `${inicioVentana.getFullYear()}-${String(inicioVentana.getMonth() + 1).padStart(2, "0")}-01`;
-  const mesesQ = useQuery(mesesConMovimientosQuery(desde));
+  const [currentYear = 0, currentMonthNumber = 1] = currentMonth.split("-").map(Number);
+  const windowStart = new Date(currentYear, currentMonthNumber - HISTORY_MONTHS, 1);
+  const fromDate = `${windowStart.getFullYear()}-${String(windowStart.getMonth() + 1).padStart(2, "0")}-01`;
+  const monthsQ = useQuery(monthsWithTransactionsQuery(fromDate));
 
-  const movimientos = movimientosQ.data ?? SIN_MOVIMIENTOS;
-  const isLoading = movimientosQ.isPending || mediosQ.isPending || categoriasQ.isPending;
+  const transactions = transactionsQ.data ?? NO_TRANSACTIONS;
+  const isLoading = transactionsQ.isPending || boxesQ.isPending || categoriesQ.isPending;
 
   // Precarga el mes anterior y el siguiente (sin pasar del actual) para que al cambiar
   // de mes la lista ya esté en caché. prefetchQuery respeta el staleTime y no lanza errores.
   useEffect(() => {
-    const [anio = 0, numMes = 1] = selectedMonth.split("-").map(Number);
-    [new Date(anio, numMes - 2, 1), new Date(anio, numMes, 1)]
+    const [yearNumber = 0, monthNumber = 1] = selectedMonth.split("-").map(Number);
+    [new Date(yearNumber, monthNumber - 2, 1), new Date(yearNumber, monthNumber, 1)]
       .map((d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`)
-      .filter((mes) => mes <= mesActual)
-      .forEach((mes) => queryClient.prefetchQuery(movimientosMesQuery(mes)));
-  }, [selectedMonth, mesActual, queryClient]);
+      .filter((month) => month <= currentMonth)
+      .forEach((month) => queryClient.prefetchQuery(monthTransactionsQuery(month)));
+  }, [selectedMonth, currentMonth, queryClient]);
 
   // Los selectores se muestran ordenados por nombre
-  const mediosData = useMemo(
-    () => [...(mediosQ.data ?? [])].sort((a, b) => a.nombre.localeCompare(b.nombre)),
-    [mediosQ.data],
+  const boxesData = useMemo(
+    () => [...(boxesQ.data ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+    [boxesQ.data],
   );
-  const categoriasData = useMemo(
-    () => [...(categoriasQ.data ?? [])].sort((a, b) => a.nombre.localeCompare(b.nombre)),
-    [categoriasQ.data],
+  const categoriesData = useMemo(
+    () => [...(categoriesQ.data ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+    [categoriesQ.data],
   );
 
-  const [tipoSel, setTipoSel] = useState<"gasto" | "ingreso">("gasto");
-  const [monto, setMonto] = useState("");
-  const [selectedCat, setSelectedCat] = useState<string | null>(null);
-  const [selectedMedio, setSelectedMedio] = useState<string | null>(null);
-  const [fecha, setFecha] = useState(fechaLocalISO());
-  const [nota, setNota] = useState("");
-  const [fMsg, setFMsg] = useState("");
-  const [filtroCategoria, setFiltroCategoria] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<"expense" | "income">("expense");
+  const [amount, setAmount] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedBox, setSelectedBox] = useState<string | null>(null);
+  const [date, setDate] = useState(localISODate());
+  const [note, setNote] = useState("");
+  const [formMessage, setFormMessage] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
   // Si la pantalla sigue abierta al pasar la medianoche (hora local), el campo fecha avanza
   // al nuevo día, pero solo si seguía en "hoy": una fecha elegida a mano no se toca.
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
 
-    function programar() {
-      const ahora = new Date();
-      const hoyAlProgramar = fechaLocalISO(ahora);
-      const medianoche = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1);
+    function schedule() {
+      const currentMoment = new Date();
+      const todayWhenScheduling = localISODate(currentMoment);
+      const midnight = new Date(
+        currentMoment.getFullYear(),
+        currentMoment.getMonth(),
+        currentMoment.getDate() + 1,
+      );
       timer = setTimeout(() => {
-        const nuevoHoy = fechaLocalISO();
-        setFecha((actual) => (actual === hoyAlProgramar ? nuevoHoy : actual));
-        programar();
-      }, medianoche.getTime() - ahora.getTime());
+        const newToday = localISODate();
+        setDate((current) => (current === todayWhenScheduling ? newToday : current));
+        schedule();
+      }, midnight.getTime() - currentMoment.getTime());
     }
 
-    programar();
+    schedule();
     return () => clearTimeout(timer);
   }, []);
 
-  const mediosDisponibles = mediosData.map((m) => m.nombre);
-  const categoriasDisponibles: CategoriaBase[] = categoriasData.map((c) => ({
-    name: c.nombre,
-    tipo: c.tipo,
+  const availableBoxes = boxesData.map((m) => m.name);
+  const availableCategories: CategoryBase[] = categoriesData.map((c) => ({
+    name: c.name,
+    type: c.type,
   }));
 
-  const categoriasFiltradas = categoriasDisponibles.filter((c) => c.tipo === tipoSel);
+  const filteredCategories = availableCategories.filter((c) => c.type === selectedType);
 
   // Meses disponibles para filtrar la tabla: los que tengan movimientos (dentro de la
   // ventana de MESES_DE_HISTORIAL) + el mes actual y el seleccionado siempre presentes.
   const monthOptions = useMemo(() => {
-    const meses = new Set<string>([...(mesesQ.data ?? []), mesActual, selectedMonth]);
+    const months = new Set<string>([...(monthsQ.data ?? []), currentMonth, selectedMonth]);
 
-    return Array.from(meses)
+    return Array.from(months)
       .sort((a, b) => b.localeCompare(a)) // más reciente primero
       .map((m) => {
         const [year = 0, month = 1] = m.split("-").map(Number);
@@ -290,163 +294,162 @@ export function useTransactions() {
         const label = date.toLocaleDateString("es-CO", { month: "long", year: "numeric" });
         return { value: m, label: label.charAt(0).toUpperCase() + label.slice(1) };
       });
-  }, [mesesQ.data, mesActual, selectedMonth]);
+  }, [monthsQ.data, currentMonth, selectedMonth]);
 
   // Altas en curso por id (true = guardada, false = falló y se revirtió). Lo usa handleDelete.
-  const insertsPendientes = useRef(new Map<string, Promise<boolean>>());
+  const pendingInserts = useRef(new Map<string, Promise<boolean>>());
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const montoNum = parseFloat(monto);
+    const amountNumber = parseAmount(amount);
 
-    if (!montoNum || montoNum <= 0) {
-      setFMsg("Ingresa un monto válido mayor a 0");
+    if (amountNumber === undefined || amountNumber <= 0) {
+      setFormMessage("Ingresa un monto válido mayor a 0 (hasta 3 decimales)");
       return;
     }
-    if (!selectedMedio) {
-      setFMsg("Selecciona un medio (Box)");
+    if (!selectedBox) {
+      setFormMessage("Selecciona un medio (Box)");
       return;
     }
     // El campo de fecha se puede vaciar en el navegador.
-    if (!fecha) {
-      setFMsg("Selecciona una fecha");
+    if (!date) {
+      setFormMessage("Selecciona una fecha");
       return;
     }
 
     // La categoría es opcional: sin ella, el movimiento no se contabiliza
     // en los totales del dashboard (sirve para traspasos entre medios).
-    const categoriaObj = selectedCat
-      ? categoriasData.find((c) => c.nombre === selectedCat)
+    const categoryObject = selectedCategory
+      ? categoriesData.find((c) => c.name === selectedCategory)
       : undefined;
-    const medioObj = mediosData.find((m) => m.nombre === selectedMedio);
+    const boxObject = boxesData.find((m) => m.name === selectedBox);
 
     // Una selección que ya no existe (se borró o renombró en otra pantalla) se descarta:
     // sin esto, una categoría inexistente se guardaría como "sin categoría" sin avisar.
-    if (!medioObj) {
-      setSelectedMedio(null);
-      setFMsg("Medio inválido");
+    if (!boxObject) {
+      setSelectedBox(null);
+      setFormMessage("Medio inválido");
       return;
     }
-    if (selectedCat && !categoriaObj) {
-      setSelectedCat(null);
-      setFMsg("Categoría inválida");
+    if (selectedCategory && !categoryObject) {
+      setSelectedCategory(null);
+      setFormMessage("Categoría inválida");
       return;
     }
 
-    setFMsg("");
+    setFormMessage("");
 
-    const id = generarUuid();
-    const nuevoMov: Movimiento = {
+    const id = generateUuid();
+    const newTransaction: Transaction = {
       id,
-      tipo: tipoSel,
-      monto: montoNum,
-      cajita: selectedCat ?? "",
-      medio: selectedMedio,
-      fecha,
-      nota,
+      type: selectedType,
+      amount: amountNumber,
+      category: selectedCategory ?? "",
+      box: selectedBox,
+      date,
+      note,
     };
     // Lo escrito, para devolverlo al formulario si la BD rechaza el movimiento.
-    const escrito = { monto, nota, categoria: selectedCat };
+    const typed = { amount, note, category: selectedCategory };
 
     // La fila aparece y el formulario se limpia al instante; el INSERT va en segundo plano.
-    const revertir = await agregarMovimientoOptimista(queryClient, nuevoMov);
-    setMonto("");
-    setNota("");
-    setSelectedCat(null);
+    const revert = await addTransactionOptimistic(queryClient, newTransaction);
+    setAmount("");
+    setNote("");
+    setSelectedCategory(null);
 
-    const alta = (async () => {
-      let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+    const creation = (async () => {
+      let result: OperationResult = { ok: false, reason: "error" };
       try {
-        resultado = await transactionsService.crearMovimiento({
+        result = await transactionsService.createTransaction({
           id,
-          tipo: tipoSel,
-          monto: montoNum,
-          medioId: medioObj.id,
-          categoriaId: categoriaObj?.id ?? null,
-          fecha,
-          nota,
+          type: selectedType,
+          amount: amountNumber,
+          boxId: boxObject.id,
+          categoryId: categoryObject?.id ?? null,
+          date,
+          note,
         });
       } catch (error) {
         console.error("Error creando movimiento:", error);
       }
 
-      if (resultado.ok) {
-        await movimientoCreadoConfirmado(queryClient, nuevoMov);
+      if (result.ok) {
+        await transactionCreatedConfirmed(queryClient, newTransaction);
         return true;
       }
 
-      await revertir();
+      await revert();
       // Cada campo solo se restaura si sigue vacío: no se pisa un registro ya empezado.
-      setMonto((actual) => (actual === "" ? escrito.monto : actual));
-      setNota((actual) => (actual === "" ? escrito.nota : actual));
-      setSelectedCat((actual) => (actual === null ? escrito.categoria : actual));
+      setAmount((current) => (current === "" ? typed.amount : current));
+      setNote((current) => (current === "" ? typed.note : current));
+      setSelectedCategory((current) => (current === null ? typed.category : current));
       // Solo se explica la causa cuando se sabe con certeza cuál fue.
       toast.error("No se pudo guardar el movimiento", {
-        description:
-          resultado.motivo === "sin-conexion" ? "No hay conexión a internet." : undefined,
+        description: result.reason === "offline" ? "No hay conexión a internet." : undefined,
       });
       return false;
     })();
 
-    insertsPendientes.current.set(id, alta);
-    await alta;
-    insertsPendientes.current.delete(id);
+    pendingInserts.current.set(id, creation);
+    await creation;
+    pendingInserts.current.delete(id);
   }
 
   async function handleDelete(id: string) {
     // Si el alta de esta fila sigue en curso, se espera a que termine (incluida su relectura)
     // para que el DELETE no llegue antes que el INSERT ni reviva la fila. Si el alta falló,
     // la fila ya se revirtió y no hay nada que borrar.
-    const alta = insertsPendientes.current.get(id);
-    if (alta && !(await alta)) return;
+    const creation = pendingInserts.current.get(id);
+    if (creation && !(await creation)) return;
 
     // La fila desaparece al instante; si la BD rechaza el borrado, reaparece.
-    const revertir = await quitarMovimientoOptimista(queryClient, id);
+    const revert = await removeTransactionOptimistic(queryClient, id);
 
-    let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+    let result: OperationResult = { ok: false, reason: "error" };
     try {
-      resultado = await transactionsService.eliminarMovimiento(id);
+      result = await transactionsService.deleteTransaction(id);
     } catch (error) {
       console.error("Error eliminando movimiento:", error);
     }
 
-    if (resultado.ok) {
-      await movimientoEliminadoConfirmado(queryClient);
+    if (result.ok) {
+      await transactionDeletedConfirmed(queryClient);
       return;
     }
 
-    await revertir();
+    await revert();
     // Solo se explica la causa cuando se sabe con certeza cuál fue.
     toast.error("No se pudo eliminar el movimiento", {
-      description: resultado.motivo === "sin-conexion" ? "No hay conexión a internet." : undefined,
+      description: result.reason === "offline" ? "No hay conexión a internet." : undefined,
     });
   }
 
   return {
     listRef,
-    mediosDisponibles,
-    categoriasDisponibles,
-    movimientos,
+    availableBoxes,
+    availableCategories,
+    transactions,
     isLoading,
-    tipoSel,
-    setTipoSel,
-    monto,
-    setMonto,
-    selectedCat,
-    setSelectedCat,
-    selectedMedio,
-    setSelectedMedio,
-    fecha,
-    setFecha,
-    nota,
-    setNota,
-    fMsg,
-    filtroCategoria,
-    setFiltroCategoria,
+    selectedType,
+    setSelectedType,
+    amount,
+    setAmount,
+    selectedCategory,
+    setSelectedCategory,
+    selectedBox,
+    setSelectedBox,
+    date,
+    setDate,
+    note,
+    setNote,
+    formMessage,
+    categoryFilter,
+    setCategoryFilter,
     selectedMonth,
     setSelectedMonth,
     monthOptions,
-    categoriasFiltradas,
+    filteredCategories,
     handleSubmit,
     handleDelete,
   };

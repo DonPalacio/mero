@@ -9,8 +9,8 @@ export default function Login() {
     setEmail,
     password,
     setPassword,
-    modo,
-    setModo,
+    mode,
+    setMode,
     msg,
     setMsg,
     loading,
@@ -31,10 +31,10 @@ export default function Login() {
             className="h-8 w-8 mb-4 shrink-0 brightness-0 invert"
           />
           <h2 className="text-2xl font-bold text-foreground">
-            {modo === "login" ? "Iniciar sesión" : "Crear cuenta"}
+            {mode === "login" ? "Iniciar sesión" : "Crear cuenta"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1 text-center">
-            {modo === "login" ? "Bienvenido a Mero" : "Comienza a controlar tus finanzas"}
+            {mode === "login" ? "Bienvenido a Mero" : "Comienza a controlar tus finanzas"}
           </p>
         </div>
 
@@ -85,7 +85,7 @@ export default function Login() {
           <div
             className={cn(
               "text-sm font-medium p-3 rounded-md text-center",
-              modo === "signup" && !msg.toLowerCase().includes("error")
+              mode === "signup" && !msg.toLowerCase().includes("error")
                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                 : "bg-destructive/10 text-destructive",
             )}
@@ -101,18 +101,18 @@ export default function Login() {
             disabled={loading}
             className="w-full flex h-10 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Un momento..." : modo === "login" ? "Entrar" : "Registrarme"}
+            {loading ? "Un momento..." : mode === "login" ? "Entrar" : "Registrarme"}
           </button>
 
           <button
             type="button"
             onClick={() => {
-              setModo(modo === "login" ? "signup" : "login");
+              setMode(mode === "login" ? "signup" : "login");
               setMsg("");
             }}
             className="w-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-2"
           >
-            {modo === "login"
+            {mode === "login"
               ? "¿No tienes cuenta? Crea una aquí"
               : "¿Ya tienes cuenta? Inicia sesión"}
           </button>
