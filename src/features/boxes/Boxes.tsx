@@ -9,12 +9,17 @@ export default function Boxes() {
     medios,
     newMedioValue,
     setNewMedioValue,
+    newTasaValue,
+    setNewTasaValue,
     editingMedio,
     setEditingMedio,
     renameMedioValue,
     setRenameMedioValue,
     confirmDeleteMedio,
     setConfirmDeleteMedio,
+    confirmResetMedio,
+    setConfirmResetMedio,
+    doResetRendimientos,
     tasaValue,
     setTasaValue,
     desdeValue,
@@ -37,24 +42,39 @@ export default function Boxes() {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <input
+                id="new-medio-input"
+                name="new-medio-input"
+                type="text"
+                placeholder="Nueva caja"
+                className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                value={newMedioValue}
+                onChange={(e) => setNewMedioValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddMedio()}
+                autoComplete="off"
+              />
+              <button
+                onClick={handleAddMedio}
+                className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <IconPlus className="h-5 w-5" />
+              </button>
+            </div>
+            {/* Rendimiento E.A. de la caja nueva: opcional, vacío = no rinde */}
             <input
-              id="new-medio-input"
-              name="new-medio-input"
+              id="new-medio-tasa-input"
+              name="new-medio-tasa-input"
               type="text"
-              placeholder="Nueva caja"
+              inputMode="decimal"
+              placeholder="Rendimiento E.A. % (ej: 9,30)"
               className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              value={newMedioValue}
-              onChange={(e) => setNewMedioValue(e.target.value)}
+              value={newTasaValue}
+              onChange={(e) => setNewTasaValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddMedio()}
               autoComplete="off"
             />
-            <button
-              onClick={handleAddMedio}
-              className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <IconPlus className="h-5 w-5" />
-            </button>
           </div>
         </div>
 
@@ -63,6 +83,7 @@ export default function Boxes() {
           {medios.map((m) => {
             const isEditing = editingMedio === m.id;
             const isConfirming = confirmDeleteMedio === m.id;
+            const isResetting = confirmResetMedio === m.id;
 
             return (
               <div
@@ -146,20 +167,45 @@ export default function Boxes() {
                   /* MODO CONFIRMACIÓN DE BORRADO */
                   <div className="flex w-full items-center justify-between">
                     <span className="text-sm font-medium text-destructive">
-                      ¿Borrar "{m.nombre}"?
+                      ¿Deseas eliminar la caja "{m.nombre}"?
                     </span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => doDeleteMedio(m.id)}
                         className="text-xs font-medium bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md hover:bg-destructive/90 transition-colors"
                       >
-                        Sí, borrar
+                        Sí, eliminar
                       </button>
                       <button
-                        onClick={() => setConfirmDeleteMedio(null)}
+                        onClick={() => {
+                          setConfirmDeleteMedio(null);
+                          // La caja se conserva: si rinde por E.A., se ofrece quitar solo ese dinero.
+                          if (m.tasa_ea !== null) setConfirmResetMedio(m.id);
+                        }}
                         className="text-xs font-medium bg-secondary text-secondary-foreground px-3 py-1.5 rounded-md hover:bg-secondary/80 transition-colors"
                       >
-                        Cancelar
+                        No
+                      </button>
+                    </div>
+                  </div>
+                ) : isResetting ? (
+                  /* MODO CONFIRMACIÓN DE REINICIO DE RENDIMIENTOS */
+                  <div className="flex w-full items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-foreground">
+                      ¿Eliminar también el dinero generado por el E.A. de "{m.nombre}"?
+                    </span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => doResetRendimientos(m.id)}
+                        className="text-xs font-medium bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md hover:bg-destructive/90 transition-colors"
+                      >
+                        Sí, eliminarlo
+                      </button>
+                      <button
+                        onClick={() => setConfirmResetMedio(null)}
+                        className="text-xs font-medium bg-secondary text-secondary-foreground px-3 py-1.5 rounded-md hover:bg-secondary/80 transition-colors"
+                      >
+                        No
                       </button>
                     </div>
                   </div>
@@ -173,7 +219,7 @@ export default function Boxes() {
                       <span className="block text-sm text-muted-foreground">{fmt(m.saldo)}</span>
                       {m.tasa_ea !== null && (
                         <span className="block text-xs text-muted-foreground">
-                          {m.tasa_ea.toLocaleString("es-CO")} % E.A. · ≈{" "}
+                          {m.tasa_ea.toLocaleString("es-CO")}% E.A. · ≈{" "}
                           {formatearRendimiento(rendimientoDiarioEstimado(m.saldo, m.tasa_ea))} al
                           día
                         </span>

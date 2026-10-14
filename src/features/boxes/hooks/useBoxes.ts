@@ -12,7 +12,7 @@ import {
   mediosQuery,
   quitarMedioOptimista,
   renombrarMedioOptimista,
-  tasaMedioConfirmada,
+  rendimientoMedioConfirmado,
 } from "@/lib/queries";
 import { parsearTasaEa, planearEdicionMedio } from "@/lib/rendimiento";
 import { fechaLocalISO, generarUuid } from "@/lib/utils";
@@ -26,9 +26,12 @@ export function useBoxes() {
   const isLoading = mediosQ.isPending;
 
   const [newMedioValue, setNewMedioValue] = useState("");
+  // Rendimiento E.A. de la caja que se está creando ("9,30"; vacío = sin rendimiento).
+  const [newTasaValue, setNewTasaValue] = useState("");
   const [editingMedio, setEditingMedio] = useState<string | null>(null); // id
   const [renameMedioValue, setRenameMedioValue] = useState("");
   const [confirmDeleteMedio, setConfirmDeleteMedio] = useState<string | null>(null); // id
+  const [confirmResetMedio, setConfirmResetMedio] = useState<string | null>(null); // id
   // Edición del rendimiento: tasa escrita ("9,30"; vacío = sin rendimiento) y desde qué día rinde.
   const [tasaValue, setTasaValue] = useState("");
   const [desdeValue, setDesdeValue] = useState(fechaLocalISO());
@@ -44,7 +47,18 @@ export function useBoxes() {
     if (!v) return;
     if (medios.some((m) => m.nombre === v)) {
       setNewMedioValue("");
+      setNewTasaValue("");
       return; // Ya existe visualmente
+    }
+
+    // Se valida antes de mostrar la caja: con una tasa inválida no se crea nada.
+    const textoTasa = newTasaValue;
+    const tasa = parsearTasaEa(textoTasa);
+    if (tasa === undefined) {
+      toast.error("El rendimiento debe ser un número entre 0 y 100", {
+        description: "Usa hasta 3 decimales, por ejemplo 9,30.",
+      });
+      return; // se queda el formulario para corregirlo
     }
 
     // Al confirmarse el alta, la lista se relee con los valores reales de la BD.
@@ -55,17 +69,18 @@ export function useBoxes() {
       saldo: 0,
       color: null,
       icono: null,
-      tasa_ea: null,
+      tasa_ea: tasa,
     };
 
-    // La caja aparece y el campo se limpia al instante; el INSERT va en segundo plano.
+    // La caja aparece y los campos se limpian al instante; el INSERT va en segundo plano.
     const revertir = await agregarMedioOptimista(queryClient, nuevo);
     setNewMedioValue("");
+    setNewTasaValue("");
 
     const alta = (async () => {
       let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
       try {
-        resultado = await boxesService.crearMedio({ id: nuevo.id, nombre: v });
+        resultado = await boxesService.crearMedio({ id: nuevo.id, nombre: v, tasaEa: tasa });
       } catch (error) {
         console.error("Error creando medio:", error);
       }
@@ -79,6 +94,7 @@ export function useBoxes() {
       // Solo se restaura lo escrito si el campo sigue vacío: no se pisa una caja que ya se
       // haya empezado a escribir.
       setNewMedioValue((actual) => (actual === "" ? v : actual));
+      setNewTasaValue((actual) => (actual === "" ? textoTasa : actual));
       // Solo se explica la causa cuando se sabe con certeza cuál fue.
       const descripcion = {
         duplicado: "Revisa que no exista otra con ese nombre.",
@@ -124,12 +140,34 @@ export function useBoxes() {
     }
 
     if (resultado.ok) {
-      await tasaMedioConfirmada(queryClient);
+      await rendimientoMedioConfirmado(queryClient);
       return;
     }
 
     await revertir();
     toast.error("No se pudo guardar el rendimiento", {
+      description: resultado.motivo === "sin-conexion" ? "No hay conexión a internet." : undefined,
+    });
+  }
+
+  // Quita de la caja los pesos acumulados por E.A. (historial y saldo); la tasa se conserva.
+  async function doResetRendimientos(id: string) {
+    setConfirmResetMedio(null);
+
+    let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+    try {
+      resultado = await boxesService.reiniciarRendimientos(id);
+    } catch (error) {
+      console.error("Error reiniciando rendimientos:", error);
+    }
+
+    if (resultado.ok) {
+      // El saldo lo recalcula la BD: no se puede deducir aquí, hay que volver a leerlo.
+      await rendimientoMedioConfirmado(queryClient);
+      return;
+    }
+
+    toast.error("No se pudieron reiniciar los rendimientos", {
       description: resultado.motivo === "sin-conexion" ? "No hay conexión a internet." : undefined,
     });
   }
@@ -224,12 +262,17 @@ export function useBoxes() {
     isLoading,
     newMedioValue,
     setNewMedioValue,
+    newTasaValue,
+    setNewTasaValue,
     editingMedio,
     setEditingMedio,
     renameMedioValue,
     setRenameMedioValue,
     confirmDeleteMedio,
     setConfirmDeleteMedio,
+    confirmResetMedio,
+    setConfirmResetMedio,
+    doResetRendimientos,
     tasaValue,
     setTasaValue,
     desdeValue,

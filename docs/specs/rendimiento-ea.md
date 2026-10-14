@@ -17,6 +17,7 @@ igual que lo hace un banco con rendimiento diario (p. ej. Nu al 9,30 % E.A.).
    siguiente (job `pg_cron`).
 4. **Activación:** una caja sin tasa (`null` o 0) no rinde. Al activarla el usuario puede elegir
    una fecha de inicio (no futura); sin fecha, el primer rendimiento es el del día de activación.
+   Al crear una caja también se puede escribir la tasa en el mismo formulario; rinde desde ese día.
    Los días atrasados desde esa fecha se acreditan de una vez.
 5. **Quién escribe:** solo la base de datos. El cliente solo puede cambiar `tasa_ea` y
    `rendimiento_desde`; `saldo`, `rendimiento_hasta` y la tabla `rendimientos` no son escribibles.
@@ -26,6 +27,10 @@ igual que lo hace un banco con rendimiento diario (p. ej. Nu al 9,30 % E.A.).
    en la siguiente corrida.
 8. **Sin retroactivo por movimientos antiguos:** un movimiento con fecha pasada no recalcula días ya
    acreditados.
+9. **Reiniciar rendimientos:** al pulsar eliminar caja y responder "No" a eliminarla, si la caja
+   tiene tasa se pregunta si también se elimina el dinero generado por el E.A. La BD borra su historial en `rendimientos` y resta la suma del saldo en una sola transacción
+   (`reiniciar_rendimientos`). La tasa y el avance diario se conservan: no se vuelve a acreditar
+   hacia atrás. Borrar una caja ya elimina su historial (`ON DELETE CASCADE`).
 
 ## Fuera de alcance
 

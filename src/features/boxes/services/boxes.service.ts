@@ -34,11 +34,18 @@ export const boxesService = {
     id: string;
     nombre: string;
     saldoInicial?: number;
+    // % E.A. opcional: la BD fija desde cuándo rinde (el día de la creación).
+    tasaEa?: number | null;
   }): Promise<ResultadoOperacion> => {
     // user_id lo asigna la BD (default auth.uid()) a partir del JWT
-    const { error } = await supabase
-      .from(TABLA_MEDIOS)
-      .insert([{ id: params.id, nombre: params.nombre, saldo: params.saldoInicial ?? 0 }]);
+    const { error } = await supabase.from(TABLA_MEDIOS).insert([
+      {
+        id: params.id,
+        nombre: params.nombre,
+        saldo: params.saldoInicial ?? 0,
+        ...(params.tasaEa != null ? { tasa_ea: params.tasaEa } : {}),
+      },
+    ]);
 
     if (error) {
       console.error("Error creando medio:", error);
@@ -70,6 +77,17 @@ export const boxesService = {
     const { error } = await supabase.rpc("acreditar_mis_rendimientos");
     if (error) {
       console.error("Error acreditando rendimientos:", error);
+      return { ok: false, motivo: motivoDeFallo(error) };
+    }
+    return { ok: true };
+  },
+
+  // Borra los rendimientos acumulados de la caja y los resta de su saldo (la BD lo hace en
+  // una sola transacción y solo sobre cajas del usuario). La tasa se conserva.
+  reiniciarRendimientos: async (id: string): Promise<ResultadoOperacion> => {
+    const { error } = await supabase.rpc("reiniciar_rendimientos", { p_medio: id });
+    if (error) {
+      console.error("Error reiniciando rendimientos:", error);
       return { ok: false, motivo: motivoDeFallo(error) };
     }
     return { ok: true };

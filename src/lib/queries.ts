@@ -334,9 +334,9 @@ export async function actualizarTasaMedioOptimista(
   };
 }
 
-// Una vez la BD confirma la tasa (y acredita los días atrasados), el saldo del medio pudo
-// cambiar: se relee la lista. Los totales del dashboard no incluyen rendimientos.
-export function tasaMedioConfirmada(qc: QueryClient) {
+// Una vez la BD confirma un cambio de tasa o el reinicio de rendimientos, el saldo del medio
+// pudo cambiar: se relee la lista. Los totales del dashboard no incluyen rendimientos.
+export function rendimientoMedioConfirmado(qc: QueryClient) {
   return qc.invalidateQueries({ queryKey: queryKeys.medios, exact: true });
 }
 
