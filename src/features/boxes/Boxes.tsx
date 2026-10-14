@@ -1,6 +1,8 @@
 import React from "react";
 import { IconEdit, IconTrash, IconCheck, IconX, IconPlus } from "@tabler/icons-react";
 import { useBoxes } from "./hooks/useBoxes";
+import { fechaLocalISO, fmt } from "@/lib/utils";
+import { formatearRendimiento, rendimientoDiarioEstimado } from "@/lib/rendimiento";
 
 export default function Boxes() {
   const {
@@ -13,9 +15,13 @@ export default function Boxes() {
     setRenameMedioValue,
     confirmDeleteMedio,
     setConfirmDeleteMedio,
+    tasaValue,
+    setTasaValue,
+    desdeValue,
+    setDesdeValue,
     handleAddMedio,
-    startRenameMedio,
-    doRenameMedio,
+    startEditMedio,
+    doSaveMedio,
     doDeleteMedio,
   } = useBoxes();
 
@@ -65,30 +71,76 @@ export default function Boxes() {
               >
                 {/* MODO EDICIÓN */}
                 {isEditing ? (
-                  <div className="flex w-full items-center gap-2">
-                    <input
-                      id={`rename-medio-${m.id}`}
-                      name={`rename-medio-${m.id}`}
-                      type="text"
-                      value={renameMedioValue}
-                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                      onChange={(e) => setRenameMedioValue(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && doRenameMedio(m.id)}
-                      autoComplete="off"
-                      autoFocus
-                    />
-                    <button
-                      onClick={() => doRenameMedio(m.id)}
-                      className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full transition-colors"
-                    >
-                      <IconCheck className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => setEditingMedio(null)}
-                      className="p-2 text-muted-foreground hover:bg-secondary rounded-full transition-colors"
-                    >
-                      <IconX className="h-4 w-4" />
-                    </button>
+                  <div className="flex w-full flex-col gap-2">
+                    <div className="flex w-full items-center gap-2">
+                      <input
+                        id={`rename-medio-${m.id}`}
+                        name={`rename-medio-${m.id}`}
+                        type="text"
+                        value={renameMedioValue}
+                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                        onChange={(e) => setRenameMedioValue(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && doSaveMedio(m.id)}
+                        autoComplete="off"
+                        autoFocus
+                      />
+                      <button
+                        onClick={() => doSaveMedio(m.id)}
+                        className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full transition-colors"
+                      >
+                        <IconCheck className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setEditingMedio(null)}
+                        className="p-2 text-muted-foreground hover:bg-secondary rounded-full transition-colors"
+                      >
+                        <IconX className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {/* Rendimiento E.A.: vacío = la caja no rinde */}
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor={`tasa-medio-${m.id}`}
+                        className="text-xs text-muted-foreground shrink-0"
+                      >
+                        Rendimiento E.A. (%)
+                      </label>
+                      <input
+                        id={`tasa-medio-${m.id}`}
+                        name={`tasa-medio-${m.id}`}
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="Ej: 9,30"
+                        value={tasaValue}
+                        className="flex h-9 w-28 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                        onChange={(e) => setTasaValue(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && doSaveMedio(m.id)}
+                        autoComplete="off"
+                      />
+                    </div>
+
+                    {/* Solo al activar la tasa: desde qué día se acredita (los atrasados se
+                        acreditan de una vez) */}
+                    {m.tasa_ea === null && tasaValue.trim() !== "" && (
+                      <div className="flex items-center gap-2">
+                        <label
+                          htmlFor={`desde-medio-${m.id}`}
+                          className="text-xs text-muted-foreground shrink-0"
+                        >
+                          Rinde desde
+                        </label>
+                        <input
+                          id={`desde-medio-${m.id}`}
+                          name={`desde-medio-${m.id}`}
+                          type="date"
+                          max={fechaLocalISO()}
+                          value={desdeValue}
+                          className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                          onChange={(e) => setDesdeValue(e.target.value)}
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : isConfirming ? (
                   /* MODO CONFIRMACIÓN DE BORRADO */
@@ -114,12 +166,22 @@ export default function Boxes() {
                 ) : (
                   /* MODO VISUALIZACIÓN NORMAL */
                   <>
-                    <span className="font-medium text-card-foreground truncate pr-2">
-                      {m.nombre}
-                    </span>
+                    <div className="min-w-0 pr-2">
+                      <span className="block font-medium text-card-foreground truncate">
+                        {m.nombre}
+                      </span>
+                      <span className="block text-sm text-muted-foreground">{fmt(m.saldo)}</span>
+                      {m.tasa_ea !== null && (
+                        <span className="block text-xs text-muted-foreground">
+                          {m.tasa_ea.toLocaleString("es-CO")} % E.A. · ≈{" "}
+                          {formatearRendimiento(rendimientoDiarioEstimado(m.saldo, m.tasa_ea))} al
+                          día
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <button
-                        onClick={() => startRenameMedio(m.id, m.nombre)}
+                        onClick={() => startEditMedio(m)}
                         className="p-2 text-muted-foreground hover:text-primary hover:bg-secondary rounded-full transition-colors"
                         title="Editar"
                       >

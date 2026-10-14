@@ -3,7 +3,7 @@ import { motivoDeFallo, type ResultadoOperacion } from "@/lib/supabase-errors";
 
 const TABLA_MEDIOS = "medios";
 // Solo las columnas que usa la app (no user_id, fechas ni columnas de sincronización).
-const SELECT_MEDIOS = "id, nombre, saldo, color, icono";
+const SELECT_MEDIOS = "id, nombre, saldo, color, icono, tasa_ea";
 
 export interface Medio {
   id: string;
@@ -11,6 +11,8 @@ export interface Medio {
   saldo: number;
   color: string | null;
   icono: string | null;
+  // % E.A. escrito por el usuario; null = la caja no rinde (ver docs/specs/rendimiento-ea.md).
+  tasa_ea: number | null;
 }
 
 export const boxesService = {
@@ -46,14 +48,28 @@ export const boxesService = {
   },
 
   // Nota: "saldo" no se edita aquí a propósito, lo ajusta el trigger de la BD
-  // cada vez que se crea/edita/borra un movimiento asociado.
+  // cada vez que se crea/edita/borra un movimiento asociado o se acredita un rendimiento.
+  // `rendimiento_desde` solo se envía al activar la tasa: la BD ignora cambiarlo después.
   actualizarMedio: async (
     id: string,
-    cambios: Partial<Pick<Medio, "nombre" | "color" | "icono">>,
+    cambios: Partial<Pick<Medio, "nombre" | "color" | "icono" | "tasa_ea">> & {
+      rendimiento_desde?: string | null;
+    },
   ): Promise<ResultadoOperacion> => {
     const { error } = await supabase.from(TABLA_MEDIOS).update(cambios).eq("id", id);
     if (error) {
       console.error("Error actualizando medio:", error);
+      return { ok: false, motivo: motivoDeFallo(error) };
+    }
+    return { ok: true };
+  },
+
+  // Acredita ya los rendimientos atrasados de las cajas del usuario (la BD solo toca las
+  // suyas). El job diario lo hace igual cada noche; esto evita esperar tras activar la tasa.
+  acreditarMisRendimientos: async (): Promise<ResultadoOperacion> => {
+    const { error } = await supabase.rpc("acreditar_mis_rendimientos");
+    if (error) {
+      console.error("Error acreditando rendimientos:", error);
       return { ok: false, motivo: motivoDeFallo(error) };
     }
     return { ok: true };

@@ -310,6 +310,36 @@ export async function renombrarMedioOptimista(qc: QueryClient, id: string, nuevo
   };
 }
 
+// Cambio optimista de la tasa E.A. de un medio. Devuelve `revertir`, que restaura solo la tasa
+// de ese medio (sin pisar otros cambios) y vuelve a leer la lista si la BD rechaza el cambio.
+export async function actualizarTasaMedioOptimista(
+  qc: QueryClient,
+  id: string,
+  tasa: number | null,
+) {
+  const anterior = qc.getQueryData<MedioDB[]>(queryKeys.medios)?.find((m) => m.id === id);
+
+  await qc.cancelQueries({ queryKey: queryKeys.medios, exact: true });
+  qc.setQueryData<MedioDB[]>(queryKeys.medios, (old) =>
+    old?.map((m) => (m.id === id ? { ...m, tasa_ea: tasa } : m)),
+  );
+
+  return async function revertir() {
+    if (anterior) {
+      qc.setQueryData<MedioDB[]>(queryKeys.medios, (old) =>
+        old?.map((m) => (m.id === id ? { ...m, tasa_ea: anterior.tasa_ea } : m)),
+      );
+    }
+    await qc.invalidateQueries({ queryKey: queryKeys.medios, exact: true });
+  };
+}
+
+// Una vez la BD confirma la tasa (y acredita los días atrasados), el saldo del medio pudo
+// cambiar: se relee la lista. Los totales del dashboard no incluyen rendimientos.
+export function tasaMedioConfirmada(qc: QueryClient) {
+  return qc.invalidateQueries({ queryKey: queryKeys.medios, exact: true });
+}
+
 // Borrado optimista de un medio: la BD borra también sus movimientos (on delete cascade),
 // así que se quitan de las cachés de meses los que tengan el nombre de ese medio. Los saldos
 // de los demás medios no cambian (el trigger solo toca el saldo del medio de cada movimiento).

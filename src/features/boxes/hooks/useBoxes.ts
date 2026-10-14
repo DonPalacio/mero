@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { boxesService, type Medio } from "../services/boxes.service";
 import type { ResultadoOperacion } from "@/lib/supabase-errors";
 import {
+  actualizarTasaMedioOptimista,
   agregarMedioOptimista,
   catalogoRenombradoConfirmado,
   medioCreadoConfirmado,
@@ -11,8 +12,10 @@ import {
   mediosQuery,
   quitarMedioOptimista,
   renombrarMedioOptimista,
+  tasaMedioConfirmada,
 } from "@/lib/queries";
-import { generarUuid } from "@/lib/utils";
+import { parsearTasaEa, planearEdicionMedio } from "@/lib/rendimiento";
+import { fechaLocalISO, generarUuid } from "@/lib/utils";
 
 const SIN_MEDIOS: Medio[] = [];
 
@@ -26,6 +29,9 @@ export function useBoxes() {
   const [editingMedio, setEditingMedio] = useState<string | null>(null); // id
   const [renameMedioValue, setRenameMedioValue] = useState("");
   const [confirmDeleteMedio, setConfirmDeleteMedio] = useState<string | null>(null); // id
+  // Edición del rendimiento: tasa escrita ("9,30"; vacío = sin rendimiento) y desde qué día rinde.
+  const [tasaValue, setTasaValue] = useState("");
+  const [desdeValue, setDesdeValue] = useState(fechaLocalISO());
 
   // Altas en curso por id (true = guardada, false = falló y se revirtió). Renombrar o eliminar
   // una caja recién creada espera a su alta: si no, el UPDATE/DELETE llegaría antes que el
@@ -49,6 +55,7 @@ export function useBoxes() {
       saldo: 0,
       color: null,
       icono: null,
+      tasa_ea: null,
     };
 
     // La caja aparece y el campo se limpia al instante; el INSERT va en segundo plano.
@@ -87,16 +94,68 @@ export function useBoxes() {
     altasPendientes.current.delete(nuevo.id);
   }
 
-  function startRenameMedio(id: string, nombreActual: string) {
-    setEditingMedio(id);
-    setRenameMedioValue(nombreActual);
+  function startEditMedio(medio: Medio) {
+    setEditingMedio(medio.id);
+    setRenameMedioValue(medio.nombre);
+    setTasaValue(medio.tasa_ea === null ? "" : String(medio.tasa_ea).replace(".", ","));
+    setDesdeValue(fechaLocalISO());
     setConfirmDeleteMedio(null);
+  }
+
+  // Guarda la tasa E.A. de la caja. La BD acredita el rendimiento cada noche; al activar la tasa
+  // se piden ya los días atrasados desde la fecha elegida para no esperar hasta mañana.
+  async function doChangeTasa(id: string, tasa: number | null, desde: string | null) {
+    // Si la caja es recién creada, se espera a que termine su alta.
+    const alta = altasPendientes.current.get(id);
+    if (alta && !(await alta)) return;
+
+    const revertir = await actualizarTasaMedioOptimista(queryClient, id, tasa);
+
+    let resultado: ResultadoOperacion = { ok: false, motivo: "error" };
+    try {
+      resultado = await boxesService.actualizarMedio(id, {
+        tasa_ea: tasa,
+        ...(tasa !== null && desde ? { rendimiento_desde: desde } : {}),
+      });
+      // Es una comodidad: si falla, el job de la noche acredita igual lo pendiente.
+      if (resultado.ok && tasa !== null) await boxesService.acreditarMisRendimientos();
+    } catch (error) {
+      console.error("Error actualizando la tasa del medio:", error);
+    }
+
+    if (resultado.ok) {
+      await tasaMedioConfirmada(queryClient);
+      return;
+    }
+
+    await revertir();
+    toast.error("No se pudo guardar el rendimiento", {
+      description: resultado.motivo === "sin-conexion" ? "No hay conexión a internet." : undefined,
+    });
+  }
+
+  // Confirma la edición: cambia solo lo que el usuario modificó (nombre y/o rendimiento).
+  async function doSaveMedio(id: string) {
+    const medio = medios.find((m) => m.id === id);
+    const tasa = parsearTasaEa(tasaValue);
+    if (!medio) return;
+    if (tasa === undefined) {
+      toast.error("El rendimiento debe ser un número entre 0 y 100", {
+        description: "Usa hasta 3 decimales, por ejemplo 9,30.",
+      });
+      return; // se queda en edición para corregirlo
+    }
+
+    const plan = planearEdicionMedio(medio, renameMedioValue, tasa);
+
+    setEditingMedio(null);
+    if (plan.tasaCambio) await doChangeTasa(id, tasa, plan.activando ? desdeValue : null);
+    if (plan.nombreCambio) await doRenameMedio(id);
   }
 
   // 3. Renombrar de forma asíncrona
   async function doRenameMedio(id: string) {
     const nuevo = renameMedioValue.trim();
-    setEditingMedio(null);
     if (!nuevo) return;
 
     // Si la caja es recién creada, se espera a que termine su alta.
@@ -171,9 +230,13 @@ export function useBoxes() {
     setRenameMedioValue,
     confirmDeleteMedio,
     setConfirmDeleteMedio,
+    tasaValue,
+    setTasaValue,
+    desdeValue,
+    setDesdeValue,
     handleAddMedio,
-    startRenameMedio,
-    doRenameMedio,
+    startEditMedio,
+    doSaveMedio,
     doDeleteMedio,
   };
 }
