@@ -1,5 +1,5 @@
 -- ============================================================================
--- Mero · Pruebas de monthly_yields (spec: docs/specs/rendimiento-ea.md, regla 10)
+-- Mero · Pruebas de monthly_yields (spec: docs/specs/ea-yield.md, regla 10)
 --
 -- Ejecutar en MERO DEV tras aplicar las migraciones 20261014 y 20261017. Requiere 2 usuarios
 -- en auth.users. Todo corre en una transacción que termina en ROLLBACK. No ejecutar en producción.

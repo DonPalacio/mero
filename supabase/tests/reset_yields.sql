@@ -1,5 +1,5 @@
 -- ============================================================================
--- Mero · Pruebas de reset_yields (spec: docs/specs/rendimiento-ea.md, regla 9)
+-- Mero · Pruebas de reset_yields (spec: docs/specs/ea-yield.md, regla 9)
 --
 -- Ejecutar en MERO DEV tras aplicar 20261014_rendimiento_diario.sql y
 -- 20261015_reiniciar_rendimientos.sql. Requiere 2 usuarios en auth.users.

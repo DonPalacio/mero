@@ -1,5 +1,5 @@
 -- ============================================================================
--- Mero · Pruebas de editar "Rinde desde" (spec: docs/specs/rendimiento-ea.md, regla 4)
+-- Mero · Pruebas de editar "Rinde desde" (spec: docs/specs/ea-yield.md, regla 4)
 --
 -- Ejecutar en MERO DEV tras aplicar las migraciones 20261014, 20261015 y 20261016.
 -- Todo corre en una transacción que termina en ROLLBACK. No ejecutar en producción.

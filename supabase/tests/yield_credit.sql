@@ -1,5 +1,5 @@
 -- ============================================================================
--- Mero · Pruebas de rendimiento diario (spec: docs/specs/rendimiento-ea.md)
+-- Mero · Pruebas de rendimiento diario (spec: docs/specs/ea-yield.md)
 --
 -- Ejecutar en el SQL Editor de MERO DEV, DESPUÉS de aplicar
 -- supabase/migrations/20261014_rendimiento_diario.sql.

@@ -11,7 +11,7 @@ export interface Box {
   balance: number;
   color: string | null;
   icon: string | null;
-  // % E.A. escrito por el usuario; null = la caja no rinde (ver docs/specs/rendimiento-ea.md).
+  // % E.A. escrito por el usuario; null = la caja no rinde (ver docs/specs/ea-yield.md).
   ea_rate: number | null;
   // Primer día que rinde ("YYYY-MM-DD"); null si la caja no rinde. Lo fija la BD.
   yield_from: string | null;
