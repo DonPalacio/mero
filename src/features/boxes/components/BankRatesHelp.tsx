@@ -66,12 +66,6 @@ export default function BankRatesHelp({ className }: { className?: string }) {
               </li>
             ))}
           </ul>
-
-          <p className="text-[11px] leading-snug text-muted-foreground">
-            Publicadas por cada entidad y consultadas el {formatCheckedOn(BANK_EA_RATES_CHECKED_ON)}
-            . Cambian con frecuencia y dependen del saldo y de las condiciones de cada producto;
-            confírmalas con tu banco antes de decidir.
-          </p>
         </div>
       </PopoverContent>
     </Popover>

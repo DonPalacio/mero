@@ -35,7 +35,7 @@ export const BANK_EA_RATES: readonly BankEaRate[] = [
     product: "Bolsillos de Cuenta Nómina y Cuenta Pensión",
   },
   {
-    bank: "Nu Colombia",
+    bank: "NU Colombia",
     maxRate: 9.35,
     product: "Cajitas · tasa que muestra la app de Nu",
   },
@@ -43,6 +43,17 @@ export const BANK_EA_RATES: readonly BankEaRate[] = [
     bank: "Davivienda",
     maxRate: 8.25,
     product: "Bolsillos de Cuenta Nómina, Pensión y Rural · desde $10 millones",
+  },
+  {
+    bank: "Bancolombia",
+    maxRate: 2.25,
+    product:
+      "Cuenta Preferencial · 2,25 % solo desde $1.000 millones; la cuenta de ahorros estándar paga 0,05 %",
+  },
+  {
+    bank: "Nequi",
+    maxRate: 0.1,
+    product: "Disponible, Bolsillos, Metas y Colchón · misma tasa en todos",
   },
 ];
 
