@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
 import React, { useState, createContext, useContext } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -107,6 +107,14 @@ export const DesktopSidebar = ({
 
 export const MobileSidebar = ({ className, children, ...props }: React.ComponentProps<"div">) => {
   const { open, setOpen } = useSidebar();
+  const reduceMotion = useReducedMotion();
+  // Solo `transform` (la Web Animations API lo corre fuera del hilo principal): `x` con
+  // porcentaje y `opacity` se animaban con JS en cada frame y exigían medir el layout, lo que
+  // en celulares de gama media se veía lento. Sin `opacity`: el panel es opaco, no hace falta.
+  const slide = {
+    duration: reduceMotion ? 0 : open ? 0.25 : 0.2,
+    ease: [0.32, 0.72, 0, 1] as [number, number, number, number],
+  };
   return (
     <>
       <div
@@ -121,13 +129,11 @@ export const MobileSidebar = ({ className, children, ...props }: React.Component
         <AnimatePresence>
           {open && (
             <motion.div
-              initial={{ x: "-100%", opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: "-100%", opacity: 0 }}
-              transition={{
-                duration: 0.3,
-                ease: "easeInOut",
-              }}
+              initial={{ transform: "translateX(-100%)" }}
+              animate={{ transform: "translateX(0%)" }}
+              exit={{ transform: "translateX(-100%)" }}
+              transition={slide}
+              style={{ willChange: "transform" }}
               className={cn(
                 "fixed h-full w-full inset-0 bg-background p-10 z-[100] flex flex-col justify-between",
                 className,
