@@ -1,6 +1,6 @@
-// Tasas de referencia de ahorro de bancos de Colombia, solo para orientar al elegir el E.A.
-// de una caja. Son valores publicados por cada banco (el máximo que anuncia para cuentas de
-// ahorro o bolsillos), no una promesa: cambian con frecuencia y dependen del saldo y de las
+// Tasas de referencia de ahorro de entidades de Colombia, solo para orientar al elegir el E.A.
+// de una caja. Son valores publicados por cada entidad (el máximo que anuncia para cuentas de
+// ahorro, bolsillos o cajitas), no una promesa: cambian con frecuencia y dependen del saldo y de las
 // condiciones del producto. Al actualizarlos, cambia también BANK_EA_RATES_CHECKED_ON.
 export interface BankEaRate {
   bank: string;
@@ -33,6 +33,11 @@ export const BANK_EA_RATES: readonly BankEaRate[] = [
     bank: "Banco Popular",
     maxRate: 9.5,
     product: "Bolsillos de Cuenta Nómina y Cuenta Pensión",
+  },
+  {
+    bank: "Nu Colombia",
+    maxRate: 9.35,
+    product: "Cajitas · tasa que muestra la app de Nu",
   },
   {
     bank: "Davivienda",
