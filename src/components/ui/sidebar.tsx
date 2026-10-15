@@ -112,7 +112,7 @@ export const MobileSidebar = ({ className, children, ...props }: React.Component
   // porcentaje y `opacity` se animaban con JS en cada frame y exigían medir el layout, lo que
   // en celulares de gama media se veía lento. Sin `opacity`: el panel es opaco, no hace falta.
   const slide = {
-    duration: reduceMotion ? 0 : open ? 0.25 : 0.2,
+    duration: reduceMotion ? 0 : 0.3,
     ease: [0.32, 0.72, 0, 1] as [number, number, number, number],
   };
   return (
