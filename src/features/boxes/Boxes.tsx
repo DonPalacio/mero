@@ -1,6 +1,7 @@
 import React from "react";
 import { IconEdit, IconTrash, IconCheck, IconX, IconPlus } from "@tabler/icons-react";
 import { useBoxes } from "./hooks/useBoxes";
+import BankRatesHelp from "./components/BankRatesHelp";
 import { localISODate, fmt } from "@/lib/utils";
 import { formatYield, estimatedDailyYield } from "@/lib/yield";
 
@@ -42,26 +43,20 @@ export default function Boxes() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <input
-                id="new-box-input"
-                name="new-box-input"
-                type="text"
-                placeholder="Nueva caja"
-                className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                value={newBoxValue}
-                onChange={(e) => setNewBoxValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddBox()}
-                autoComplete="off"
-              />
-              <button
-                onClick={handleAddBox}
-                className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                <IconPlus className="h-5 w-5" />
-              </button>
-            </div>
+          {/* Orden en celular: nombre, E.A., botón + y botón de ayuda. Desde sm: 2 columnas,
+              nombre y + arriba; E.A. y ayuda abajo (la ayuda queda justo debajo del +). */}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[auto_auto] sm:items-center">
+            <input
+              id="new-box-input"
+              name="new-box-input"
+              type="text"
+              placeholder="Nueva caja"
+              className="flex h-10 w-full rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring sm:col-start-1 sm:row-start-1 sm:w-64"
+              value={newBoxValue}
+              onChange={(e) => setNewBoxValue(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddBox()}
+              autoComplete="off"
+            />
             {/* Rendimiento E.A. de la caja nueva: opcional, vacío = no rinde */}
             <input
               id="new-box-ea-rate-input"
@@ -69,12 +64,19 @@ export default function Boxes() {
               type="text"
               inputMode="decimal"
               placeholder="Rendimiento E.A. % (ej: 9,30)"
-              className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="flex h-10 w-full rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring sm:col-start-1 sm:row-start-2 sm:w-64"
               value={newEaRateValue}
               onChange={(e) => setNewEaRateValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddBox()}
               autoComplete="off"
             />
+            <button
+              onClick={handleAddBox}
+              className="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:col-start-2 sm:row-start-1 sm:w-14 sm:px-0"
+            >
+              <IconPlus className="h-5 w-5" />
+            </button>
+            <BankRatesHelp className="w-full sm:col-start-2 sm:row-start-2 sm:w-14 sm:px-0" />
           </div>
         </div>
 
