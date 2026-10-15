@@ -19,7 +19,7 @@ export default function BankRatesHelp({ className }: { className?: string }) {
           type="button"
           aria-label="Ver tasas E.A. de ahorro de los bancos"
           className={cn(
-            "inline-flex h-10 items-center justify-center gap-2 rounded-full border border-input bg-zinc-800 px-4 text-sm text-foreground transition-colors hover:bg-zinc-700 focus:outline-none focus:ring-1 focus:ring-ring",
+            "inline-flex h-10 items-center justify-center gap-2 rounded-full bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-1 focus:ring-ring",
             className,
           )}
         >
@@ -29,7 +29,9 @@ export default function BankRatesHelp({ className }: { className?: string }) {
       </PopoverTrigger>
       <PopoverContent
         align="end"
-        className="w-[min(24rem,calc(100vw-2rem))] max-h-[80vh] overflow-y-auto p-0"
+        sideOffset={8}
+        collisionPadding={16}
+        className="w-[min(24rem,calc(100vw-2rem))] max-h-(--radix-popover-content-available-height) overflow-y-auto border-border bg-card p-0 text-card-foreground"
       >
         <div className="flex flex-col gap-3 p-4">
           <h2 className="text-sm font-semibold text-foreground">
