@@ -1,6 +1,9 @@
 import { fmt, monthLabelText } from "@/lib/utils";
 import { formatYield } from "@/lib/yield";
 
+// 14cqw ≈ ancho de la celda / 7 caracteres: cabe "$1.900.000" y llega a 1.25rem (text-xl) si hay espacio.
+const AMOUNT_CLASS = "text-[min(1.25rem,14cqw)] font-bold whitespace-nowrap leading-tight";
+
 interface Box {
   name: string;
 }
@@ -51,20 +54,20 @@ export default function Summary({
         </button>
       </div>
 
+      {/* Cada celda es un contenedor: el tamaño de la cifra sigue el ancho de su columna
+          para que montos de siete cifras no se desborden en pantallas angostas. */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="flex flex-col gap-1">
+        <div className="@container flex min-w-0 flex-col gap-1">
           <span className="text-xs text-muted-foreground">Ingresos del mes</span>
-          <span className="text-xl font-bold text-foreground">{fmt(income)}</span>
+          <span className={`${AMOUNT_CLASS} text-foreground`}>{fmt(income)}</span>
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="@container flex min-w-0 flex-col gap-1">
           <span className="text-xs text-muted-foreground">Gastos del mes</span>
-          <span className="text-xl font-bold text-foreground">{fmt(expenses)}</span>
+          <span className={`${AMOUNT_CLASS} text-foreground`}>{fmt(expenses)}</span>
         </div>
-        <div className="flex flex-col gap-1">
+        <div className="@container flex min-w-0 flex-col gap-1">
           <span className="text-xs text-muted-foreground">Queda</span>
-          <span
-            className={`text-xl font-bold ${remaining < 0 ? "text-red-500" : "text-foreground"}`}
-          >
+          <span className={`${AMOUNT_CLASS} ${remaining < 0 ? "text-red-500" : "text-foreground"}`}>
             {fmt(remaining)}
           </span>
         </div>
