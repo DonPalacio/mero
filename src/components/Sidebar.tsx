@@ -95,9 +95,12 @@ export default function SidebarDemo({ children }: SidebarLayoutProps) {
         </SidebarBody>
       </Sidebar>
 
-      {/* En móvil deja espacio abajo para el dock; en desktop `contents` lo hace invisible
-          al layout y las pantallas quedan como hijos directos, igual que antes. */}
-      <div className="flex flex-col flex-1 min-h-0 pb-24 bg-background md:contents">{children}</div>
+      {/* En móvil cada pantalla deja espacio abajo (dentro de su scroll) para que el contenido
+          pase por detrás del dock difuminado; en desktop `contents` lo hace invisible al layout
+          y las pantallas quedan como hijos directos, igual que antes. */}
+      <div className="flex flex-col flex-1 min-h-0 bg-background max-md:[&>*]:pb-24 md:contents">
+        {children}
+      </div>
 
       <FloatingDock items={dockItems} />
     </div>
