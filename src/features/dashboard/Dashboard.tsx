@@ -32,10 +32,11 @@ export default function Dashboard() {
     );
   }
 
+  // El espacio para el dock móvil lo reserva el scroll interno (`max-md:pb-24`), no este contenedor.
   return (
-    <div className="flex flex-1 min-h-0">
-      <div className="p-2 md:p-10 rounded-tl-2xl border border-border bg-background flex flex-col gap-4 lg:gap-2 flex-1 w-full h-full overflow-y-auto min-h-0">
-        <div className="grid grid-cols-1 lg:grid-cols-6 lg:grid-rows-5 gap-4 lg:gap-2 flex-1 min-h-0">
+    <div className="flex flex-1 min-h-0 max-md:pb-0!">
+      <div className="p-2 max-md:pb-24 md:p-10 rounded-tl-2xl border border-border bg-background flex flex-col gap-4 lg:gap-2 flex-1 w-full h-full overflow-y-auto min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-6 lg:grid-rows-5 gap-4 lg:gap-2 flex-1 lg:min-h-0">
           <div className="col-span-1 lg:col-span-2 lg:row-span-3">
             <Summary
               selectedMonth={selectedMonth}
