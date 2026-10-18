@@ -8,6 +8,7 @@ import {
   IconCategory2,
   IconLayoutDashboard,
 } from "@tabler/icons-react";
+import { FloatingDock, type DockItem } from "@/components/ui/floating-dock";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useLogout } from "@/features/auth/hooks/useLogout";
@@ -42,6 +43,19 @@ export default function SidebarDemo({ children }: SidebarLayoutProps) {
       href: "/dashboard",
       icon: <IconLayoutDashboard className="text-foreground h-5 w-5 shrink-0" />,
     },
+  ];
+
+  // Mismas rutas que la sidebar; el dock pinta el color del ícono según esté activo o no.
+  const dockItems: DockItem[] = [
+    {
+      label: "Transacciones",
+      href: "/transactions",
+      icon: <IconCashRegister className="h-5 w-5" />,
+    },
+    { label: "Categorías", href: "/categories", icon: <IconCategory2 className="h-5 w-5" /> },
+    { label: "Cajas", href: "/boxes", icon: <IconPackages className="h-5 w-5" /> },
+    { label: "Dashboard", href: "/dashboard", icon: <IconLayoutDashboard className="h-5 w-5" /> },
+    { label: "Salir", icon: <IconArrowLeft className="h-5 w-5" />, onClick: () => void logout() },
   ];
 
   // El redirect a /login lo maneja automáticamente el guard de __root.tsx
@@ -81,7 +95,11 @@ export default function SidebarDemo({ children }: SidebarLayoutProps) {
         </SidebarBody>
       </Sidebar>
 
-      {children}
+      {/* En móvil deja espacio abajo para el dock; en desktop `contents` lo hace invisible
+          al layout y las pantallas quedan como hijos directos, igual que antes. */}
+      <div className="flex flex-col flex-1 min-h-0 pb-24 bg-background md:contents">{children}</div>
+
+      <FloatingDock items={dockItems} />
     </div>
   );
 }
