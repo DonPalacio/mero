@@ -8,7 +8,7 @@ import {
   IconWallet,
 } from "@tabler/icons-react";
 import { monthLabelText } from "@/lib/utils";
-import AnimatedNumber from "./AnimatedNumber";
+import AnimatedNumber from "@/components/AnimatedNumber";
 
 // Cada cifra vive en un contenedor (@container): su tamaño sigue el ancho disponible para que
 // montos de siete cifras no se desborden en pantallas angostas (13cqw ≈ ancho / 7 caracteres).

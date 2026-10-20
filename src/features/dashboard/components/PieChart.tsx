@@ -1,6 +1,6 @@
 import { IconChartDonut } from "@tabler/icons-react";
 import { fmt } from "@/lib/utils";
-import AnimatedNumber from "./AnimatedNumber";
+import AnimatedNumber from "@/components/AnimatedNumber";
 
 interface PieChartProps {
   expensesByCategory: Record<string, number>;

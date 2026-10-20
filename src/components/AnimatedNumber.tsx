@@ -1,5 +1,5 @@
 import { fmt } from "@/lib/utils";
-import { useCountUp } from "../hooks/useCountUp";
+import { useCountUp } from "@/hooks/useCountUp";
 
 interface AnimatedNumberProps {
   value: number;

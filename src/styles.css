@@ -362,3 +362,129 @@
     animation: none;
   }
 }
+
+/*
+ * Controles compartidos del sistema del Dashboard (formularios y botones en píldora).
+ */
+
+/* Campo de texto/fecha en píldora: fondo hundido, borde fino y foco azul visible. */
+@utility fn-input {
+  background-color: var(--fn-chip);
+  border: 1px solid var(--fn-line);
+  border-radius: 9999px;
+  padding-inline: 1rem;
+  font-size: 0.875rem;
+  color: var(--fn-text);
+  transition: border-color 150ms ease;
+  &::placeholder {
+    color: var(--fn-muted);
+  }
+  &:hover {
+    border-color: var(--fn-muted);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--fn-brand);
+    outline-offset: 0;
+    border-color: var(--fn-brand);
+  }
+}
+
+/* Botón principal en píldora: relleno claro con texto oscuro, como la opción activa del mes. */
+@utility fn-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--fn-text);
+  color: var(--fn-ground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+  &:hover {
+    opacity: 0.9;
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--fn-brand);
+    outline-offset: 2px;
+  }
+}
+
+/* Botón secundario en píldora: relleno hundido con borde fino. */
+@utility fn-button-soft {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--fn-chip);
+  border: 1px solid var(--fn-line);
+  color: var(--fn-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition:
+    background-color 150ms ease,
+    transform 150ms ease;
+  &:hover {
+    background-color: var(--fn-chip-hover);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--fn-brand);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fn-input,
+  .fn-button,
+  .fn-button-soft {
+    transition: none;
+  }
+  .fn-button:active,
+  .fn-button-soft:active {
+    transform: none;
+  }
+}
+
+/* Botón destructivo en píldora (confirmaciones de borrado): mismo trazo que fn-button, en rojo. */
+@utility fn-button-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--negative);
+  color: var(--fn-ground);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition:
+    opacity 150ms ease,
+    transform 150ms ease;
+  &:hover {
+    opacity: 0.9;
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--fn-brand);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fn-button-danger {
+    transition: none;
+  }
+  .fn-button-danger:active {
+    transform: none;
+  }
+}

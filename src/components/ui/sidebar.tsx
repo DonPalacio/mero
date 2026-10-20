@@ -1,7 +1,7 @@
 "use client";
 import { cn } from "@/lib/utils";
 import React, { useState, createContext, useContext } from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { motion } from "motion/react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { prefetchScreen } from "@/lib/queries";
@@ -80,29 +80,23 @@ export const DesktopSidebar = ({
   ...props
 }: React.ComponentProps<typeof motion.div>) => {
   const { open, setOpen, animate } = useSidebar();
-  const reduceMotion = useReducedMotion();
-  // Al expandirse, la sidebar NO empuja el contenido: el hueco de 60px en el layout es fijo y el
-  // panel (300px) se superpone, revelándose con clip-path. Así la animación solo repinta la
-  // sidebar y no provoca reflujo en las pantallas (grids, SVG y container queries).
   return (
-    <div className="relative hidden w-[60px] shrink-0 md:block">
+    <>
       <motion.div
         className={cn(
-          "absolute inset-y-0 left-0 z-30 hidden w-[300px] px-4 py-4 md:flex md:flex-col bg-sidebar border-r border-sidebar-border",
+          "h-full px-4 py-4 hidden md:flex md:flex-col bg-sidebar w-[300px] shrink-0",
           className,
         )}
-        initial={false}
         animate={{
-          clipPath: animate && !open ? "inset(0px 240px 0px 0px)" : "inset(0px 0px 0px 0px)",
+          width: animate ? (open ? "300px" : "60px") : "300px",
         }}
-        transition={{ duration: reduceMotion ? 0 : 0.2, ease: "easeOut" }}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         {...props}
       >
         {children}
       </motion.div>
-    </div>
+    </>
   );
 };
 
@@ -130,14 +124,12 @@ export const SidebarLink = ({ link, className, ...props }: { link: Links; classN
     >
       {link.icon}
 
-      {/* Siempre en el layout (sin alternar `display`): solo cambia la opacidad y el panel recorta. */}
       <motion.span
-        initial={false}
         animate={{
+          display: animate ? (open ? "inline-block" : "none") : "inline-block",
           opacity: animate ? (open ? 1 : 0) : 1,
         }}
-        transition={{ duration: 0.15 }}
-        className="text-foreground text-sm group-hover/sidebar:translate-x-1 transition-transform duration-150 whitespace-pre inline-block !p-0 !m-0"
+        className="text-foreground text-sm group-hover/sidebar:translate-x-1 transition duration-150 whitespace-pre inline-block !p-0 !m-0"
       >
         {link.label}
       </motion.span>
