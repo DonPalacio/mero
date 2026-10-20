@@ -18,6 +18,7 @@ import { formatYield, estimatedDailyYield } from "@/lib/yield";
 export default function Boxes() {
   const {
     boxes,
+    isLoading,
     newBoxValue,
     setNewBoxValue,
     newEaRateValue,
@@ -40,6 +41,27 @@ export default function Boxes() {
     doSaveBox,
     doDeleteBox,
   } = useBoxes();
+
+  // Esqueleto con la misma estructura que la pantalla real: al llegar los datos no hay salto de
+  // layout ni de color. El texto queda para lectores de pantalla.
+  if (isLoading) {
+    return (
+      <div
+        role="status"
+        className="flex h-full flex-1 flex-col overflow-y-auto rounded-tl-2xl border border-fn-line bg-fn-ground p-3 md:p-8"
+      >
+        <span className="sr-only">Cargando datos...</span>
+        <div aria-hidden className="mx-auto flex w-full max-w-4xl flex-col gap-5 lg:gap-6">
+          <div className="skeleton-pulse fn-card h-72 md:h-[7.5rem]" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} className="skeleton-pulse fn-card h-36 md:h-40" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-1 flex-col overflow-y-auto rounded-tl-2xl border border-fn-line bg-fn-ground p-3 text-fn-text md:p-8">
@@ -297,12 +319,6 @@ export default function Boxes() {
               </div>
             );
           })}
-
-          {boxes.length === 0 && (
-            <div className="col-span-full rounded-3xl border-2 border-dashed border-fn-line p-8 text-center text-fn-muted">
-              No tienes medios creados aún. Agrega uno arriba.
-            </div>
-          )}
         </div>
       </div>
     </div>

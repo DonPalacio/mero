@@ -15,6 +15,7 @@ import { useCategories } from "./hooks/useCategories";
 export default function Categories() {
   const {
     categories,
+    isLoading,
     newCategoryValue,
     setNewCategoryValue,
     newCategoryType,
@@ -30,6 +31,27 @@ export default function Categories() {
     doRename,
     doDeleteCategory,
   } = useCategories();
+
+  // Esqueleto con la misma estructura que la pantalla real: al llegar los datos no hay salto de
+  // layout ni de color. El texto queda para lectores de pantalla.
+  if (isLoading) {
+    return (
+      <div
+        role="status"
+        className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto rounded-tl-2xl border border-fn-line bg-fn-ground p-3 md:p-8"
+      >
+        <span className="sr-only">Cargando datos...</span>
+        <div aria-hidden className="mx-auto flex w-full max-w-4xl flex-col gap-5 lg:gap-6">
+          <div className="skeleton-pulse fn-card h-72 md:h-[8.75rem]" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 9 }, (_, i) => (
+              <div key={i} className="skeleton-pulse fn-card h-[4.5rem]" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto rounded-tl-2xl border border-fn-line bg-fn-ground p-3 text-fn-text md:p-8">
@@ -217,12 +239,6 @@ export default function Categories() {
               </div>
             );
           })}
-
-          {categories.length === 0 && (
-            <div className="col-span-full mt-4 rounded-3xl border-2 border-dashed border-fn-line p-8 text-center text-fn-muted">
-              No tienes categorías creadas aún. Agrega una arriba.
-            </div>
-          )}
         </div>
       </div>
     </div>

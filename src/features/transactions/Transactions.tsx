@@ -25,6 +25,7 @@ export default function Transactions() {
   const {
     listRef,
     availableBoxes,
+    isLoading,
     availableCategories,
     transactions,
     selectedType,
@@ -154,6 +155,14 @@ export default function Transactions() {
               <div className="flex shrink-0 flex-col gap-1.5">
                 <span className="text-sm font-medium text-fn-text">Categoría</span>
                 <div className="flex flex-wrap gap-2">
+                  {isLoading &&
+                    [0, 1, 2, 3].map((i) => (
+                      <span
+                        key={`sk-cat-${i}`}
+                        aria-hidden
+                        className="skeleton-pulse h-7 w-24 rounded-full fn-chip"
+                      />
+                    ))}
                   {filteredCategories.map((c) => {
                     const isActive = selectedCategory === c.name;
                     return (
@@ -169,7 +178,7 @@ export default function Transactions() {
                       </button>
                     );
                   })}
-                  {filteredCategories.length === 0 && (
+                  {!isLoading && filteredCategories.length === 0 && (
                     <span className="text-xs italic text-fn-muted">
                       No hay categorías para este tipo.
                     </span>
@@ -181,6 +190,14 @@ export default function Transactions() {
               <div className="flex shrink-0 flex-col gap-1.5">
                 <span className="text-sm font-medium text-fn-text">Medio de pago</span>
                 <div className="flex flex-wrap gap-2">
+                  {isLoading &&
+                    [0, 1, 2].map((i) => (
+                      <span
+                        key={`sk-box-${i}`}
+                        aria-hidden
+                        className="skeleton-pulse h-7 w-20 rounded-full fn-chip"
+                      />
+                    ))}
                   {availableBoxes.map((m) => {
                     const isActive = selectedBox === m;
                     return (
@@ -296,6 +313,15 @@ export default function Transactions() {
               ref={listRef}
               className="flex flex-col gap-2.5 overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
+              {/* Esqueleto de carga: filas hundidas con la misma altura que las reales. */}
+              {isLoading &&
+                Array.from({ length: 7 }, (_, i) => (
+                  <div
+                    key={`sk-${i}`}
+                    aria-hidden
+                    className="skeleton-pulse h-[4.5rem] shrink-0 rounded-2xl fn-chip sm:h-16"
+                  />
+                ))}
               {filteredTransactions.map((transaction) => {
                 const isExpense = transaction.type === "expense";
                 return (
@@ -362,7 +388,7 @@ export default function Transactions() {
               })}
 
               {/* Mensaje de vacío dinámico según los filtros */}
-              {filteredTransactions.length === 0 && (
+              {!isLoading && filteredTransactions.length === 0 && (
                 <div className="shrink-0 rounded-3xl border-2 border-dashed border-fn-line py-10 text-center text-fn-muted">
                   {categoryFilter
                     ? `No hay transacciones registradas para "${categoryFilter}" en este mes.`
