@@ -1,3 +1,5 @@
+import { IconChartBar } from "@tabler/icons-react";
+
 interface BarChartProps {
   labels: string[];
   values: number[];
@@ -7,30 +9,47 @@ export default function BarChart({ labels, values }: BarChartProps) {
   const max = Math.max(...values, 1);
   const w = 300,
     h = 220,
-    padB = 28,
+    padB = 30,
     padT = 24;
   const bw = w / values.length;
   const barWidth = bw * 0.5;
   const lastIndex = values.length - 1;
 
   return (
-    <div className="rounded-3xl bg-card border border-border p-4 flex flex-col gap-4 w-full h-full">
-      <h2 className="text-foreground font-semibold text-lg">Últimos 6 meses</h2>
-      <div className="flex-1 flex items-center justify-center">
-        <svg viewBox={`0 0 ${w} ${h}`} style={{ width: "100%", height: "100%" }}>
-          <defs>
-            <linearGradient id="barActual" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#7aa2ff" />
-              <stop offset="100%" stopColor="#5b8def" />
-            </linearGradient>
-            <linearGradient id="barMuted" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#3f4657" />
-              <stop offset="100%" stopColor="#33394a" />
-            </linearGradient>
-          </defs>
-
-          {/* Línea base */}
-          <line x1={0} y1={h - padB} x2={w} y2={h - padB} stroke="#2a2f3d" strokeWidth={1} />
+    <div className="flex h-full w-full flex-col gap-4 fn-card p-5">
+      <div className="flex items-center gap-2.5">
+        <span className="flex size-9 items-center justify-center rounded-full fn-chip">
+          <IconChartBar className="size-[1.125rem] text-fn-brand" aria-hidden />
+        </span>
+        <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">
+          Últimos 6 meses
+        </h2>
+      </div>
+      <div className="flex flex-1 items-center justify-center">
+        <svg
+          viewBox={`0 0 ${w} ${h}`}
+          style={{ width: "100%", height: "100%" }}
+          role="img"
+          aria-label="Últimos 6 meses"
+        >
+          {/* Guía al 50 % y línea base: reglas finas, sin relleno */}
+          <line
+            x1={0}
+            y1={h - padB - 0.5 * (h - padB - padT)}
+            x2={w}
+            y2={h - padB - 0.5 * (h - padB - padT)}
+            className="stroke-fn-line"
+            strokeWidth={1}
+            strokeDasharray="2 4"
+          />
+          <line
+            x1={0}
+            y1={h - padB}
+            x2={w}
+            y2={h - padB}
+            className="stroke-fn-line"
+            strokeWidth={1}
+          />
 
           {values.map((v, i) => {
             const bh = v > 0 ? (v / max) * (h - padB - padT) : 0;
@@ -46,9 +65,10 @@ export default function BarChart({ labels, values }: BarChartProps) {
                     x={x + barWidth / 2}
                     y={y - 6}
                     textAnchor="middle"
-                    fontSize={9}
-                    fontWeight={600}
-                    fill={isCurrent ? "#7aa2ff" : "#8b93a1"}
+                    fontSize={11}
+                    fontWeight={isCurrent ? 700 : 500}
+                    className={isCurrent ? "fill-fn-brand" : "fill-fn-muted"}
+                    style={{ fontVariantNumeric: "tabular-nums" }}
                   >
                     {v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v.toLocaleString("es-CO")}
                   </text>
@@ -60,21 +80,30 @@ export default function BarChart({ labels, values }: BarChartProps) {
                   width={barWidth}
                   height={bh}
                   rx={6}
-                  fill={isCurrent ? "url(#barActual)" : "url(#barMuted)"}
-                  style={{ transition: "height 0.35s ease, y 0.35s ease" }}
+                  className={`bar-rise transition-[y,height] duration-300 ease-out motion-reduce:transition-none ${isCurrent ? "fill-fn-brand" : "fill-[oklch(0.45_0_0)]"}`}
+                  style={{ "--i": i } as React.CSSProperties}
                 />
 
-                {/* Punto guía cuando el mes no tiene registros aún */}
-                {v === 0 && <circle cx={x + barWidth / 2} cy={h - padB - 3} r={2} fill="#3f4657" />}
+                {/* Marca guía cuando el mes no tiene registros aún */}
+                {v === 0 && (
+                  <line
+                    x1={x + barWidth * 0.25}
+                    x2={x + barWidth * 0.75}
+                    y1={h - padB - 1.5}
+                    y2={h - padB - 1.5}
+                    className="stroke-fn-muted"
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                  />
+                )}
 
                 <text
                   x={x + barWidth / 2}
                   y={h - 10}
                   textAnchor="middle"
-                  fontSize={9}
+                  fontSize={11}
                   fontWeight={isCurrent ? 700 : 400}
-                  fill={isCurrent ? "#e2e5eb" : "#8b93a1"}
-                  className="pointer-events-none"
+                  className={`pointer-events-none ${isCurrent ? "fill-fn-text" : "fill-fn-muted"}`}
                 >
                   {labels[i]}
                 </text>
