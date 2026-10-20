@@ -40,6 +40,7 @@ bun run build
 - **Servicios:** las lecturas lanzan error (lo maneja React Query) y las escrituras devuelven `{ ok, motivo }`.
 - **Caché:** las claves y queries viven solo en `src/lib/queries.ts`. Tras mutar se usan sus helpers, con actualización optimista y `toast.error("No se pudo …")` si falla.
 - **UI:** Tailwind v4 con tokens semánticos (`bg-card`, `text-muted-foreground`) y shadcn/ui en `src/components/ui`. Iconos con Tabler en las pantallas y Lucide solo en `ui/`. Toasts con `sonner`.
+- **Tarjetas del Dashboard:** las superficies usan las utilidades de `src/styles.css` (`fn-card`, `fn-chip`, `fn-icon-button`, `fn-input`, `fn-button`, `fn-button-soft`, `fn-button-danger`) y los tokens `fn-*` (`bg-fn-card`, `text-fn-muted`, `bg-fn-brand`), que reutilizan `--background`, `--card` y `--border`; estados con `text-success`, `text-warning`, `text-negative`, siempre con ícono o texto. Movimiento corto y solo `transform`/`opacity`/`clip-path` (`dash-enter`, `bar-rise`, `fill-reveal`), con `prefers-reduced-motion`. Cifras animadas con `AnimatedNumber` (`src/components`); entrada de tarjetas con `dash-enter` y `[--i:N]`.
 - **Servidor:** `*.server.ts` o `@tanstack/react-start/server-only`. Nunca `server-only`.
 
 ## Reglas

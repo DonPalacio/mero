@@ -1,13 +1,24 @@
 import React from "react";
-import { IconEdit, IconTrash, IconCheck, IconX, IconPlus } from "@tabler/icons-react";
+import {
+  IconEdit,
+  IconTrash,
+  IconCheck,
+  IconX,
+  IconPlus,
+  IconPackages,
+  IconBuildingBank,
+  IconTrendingUp,
+} from "@tabler/icons-react";
 import { useBoxes } from "./hooks/useBoxes";
 import BankRatesHelp from "./components/BankRatesHelp";
-import { localISODate, fmt } from "@/lib/utils";
+import AnimatedNumber from "@/components/AnimatedNumber";
+import { cn, localISODate } from "@/lib/utils";
 import { formatYield, estimatedDailyYield } from "@/lib/yield";
 
 export default function Boxes() {
   const {
     boxes,
+    isLoading,
     newBoxValue,
     setNewBoxValue,
     newEaRateValue,
@@ -31,16 +42,42 @@ export default function Boxes() {
     doDeleteBox,
   } = useBoxes();
 
+  // Esqueleto con la misma estructura que la pantalla real: al llegar los datos no hay salto de
+  // layout ni de color. El texto queda para lectores de pantalla.
+  if (isLoading) {
+    return (
+      <div
+        role="status"
+        className="flex h-full flex-1 flex-col overflow-y-auto rounded-tl-2xl border border-fn-line bg-fn-ground p-3 md:p-8"
+      >
+        <span className="sr-only">Cargando datos...</span>
+        <div aria-hidden className="mx-auto flex w-full max-w-4xl flex-col gap-5 lg:gap-6">
+          <div className="skeleton-pulse fn-card h-72 md:h-[7.5rem]" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} className="skeleton-pulse fn-card h-36 md:h-40" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 p-4 md:p-10 h-full overflow-y-auto bg-background rounded-tl-2xl">
-      <div className="max-w-4xl mx-auto w-full flex flex-col gap-8">
+    <div className="flex h-full flex-1 flex-col overflow-y-auto rounded-tl-2xl border border-fn-line bg-fn-ground p-3 text-fn-text md:p-8">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 lg:gap-6">
         {/* Encabezado y Creación */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Cajas</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Administra las cuentas, tarjetas o lugares donde guardas tu dinero.
-            </p>
+        <div className="dash-enter [--i:0] fn-card flex flex-col justify-between gap-5 p-5 md:flex-row md:items-end md:p-6">
+          <div className="flex items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full fn-chip">
+              <IconPackages className="size-5 text-fn-brand" aria-hidden />
+            </span>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-fn-text">Cajas</h1>
+              <p className="mt-1 text-sm text-fn-muted">
+                Administra las cuentas, tarjetas o lugares donde guardas tu dinero.
+              </p>
+            </div>
           </div>
 
           {/* Orden en celular: nombre, E.A., botón + y botón de ayuda. Desde sm: 2 columnas,
@@ -51,7 +88,7 @@ export default function Boxes() {
               name="new-box-input"
               type="text"
               placeholder="Nueva caja"
-              className="flex h-10 w-full rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring sm:col-start-1 sm:row-start-1 sm:w-64"
+              className="fn-input h-10 w-full sm:col-start-1 sm:row-start-1 sm:w-64"
               value={newBoxValue}
               onChange={(e) => setNewBoxValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddBox()}
@@ -64,7 +101,7 @@ export default function Boxes() {
               type="text"
               inputMode="decimal"
               placeholder="Rendimiento E.A. % (ej: 9,30)"
-              className="flex h-10 w-full rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring sm:col-start-1 sm:row-start-2 sm:w-64"
+              className="fn-input h-10 w-full sm:col-start-1 sm:row-start-2 sm:w-64"
               value={newEaRateValue}
               onChange={(e) => setNewEaRateValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddBox()}
@@ -72,7 +109,8 @@ export default function Boxes() {
             />
             <button
               onClick={handleAddBox}
-              className="inline-flex h-10 w-full items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:col-start-2 sm:row-start-1 sm:w-14 sm:px-0"
+              aria-label="Agregar caja"
+              className="fn-button h-10 w-full px-4 sm:col-start-2 sm:row-start-1 sm:w-14 sm:px-0"
             >
               <IconPlus className="h-5 w-5" />
             </button>
@@ -81,8 +119,8 @@ export default function Boxes() {
         </div>
 
         {/* Lista de Medios (Grid adaptativo: 1 col celular, 2 tablet, 3 PC) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {boxes.map((m) => {
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {boxes.map((m, index) => {
             const isEditing = editingBox === m.id;
             const isConfirming = confirmDeleteBox === m.id;
             const isResetting = confirmResetBox === m.id;
@@ -90,18 +128,22 @@ export default function Boxes() {
             return (
               <div
                 key={m.id}
-                className="flex items-center justify-between p-4 bg-card rounded-xl border border-border shadow-sm transition-all hover:shadow-md"
+                style={{ "--i": Math.min(index + 1, 8) } as React.CSSProperties}
+                // Alto fijo y compacto en escritorio: ver, editar y confirmar ocupan el mismo espacio, así
+                // la tarjeta (y la cuadrícula) no cambia de tamaño al pulsar Editar.
+                className="dash-enter fn-card flex flex-col p-3.5 md:h-40"
               >
                 {/* MODO EDICIÓN */}
                 {isEditing ? (
-                  <div className="flex w-full flex-col gap-2">
+                  <div className="flex h-full w-full flex-col justify-between gap-1.5 rounded-2xl fn-chip p-2.5">
                     <div className="flex w-full items-center gap-2">
                       <input
                         id={`rename-box-${m.id}`}
                         name={`rename-box-${m.id}`}
                         type="text"
                         value={renameBoxValue}
-                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                        aria-label="Nombre de la caja"
+                        className="fn-input h-8 w-full bg-fn-card"
                         onChange={(e) => setRenameBoxValue(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && doSaveBox(m.id)}
                         autoComplete="off"
@@ -109,23 +151,28 @@ export default function Boxes() {
                       />
                       <button
                         onClick={() => doSaveBox(m.id)}
-                        className="p-2 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-full transition-colors"
+                        aria-label="Guardar"
+                        title="Guardar"
+                        className="fn-icon-button flex size-8 shrink-0 items-center justify-center rounded-full text-success"
                       >
                         <IconCheck className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => setEditingBox(null)}
-                        className="p-2 text-muted-foreground hover:bg-secondary rounded-full transition-colors"
+                        aria-label="Cancelar"
+                        title="Cancelar"
+                        className="fn-icon-button flex size-8 shrink-0 items-center justify-center rounded-full text-fn-muted"
                       >
                         <IconX className="h-4 w-4" />
                       </button>
                     </div>
 
-                    {/* Rendimiento E.A.: vacío = la caja no rinde */}
+                    {/* Rendimiento E.A.: vacío = la caja no rinde. Etiqueta de ancho fijo para que
+                        los campos queden alineados. */}
                     <div className="flex items-center gap-2">
                       <label
                         htmlFor={`ea-rate-box-${m.id}`}
-                        className="text-xs text-muted-foreground shrink-0"
+                        className="w-28 shrink-0 text-xs text-fn-muted"
                       >
                         Rendimiento E.A. (%)
                       </label>
@@ -136,7 +183,7 @@ export default function Boxes() {
                         inputMode="decimal"
                         placeholder="Ej: 9,30"
                         value={eaRateValue}
-                        className="flex h-9 w-28 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="fn-input h-8 min-w-0 flex-1 bg-fn-card"
                         onChange={(e) => setEaRateValue(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && doSaveBox(m.id)}
                         autoComplete="off"
@@ -145,37 +192,42 @@ export default function Boxes() {
 
                     {/* Desde qué día rinde. Al activar la tasa se elige libremente; si la caja ya
                         rinde solo se puede mover hacia atrás (los días anteriores se acreditan
-                        de una vez; los ya acreditados no cambian). */}
-                    {eaRateValue.trim() !== "" && (
-                      <div className="flex items-center gap-2">
-                        <label
-                          htmlFor={`from-box-${m.id}`}
-                          className="text-xs text-muted-foreground shrink-0"
-                        >
-                          Rinde desde
-                        </label>
-                        <input
-                          id={`from-box-${m.id}`}
-                          name={`from-box-${m.id}`}
-                          type="date"
-                          max={m.yield_from ?? localISODate()}
-                          value={fromValue}
-                          className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                          onChange={(e) => setFromValue(e.target.value)}
-                        />
-                      </div>
-                    )}
+                        de una vez; los ya acreditados no cambian). La fila siempre ocupa su
+                        espacio: sin tasa queda invisible (y fuera del foco) para que el alto no
+                        cambie al escribir. */}
+                    <div
+                      className={cn(
+                        "flex items-center gap-2",
+                        eaRateValue.trim() === "" && "invisible",
+                      )}
+                    >
+                      <label
+                        htmlFor={`from-box-${m.id}`}
+                        className="w-28 shrink-0 text-xs text-fn-muted"
+                      >
+                        Rinde desde
+                      </label>
+                      <input
+                        id={`from-box-${m.id}`}
+                        name={`from-box-${m.id}`}
+                        type="date"
+                        max={m.yield_from ?? localISODate()}
+                        value={fromValue}
+                        className="fn-input scheme-dark h-8 min-w-0 flex-1 bg-fn-card"
+                        onChange={(e) => setFromValue(e.target.value)}
+                      />
+                    </div>
                   </div>
                 ) : isConfirming ? (
                   /* MODO CONFIRMACIÓN DE BORRADO */
-                  <div className="flex w-full items-center justify-between">
-                    <span className="text-sm font-medium text-destructive">
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-center">
+                    <span className="text-sm font-medium text-negative">
                       ¿Deseas eliminar la caja "{m.name}"?
                     </span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => doDeleteBox(m.id)}
-                        className="text-xs font-medium bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md hover:bg-destructive/90 transition-colors"
+                        className="fn-button-danger px-3.5 py-1.5"
                       >
                         Sí, eliminar
                       </button>
@@ -185,7 +237,7 @@ export default function Boxes() {
                           // La caja se conserva: si rinde por E.A., se ofrece quitar solo ese dinero.
                           if (m.ea_rate !== null) setConfirmResetBox(m.id);
                         }}
-                        className="text-xs font-medium bg-secondary text-secondary-foreground px-3 py-1.5 rounded-md hover:bg-secondary/80 transition-colors"
+                        className="fn-button-soft px-3.5 py-1.5"
                       >
                         No
                       </button>
@@ -193,67 +245,80 @@ export default function Boxes() {
                   </div>
                 ) : isResetting ? (
                   /* MODO CONFIRMACIÓN DE REINICIO DE RENDIMIENTOS */
-                  <div className="flex w-full items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-foreground">
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-center">
+                    <span className="text-sm font-medium text-fn-text">
                       ¿Eliminar también el dinero generado por el E.A. de "{m.name}"?
                     </span>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex shrink-0 items-center gap-2">
                       <button
                         onClick={() => doResetYields(m.id)}
-                        className="text-xs font-medium bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md hover:bg-destructive/90 transition-colors"
+                        className="fn-button-danger px-3.5 py-1.5"
                       >
                         Sí, eliminarlo
                       </button>
                       <button
                         onClick={() => setConfirmResetBox(null)}
-                        className="text-xs font-medium bg-secondary text-secondary-foreground px-3 py-1.5 rounded-md hover:bg-secondary/80 transition-colors"
+                        className="fn-button-soft px-3.5 py-1.5"
                       >
                         No
                       </button>
                     </div>
                   </div>
                 ) : (
-                  /* MODO VISUALIZACIÓN NORMAL */
-                  <>
-                    <div className="min-w-0 pr-2">
-                      <span className="block font-medium text-card-foreground truncate">
+                  /* MODO VISUALIZACIÓN NORMAL: tres franjas fijas (nombre y acciones, saldo,
+                      rendimiento). La franja del rendimiento reserva su alto aunque la caja no
+                      rinda, para que todas las tarjetas midan igual. */
+                  <div className="flex h-full w-full flex-col justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full fn-chip">
+                        <IconBuildingBank className="size-5 text-fn-muted" aria-hidden />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-medium text-fn-text">
                         {m.name}
                       </span>
-                      <span className="block text-sm text-muted-foreground">{fmt(m.balance)}</span>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <button
+                          onClick={() => startEditBox(m)}
+                          aria-label="Editar"
+                          className="fn-icon-button flex size-8 items-center justify-center rounded-full text-fn-muted hover:text-fn-text"
+                          title="Editar"
+                        >
+                          <IconEdit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteBox(m.id)}
+                          aria-label="Eliminar"
+                          className="fn-icon-button flex size-8 items-center justify-center rounded-full text-fn-muted hover:text-negative"
+                          title="Eliminar"
+                        >
+                          <IconTrash className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="@container min-w-0">
+                      <AnimatedNumber
+                        value={m.balance}
+                        className={`block whitespace-nowrap text-[min(1.75rem,11cqw)] font-bold leading-none tracking-tight tabular-nums ${m.balance < 0 ? "text-negative" : "text-fn-text"}`}
+                      />
+                    </div>
+
+                    <div className="flex min-h-6 items-center">
                       {m.ea_rate !== null && (
-                        <span className="block text-xs text-muted-foreground">
-                          {m.ea_rate.toLocaleString("es-CO")}% E.A. · ≈{" "}
-                          {formatYield(estimatedDailyYield(m.balance, m.ea_rate))} al día
+                        <span className="inline-flex max-w-full items-center gap-1 truncate rounded-full fn-chip px-2.5 py-1 text-xs text-fn-muted">
+                          <IconTrendingUp className="size-3.5 shrink-0 text-success" aria-hidden />
+                          <span className="truncate">
+                            {m.ea_rate.toLocaleString("es-CO")}% E.A. · ≈{" "}
+                            {formatYield(estimatedDailyYield(m.balance, m.ea_rate))} al día
+                          </span>
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => startEditBox(m)}
-                        className="p-2 text-muted-foreground hover:text-primary hover:bg-secondary rounded-full transition-colors"
-                        title="Editar"
-                      >
-                        <IconEdit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeleteBox(m.id)}
-                        className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
-                        title="Eliminar"
-                      >
-                        <IconTrash className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
             );
           })}
-
-          {boxes.length === 0 && (
-            <div className="col-span-full p-8 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
-              No tienes medios creados aún. Agrega uno arriba.
-            </div>
-          )}
         </div>
       </div>
     </div>

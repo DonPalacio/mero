@@ -1,11 +1,21 @@
 import React from "react";
-import { IconEdit, IconTrash, IconCheck, IconX, IconPlus } from "@tabler/icons-react";
+import {
+  IconEdit,
+  IconTrash,
+  IconCheck,
+  IconX,
+  IconPlus,
+  IconCategory2,
+  IconArrowDownRight,
+  IconArrowUpRight,
+} from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { useCategories } from "./hooks/useCategories";
 
 export default function Categories() {
   const {
     categories,
+    isLoading,
     newCategoryValue,
     setNewCategoryValue,
     newCategoryType,
@@ -22,41 +32,79 @@ export default function Categories() {
     doDeleteCategory,
   } = useCategories();
 
+  // Esqueleto con la misma estructura que la pantalla real: al llegar los datos no hay salto de
+  // layout ni de color. El texto queda para lectores de pantalla.
+  if (isLoading) {
+    return (
+      <div
+        role="status"
+        className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto rounded-tl-2xl border border-fn-line bg-fn-ground p-3 md:p-8"
+      >
+        <span className="sr-only">Cargando datos...</span>
+        <div aria-hidden className="mx-auto flex w-full max-w-4xl flex-col gap-5 lg:gap-6">
+          <div className="skeleton-pulse fn-card h-72 md:h-[8.75rem]" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 9 }, (_, i) => (
+              <div key={i} className="skeleton-pulse fn-card h-[4.5rem]" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 p-4 md:p-10 h-full overflow-y-auto min-h-0 bg-background rounded-tl-2xl">
-      <div className="max-w-4xl mx-auto w-full flex flex-col gap-8">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto rounded-tl-2xl border border-fn-line bg-fn-ground p-3 text-fn-text md:p-8">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 lg:gap-6">
         {/* Encabezado y Creación */}
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 bg-card p-6 rounded-2xl border border-border shadow-sm">
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-foreground">Categorías</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Organiza de dónde viene tu dinero y en qué lo gastas.
-            </p>
+        <div className="dash-enter [--i:0] fn-card flex flex-col justify-between gap-5 p-5 md:flex-row md:items-start md:p-6">
+          <div className="flex flex-1 items-start gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full fn-chip">
+              <IconCategory2 className="size-5 text-fn-brand" aria-hidden />
+            </span>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-fn-text">Categorías</h1>
+              <p className="mt-1 text-sm text-fn-muted">
+                Organiza de dónde viene tu dinero y en qué lo gastas.
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-3 w-full md:w-auto">
-            {/* Selector de Tipo (Ingreso / Gasto) */}
-            <div className="flex p-1 bg-zinc-800 rounded-full border boder-border">
+          <div className="flex w-full flex-col gap-3 md:w-auto">
+            {/* Selector de Tipo (Ingreso / Gasto): la opción activa va rellena, con ícono y texto */}
+            <div className="flex rounded-full fn-chip p-1">
               <button
+                type="button"
+                aria-pressed={newCategoryType === "expense"}
                 className={cn(
-                  "flex-1 px-4 py-1.5 text-sm font-medium rounded-full transition-colors",
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-fn-brand",
                   newCategoryType === "expense"
-                    ? "text-destructive"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "fn-segment-active"
+                    : "text-fn-muted hover:text-fn-text",
                 )}
                 onClick={() => setNewCategoryType("expense")}
               >
+                <IconArrowDownRight
+                  className={cn("size-4", newCategoryType === "expense" && "text-negative")}
+                  aria-hidden
+                />
                 Gasto
               </button>
               <button
+                type="button"
+                aria-pressed={newCategoryType === "income"}
                 className={cn(
-                  "flex-1 px-4 py-1.5 text-sm font-medium rounded-xl transition-colors",
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-fn-brand",
                   newCategoryType === "income"
-                    ? "text-emerald-600 dark:text-emerald-500"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "fn-segment-active"
+                    : "text-fn-muted hover:text-fn-text",
                 )}
                 onClick={() => setNewCategoryType("income")}
               >
+                <IconArrowUpRight
+                  className={cn("size-4", newCategoryType === "income" && "text-success")}
+                  aria-hidden
+                />
                 Ingreso
               </button>
             </div>
@@ -68,7 +116,7 @@ export default function Categories() {
                 name="new-category-input"
                 type="text"
                 placeholder="Nombre (ej. Restaurante)"
-                className="flex h-10 w-full md:w-64 rounded-full border border-input bg-zinc-800 px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                className="fn-input h-10 w-full md:w-64"
                 value={newCategoryValue}
                 onChange={(e) => setNewCategoryValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleAddCategory()}
@@ -76,7 +124,8 @@ export default function Categories() {
               />
               <button
                 onClick={handleAddCategory}
-                className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                aria-label="Agregar categoría"
+                className="fn-button h-10 shrink-0 px-4"
               >
                 <IconPlus className="h-5 w-5" />
               </button>
@@ -85,8 +134,8 @@ export default function Categories() {
         </div>
 
         {/* Lista de Categorías (Grid adaptativo) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories.map((c) => {
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {categories.map((c, index) => {
             const isEditing = editingCategory === c.id;
             const isConfirming = confirmDeleteCategory === c.id;
             const isIncome = c.type === "income";
@@ -94,81 +143,91 @@ export default function Categories() {
             return (
               <div
                 key={c.id}
-                className="flex items-center justify-between p-4 bg-card rounded-xl border border-border shadow-sm transition-all hover:shadow-md relative overflow-hidden"
+                style={{ "--i": Math.min(index + 1, 8) } as React.CSSProperties}
+                // Alto fijo en escritorio: ver, editar y confirmar borrado ocupan el mismo espacio.
+                className="dash-enter fn-card flex items-center justify-between p-4 md:h-[4.5rem]"
               >
-                {/* Borde de color sutil a la izquierda para identificar rápido */}
-                <div
-                  className={cn(
-                    "absolute left-0 top-0 bottom-0 w-1",
-                    isIncome ? "bg-emerald-500" : "bg-destructive",
-                  )}
-                />
-
-                <div className="w-full pl-2">
+                <div className="h-full w-full">
                   {/* MODO EDICIÓN */}
                   {isEditing ? (
-                    <div className="flex w-full items-center gap-2">
+                    <div className="flex h-full w-full items-center gap-2 rounded-2xl fn-chip px-2">
                       <input
                         value={renameValue}
-                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
+                        aria-label="Nombre de la categoría"
+                        className="fn-input h-8 w-full bg-fn-card"
                         onChange={(e) => setRenameValue(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && doRename(c.id)}
                         autoFocus
                       />
                       <button
                         onClick={() => doRename(c.id)}
-                        className="p-1.5 text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 rounded-full transition-colors shrink-0"
+                        aria-label="Guardar"
+                        title="Guardar"
+                        className="fn-icon-button flex size-8 shrink-0 items-center justify-center rounded-full text-success"
                       >
                         <IconCheck className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => setEditingCategory(null)}
-                        className="p-1.5 text-muted-foreground hover:bg-secondary rounded-full transition-colors shrink-0"
+                        aria-label="Cancelar"
+                        title="Cancelar"
+                        className="fn-icon-button flex size-8 shrink-0 items-center justify-center rounded-full text-fn-muted"
                       >
                         <IconX className="h-4 w-4" />
                       </button>
                     </div>
                   ) : isConfirming ? (
                     /* MODO CONFIRMACIÓN DE BORRADO */
-                    <div className="flex w-full items-center justify-between gap-2">
-                      <span className="text-sm font-medium text-destructive truncate">
+                    <div className="flex h-full w-full items-center justify-between gap-2">
+                      <span className="truncate text-sm font-medium text-negative">
                         ¿Borrar "{c.name}"?
                       </span>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex shrink-0 items-center gap-1.5">
                         <button
                           onClick={() => doDeleteCategory(c.id)}
-                          className="text-xs font-medium bg-destructive text-destructive-foreground px-2.5 py-1.5 rounded-md hover:bg-destructive/90 transition-colors"
+                          className="fn-button-danger px-3.5 py-1.5"
                         >
                           Sí
                         </button>
                         <button
                           onClick={() => setConfirmDeleteCategory(null)}
-                          className="text-xs font-medium bg-secondary text-secondary-foreground px-2.5 py-1.5 rounded-md hover:bg-secondary/80 transition-colors"
+                          className="fn-button-soft px-3.5 py-1.5"
                         >
                           No
                         </button>
                       </div>
                     </div>
                   ) : (
-                    /* MODO VISUALIZACIÓN NORMAL */
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex flex-col truncate pr-2">
-                        <span className="font-medium text-card-foreground truncate">{c.name}</span>
-                        <span className="text-xs text-muted-foreground capitalize mt-0.5">
-                          {isIncome ? "Ingreso" : "Gasto"}
+                    /* MODO VISUALIZACIÓN NORMAL: el tipo se ve por ícono y texto, no solo por color */
+                    <div className="flex h-full w-full items-center justify-between">
+                      <div className="flex min-w-0 items-center gap-3 pr-2">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-full fn-chip">
+                          {isIncome ? (
+                            <IconArrowUpRight className="size-5 text-success" aria-hidden />
+                          ) : (
+                            <IconArrowDownRight className="size-5 text-negative" aria-hidden />
+                          )}
                         </span>
+                        <div className="flex min-w-0 flex-col">
+                          <span className="truncate font-medium text-fn-text">{c.name}</span>
+                          <span className="mt-0.5 text-xs capitalize text-fn-muted">
+                            {isIncome ? "Ingreso" : "Gasto"}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex shrink-0 items-center gap-1.5">
                         <button
                           onClick={() => startRename(c.id, c.name)}
-                          className="p-2 text-muted-foreground hover:text-primary hover:bg-secondary rounded-full transition-colors"
+                          aria-label="Editar"
+                          className="fn-icon-button flex size-9 items-center justify-center rounded-full text-fn-muted hover:text-fn-text"
                           title="Editar"
                         >
                           <IconEdit className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => setConfirmDeleteCategory(c.id)}
-                          className="p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
+                          aria-label="Eliminar"
+                          className="fn-icon-button flex size-9 items-center justify-center rounded-full text-fn-muted hover:text-negative"
                           title="Eliminar"
                         >
                           <IconTrash className="h-4 w-4" />
@@ -180,12 +239,6 @@ export default function Categories() {
               </div>
             );
           })}
-
-          {categories.length === 0 && (
-            <div className="col-span-full p-8 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl mt-4">
-              No tienes categorías creadas aún. Agrega una arriba.
-            </div>
-          )}
         </div>
       </div>
     </div>

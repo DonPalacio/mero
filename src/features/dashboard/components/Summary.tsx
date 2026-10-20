@@ -1,8 +1,22 @@
-import { fmt, monthLabelText } from "@/lib/utils";
-import { formatYield } from "@/lib/yield";
+import {
+  IconAlertTriangle,
+  IconArrowDownRight,
+  IconArrowUpRight,
+  IconBuildingBank,
+  IconChevronLeft,
+  IconChevronRight,
+  IconWallet,
+} from "@tabler/icons-react";
+import { monthLabelText } from "@/lib/utils";
+import AnimatedNumber from "@/components/AnimatedNumber";
 
-// 14cqw ≈ ancho de la celda / 7 caracteres: cabe "$1.900.000" y llega a 1.25rem (text-xl) si hay espacio.
-const AMOUNT_CLASS = "text-[min(1.25rem,14cqw)] font-bold whitespace-nowrap leading-tight";
+// Cada cifra vive en un contenedor (@container): su tamaño sigue el ancho disponible para que
+// montos de siete cifras no se desborden en pantallas angostas (13cqw ≈ ancho / 7 caracteres).
+// En negativo se reduce un poco para dejar sitio al ícono de alerta.
+const heroAmountClass = (negative: boolean) =>
+  `${negative ? "text-[min(2.5rem,11cqw)]" : "text-[min(2.5rem,13cqw)]"} font-bold whitespace-nowrap leading-none tracking-tight tabular-nums`;
+const SUB_AMOUNT_CLASS =
+  "text-[min(1.25rem,11cqw)] font-bold whitespace-nowrap leading-tight tracking-tight tabular-nums text-fn-text";
 
 interface Box {
   name: string;
@@ -27,68 +41,107 @@ export default function Summary({
   onPrev,
   onNext,
   income,
-  yields = 0,
   expenses,
   remaining,
-  cmpColor,
   boxes,
   balancesByBox,
 }: SummaryProps) {
-  return (
-    <div className="rounded-3xl bg-card border border-border p-4 flex flex-col gap-4 w-full h-full">
-      <h2 className="text-foreground font-semibold text-lg">Resumen del mes</h2>
+  const isNegative = remaining < 0;
 
-      <div className="flex items-center justify-between">
-        <button
-          className="px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-sm text-foreground"
-          onClick={onPrev}
-        >
-          ‹
-        </button>
-        <span className="font-semibold text-foreground">{monthLabelText(selectedMonth)}</span>
-        <button
-          className="px-2 py-1 rounded-md bg-muted hover:bg-muted/80 text-sm text-foreground"
-          onClick={onNext}
-        >
-          ›
-        </button>
+  return (
+    <div className="fn-card flex h-full w-full flex-col gap-4 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="flex size-9 items-center justify-center rounded-full fn-chip">
+            <IconWallet className="size-[1.125rem] text-fn-brand" aria-hidden />
+          </span>
+          <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">
+            Resumen del mes
+          </h2>
+        </div>
+
+        {/* Selector de mes: píldora con la opción activa rellena, como las pestañas del modelo. */}
+        <div className="flex items-center gap-1">
+          <button
+            aria-label="Mes anterior"
+            className="fn-icon-button flex size-8 items-center justify-center rounded-full text-fn-text"
+            onClick={onPrev}
+          >
+            <IconChevronLeft className="size-4" aria-hidden />
+          </button>
+          {/* Ancho fijo (cabe "Septiembre de 2026"): la píldora no cambia de tamaño entre meses. */}
+          <span className="w-40 shrink-0 whitespace-nowrap rounded-full bg-fn-text px-3 py-1.5 text-center text-xs font-semibold text-fn-ground">
+            <span key={selectedMonth} className="label-swap inline-block">
+              {monthLabelText(selectedMonth)}
+            </span>
+          </span>
+          <button
+            aria-label="Mes siguiente"
+            className="fn-icon-button flex size-8 items-center justify-center rounded-full text-fn-text"
+            onClick={onNext}
+          >
+            <IconChevronRight className="size-4" aria-hidden />
+          </button>
+        </div>
       </div>
 
-      {/* Cada celda es un contenedor: el tamaño de la cifra sigue el ancho de su columna
-          para que montos de siete cifras no se desborden en pantallas angostas. */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="@container flex min-w-0 flex-col gap-1">
-          <span className="text-xs text-muted-foreground">Ingresos del mes</span>
-          <span className={`${AMOUNT_CLASS} text-foreground`}>{fmt(income)}</span>
+      {/* Panel hundido con la cifra principal: lo que queda del mes. */}
+      <div className="@container flex min-w-0 flex-col gap-2 rounded-2xl fn-chip p-4">
+        <span className="text-sm text-fn-muted">Queda</span>
+        <span
+          className={`${heroAmountClass(isNegative)} flex items-center gap-2 ${isNegative ? "text-negative" : "text-fn-text"}`}
+        >
+          {isNegative && <IconAlertTriangle className="size-[0.55em] shrink-0" aria-hidden />}
+          <AnimatedNumber value={remaining} />
+        </span>
+      </div>
+
+      {/* Mosaicos con el ícono arriba, como la fila de acciones del modelo. */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="@container min-w-0 rounded-2xl fn-chip p-3">
+          <div className="flex flex-col gap-2">
+            <span className="flex size-9 items-center justify-center rounded-full bg-fn-card">
+              <IconArrowUpRight className="size-[1.125rem] text-success" aria-hidden />
+            </span>
+            <span className="text-xs text-fn-muted">Ingresos del mes</span>
+            <AnimatedNumber value={income} className={SUB_AMOUNT_CLASS} />
+          </div>
         </div>
-        <div className="@container flex min-w-0 flex-col gap-1">
-          <span className="text-xs text-muted-foreground">Gastos del mes</span>
-          <span className={`${AMOUNT_CLASS} text-foreground`}>{fmt(expenses)}</span>
-        </div>
-        <div className="@container flex min-w-0 flex-col gap-1">
-          <span className="text-xs text-muted-foreground">Queda</span>
-          <span className={`${AMOUNT_CLASS} ${remaining < 0 ? "text-red-500" : "text-foreground"}`}>
-            {fmt(remaining)}
-          </span>
+        <div className="@container min-w-0 rounded-2xl fn-chip p-3">
+          <div className="flex flex-col gap-2">
+            <span className="flex size-9 items-center justify-center rounded-full bg-fn-card">
+              <IconArrowDownRight className="size-[1.125rem] text-negative" aria-hidden />
+            </span>
+            <span className="text-xs text-fn-muted">Gastos del mes</span>
+            <AnimatedNumber value={expenses} className={SUB_AMOUNT_CLASS} />
+          </div>
         </div>
       </div>
 
       {boxes && boxes.length > 0 && (
-        <div className="flex flex-col gap-2 flex-1 min-h-0">
-          <h3 className="text-foreground font-semibold text-sm">Saldo por medio</h3>
-          <div className="flex flex-col gap-1 flex-1">
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
+          <h3 className="text-sm font-semibold text-fn-text">Saldo por medio</h3>
+          <ul className="flex flex-1 flex-col gap-2 overflow-y-auto">
             {boxes.map((m) => {
               const balance = balancesByBox?.[m.name] || 0;
               return (
-                <div key={m.name} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{m.name}</span>
-                  <span className={balance < 0 ? "text-red-500" : "text-foreground"}>
-                    {fmt(balance)}
+                <li
+                  key={m.name}
+                  className="flex items-center gap-3 rounded-2xl fn-chip px-3 py-2.5 text-sm"
+                >
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fn-card">
+                    <IconBuildingBank className="size-4 text-fn-muted" aria-hidden />
                   </span>
-                </div>
+                  <span className="min-w-0 flex-1 truncate text-fn-text">{m.name}</span>
+                  <span
+                    className={`shrink-0 font-semibold tabular-nums ${balance < 0 ? "text-negative" : "text-fn-text"}`}
+                  >
+                    <AnimatedNumber value={balance} />
+                  </span>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </div>
       )}
     </div>

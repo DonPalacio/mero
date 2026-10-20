@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { IconAlertOctagon, IconAlertTriangle, IconTargetArrow } from "@tabler/icons-react";
 import { fmt, cn } from "@/lib/utils";
 
 export interface Category {
@@ -41,33 +42,59 @@ export default function Budgets({ categories, expensesByCategory, onBudgetChange
   };
 
   return (
-    <div className="p-4 rounded-3xl border border-border bg-card flex flex-col gap-4 h-auto lg:h-full">
-      <h2 className="font-semibold text-lg text-card-foreground">Presupuestos</h2>
+    <div className="fn-card flex h-auto flex-col gap-4 p-5 lg:h-full">
+      <div className="flex items-center gap-2.5">
+        <span className="flex size-9 items-center justify-center rounded-full fn-chip">
+          <IconTargetArrow className="size-[1.125rem] text-fn-brand" aria-hidden />
+        </span>
+        <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">Presupuestos</h2>
+      </div>
 
-      <div className="overflow-y-auto flex-1 pr-2 flex flex-col gap-4 lg:[&::-webkit-scrollbar]:hidden lg:[-ms-overflow-style:none] lg:[scrollbar-width:none]">
-        {expenseCategories.map((c) => {
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
+        {expenseCategories.map((c, index) => {
           const spent = expensesByCategory[c.name] || 0;
           const pct = c.budget > 0 ? Math.min((spent / c.budget) * 100, 100) : 0;
+          const exceeded = c.budget > 0 && spent > c.budget;
+          const nearLimit = !exceeded && pct >= 80;
 
-          let colorClass = "bg-primary";
-          if (c.budget > 0 && spent > c.budget) {
-            colorClass = "bg-destructive"; // Rojo si se pasa
-          } else if (pct >= 80) {
-            colorClass = "bg-amber-500"; // Naranja si está cerca del límite
+          let colorClass = "bg-fn-brand";
+          if (exceeded) {
+            colorClass = "bg-negative"; // Se pasó del presupuesto
+          } else if (nearLimit) {
+            colorClass = "bg-warning"; // Cerca del límite
           }
 
           return (
-            <div key={c.id} className="flex flex-col gap-1">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-foreground">{c.name}</span>
-                <span className="text-muted-foreground flex items-center gap-2">
+            <div key={c.id} className="flex flex-col gap-2.5 rounded-2xl fn-chip p-3.5">
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <span className="flex min-w-0 items-center gap-1.5 font-medium text-fn-text">
+                  <span className="truncate">{c.name}</span>
+                  {/* El estado no depende del color: cada uno lleva su propio ícono y etiqueta. */}
+                  {exceeded && (
+                    <IconAlertOctagon
+                      role="img"
+                      aria-label="Presupuesto superado"
+                      className="size-4 shrink-0 text-negative"
+                    />
+                  )}
+                  {nearLimit && (
+                    <IconAlertTriangle
+                      role="img"
+                      aria-label="Cerca del límite"
+                      className="size-4 shrink-0 text-warning"
+                    />
+                  )}
+                </span>
+                <span className="flex shrink-0 items-center gap-2 tabular-nums text-fn-muted">
                   {fmt(spent)} /{" "}
                   <input
                     id={`budget-${c.id}`}
                     name={`budget-${c.id}`}
                     type="number"
+                    inputMode="numeric"
+                    aria-label={`Presupuesto de ${c.name}`}
                     value={getValue(c)}
-                    className="w-24 px-2 py-1 text-sm bg-background border border-border rounded text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-28 rounded-full border border-fn-line bg-fn-card px-3 py-1.5 text-right text-sm tabular-nums text-fn-text transition-colors [appearance:textfield] hover:border-fn-muted focus-visible:border-fn-brand focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-fn-brand [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     onChange={(e) => handleChange(c.id, e.target.value)}
                     onBlur={() => commitChange(c.id)}
                     onKeyDown={(e) => {
@@ -77,10 +104,13 @@ export default function Budgets({ categories, expensesByCategory, onBudgetChange
                 </span>
               </div>
 
-              <div className="w-full h-2 bg-secondary rounded-full overflow-hidden mt-1">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-fn-card">
                 <div
-                  className={cn("h-full rounded-full transition-all", colorClass)}
-                  style={{ width: `${pct}%` }}
+                  className={cn(
+                    "fill-reveal h-full rounded-full transition-[width] duration-300 ease-out motion-reduce:transition-none",
+                    colorClass,
+                  )}
+                  style={{ width: `${pct}%`, "--i": Math.min(index, 8) } as React.CSSProperties}
                 />
               </div>
             </div>

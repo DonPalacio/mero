@@ -30,7 +30,7 @@ export function FloatingDock({ items }: { items: DockItem[] }) {
         aria-label="Navegación principal"
         className="md:hidden fixed inset-x-0 bottom-3 z-50 mx-auto w-fit max-w-[calc(100vw-1rem)] pb-[env(safe-area-inset-bottom)]"
       >
-        <ul className="flex items-start gap-1 rounded-3xl border border-white/10 bg-[color-mix(in_oklab,var(--card),var(--background))] px-2 py-2 shadow-lg">
+        <ul className="flex items-start gap-1 rounded-3xl border border-white/10 bg-[color-mix(in_oklab,color-mix(in_oklab,var(--card),var(--background))_75%,transparent)] px-2 py-2 shadow-lg">
           {items.map((item) => {
             const isActive = item.href !== undefined && pathname === item.href;
             const content = (
