@@ -57,7 +57,7 @@ export default function Categories() {
                 className={cn(
                   "flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-fn-brand",
                   newCategoryType === "expense"
-                    ? "bg-fn-text text-fn-ground"
+                    ? "fn-segment-active"
                     : "text-fn-muted hover:text-fn-text",
                 )}
                 onClick={() => setNewCategoryType("expense")}
@@ -74,7 +74,7 @@ export default function Categories() {
                 className={cn(
                   "flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-fn-brand",
                   newCategoryType === "income"
-                    ? "bg-fn-text text-fn-ground"
+                    ? "fn-segment-active"
                     : "text-fn-muted hover:text-fn-text",
                 )}
                 onClick={() => setNewCategoryType("income")}
@@ -122,16 +122,17 @@ export default function Categories() {
               <div
                 key={c.id}
                 style={{ "--i": Math.min(index + 1, 8) } as React.CSSProperties}
-                className="dash-enter fn-card flex items-center justify-between p-4"
+                // Alto fijo en escritorio: ver, editar y confirmar borrado ocupan el mismo espacio.
+                className="dash-enter fn-card flex items-center justify-between p-4 md:h-[4.5rem]"
               >
-                <div className="w-full">
+                <div className="h-full w-full">
                   {/* MODO EDICIÓN */}
                   {isEditing ? (
-                    <div className="flex w-full items-center gap-2 rounded-2xl fn-chip p-2.5">
+                    <div className="flex h-full w-full items-center gap-2 rounded-2xl fn-chip px-2">
                       <input
                         value={renameValue}
                         aria-label="Nombre de la categoría"
-                        className="fn-input h-9 w-full bg-fn-card"
+                        className="fn-input h-8 w-full bg-fn-card"
                         onChange={(e) => setRenameValue(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && doRename(c.id)}
                         autoFocus
@@ -140,7 +141,7 @@ export default function Categories() {
                         onClick={() => doRename(c.id)}
                         aria-label="Guardar"
                         title="Guardar"
-                        className="fn-icon-button flex size-9 shrink-0 items-center justify-center rounded-full text-success"
+                        className="fn-icon-button flex size-8 shrink-0 items-center justify-center rounded-full text-success"
                       >
                         <IconCheck className="h-4 w-4" />
                       </button>
@@ -148,14 +149,14 @@ export default function Categories() {
                         onClick={() => setEditingCategory(null)}
                         aria-label="Cancelar"
                         title="Cancelar"
-                        className="fn-icon-button flex size-9 shrink-0 items-center justify-center rounded-full text-fn-muted"
+                        className="fn-icon-button flex size-8 shrink-0 items-center justify-center rounded-full text-fn-muted"
                       >
                         <IconX className="h-4 w-4" />
                       </button>
                     </div>
                   ) : isConfirming ? (
                     /* MODO CONFIRMACIÓN DE BORRADO */
-                    <div className="flex w-full items-center justify-between gap-2">
+                    <div className="flex h-full w-full items-center justify-between gap-2">
                       <span className="truncate text-sm font-medium text-negative">
                         ¿Borrar "{c.name}"?
                       </span>
@@ -176,7 +177,7 @@ export default function Categories() {
                     </div>
                   ) : (
                     /* MODO VISUALIZACIÓN NORMAL: el tipo se ve por ícono y texto, no solo por color */
-                    <div className="flex w-full items-center justify-between">
+                    <div className="flex h-full w-full items-center justify-between">
                       <div className="flex min-w-0 items-center gap-3 pr-2">
                         <span className="flex size-10 shrink-0 items-center justify-center rounded-full fn-chip">
                           {isIncome ? (

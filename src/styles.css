@@ -63,6 +63,7 @@
   --color-fn-ground: var(--fn-ground);
   --color-fn-card: var(--fn-card);
   --color-fn-chip: var(--fn-chip);
+  --color-fn-chip-hover: var(--fn-chip-hover);
   --color-fn-line: var(--fn-line);
   --color-fn-text: var(--fn-text);
   --color-fn-muted: var(--fn-muted);
@@ -211,10 +212,8 @@
 /* Tarjeta de sección: superficie sólida, borde fino y elevación suave. */
 @utility fn-card {
   background-color: var(--fn-card);
-  border: 1px solid var(--fn-line);
   border-radius: 1.75rem;
   box-shadow:
-    0 1px 0 var(--fn-edge) inset,
     0 1px 2px var(--fn-shadow),
     0 14px 28px -16px var(--fn-shadow);
 }
@@ -487,4 +486,12 @@
   .fn-button-danger:active {
     transform: none;
   }
+}
+
+/* Opción activa del selector Gasto/Ingreso: relleno gris oscuro elevado con texto claro. Así el
+   verde y el rojo de los íconos contrastan (sobre un fondo claro se perdían) y no deslumbra. */
+@utility fn-segment-active {
+  background-color: color-mix(in oklab, var(--fn-card) 80%, var(--fn-text));
+  color: var(--fn-text);
+  box-shadow: inset 0 0 0 1px var(--fn-line);
 }

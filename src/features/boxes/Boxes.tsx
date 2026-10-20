@@ -12,7 +12,7 @@ import {
 import { useBoxes } from "./hooks/useBoxes";
 import BankRatesHelp from "./components/BankRatesHelp";
 import AnimatedNumber from "@/components/AnimatedNumber";
-import { localISODate } from "@/lib/utils";
+import { cn, localISODate } from "@/lib/utils";
 import { formatYield, estimatedDailyYield } from "@/lib/yield";
 
 export default function Boxes() {
@@ -107,11 +107,13 @@ export default function Boxes() {
               <div
                 key={m.id}
                 style={{ "--i": Math.min(index + 1, 8) } as React.CSSProperties}
-                className="dash-enter fn-card flex items-center justify-between p-4"
+                // Alto fijo y compacto en escritorio: ver, editar y confirmar ocupan el mismo espacio, así
+                // la tarjeta (y la cuadrícula) no cambia de tamaño al pulsar Editar.
+                className="dash-enter fn-card flex flex-col p-3.5 md:h-40"
               >
                 {/* MODO EDICIÓN */}
                 {isEditing ? (
-                  <div className="flex w-full flex-col gap-2.5 rounded-2xl fn-chip p-3">
+                  <div className="flex h-full w-full flex-col justify-between gap-1.5 rounded-2xl fn-chip p-2.5">
                     <div className="flex w-full items-center gap-2">
                       <input
                         id={`rename-box-${m.id}`}
@@ -119,7 +121,7 @@ export default function Boxes() {
                         type="text"
                         value={renameBoxValue}
                         aria-label="Nombre de la caja"
-                        className="fn-input h-9 w-full bg-fn-card"
+                        className="fn-input h-8 w-full bg-fn-card"
                         onChange={(e) => setRenameBoxValue(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && doSaveBox(m.id)}
                         autoComplete="off"
@@ -129,7 +131,7 @@ export default function Boxes() {
                         onClick={() => doSaveBox(m.id)}
                         aria-label="Guardar"
                         title="Guardar"
-                        className="fn-icon-button flex size-9 shrink-0 items-center justify-center rounded-full text-success"
+                        className="fn-icon-button flex size-8 shrink-0 items-center justify-center rounded-full text-success"
                       >
                         <IconCheck className="h-4 w-4" />
                       </button>
@@ -137,17 +139,18 @@ export default function Boxes() {
                         onClick={() => setEditingBox(null)}
                         aria-label="Cancelar"
                         title="Cancelar"
-                        className="fn-icon-button flex size-9 shrink-0 items-center justify-center rounded-full text-fn-muted"
+                        className="fn-icon-button flex size-8 shrink-0 items-center justify-center rounded-full text-fn-muted"
                       >
                         <IconX className="h-4 w-4" />
                       </button>
                     </div>
 
-                    {/* Rendimiento E.A.: vacío = la caja no rinde */}
+                    {/* Rendimiento E.A.: vacío = la caja no rinde. Etiqueta de ancho fijo para que
+                        los campos queden alineados. */}
                     <div className="flex items-center gap-2">
                       <label
                         htmlFor={`ea-rate-box-${m.id}`}
-                        className="shrink-0 text-xs text-fn-muted"
+                        className="w-28 shrink-0 text-xs text-fn-muted"
                       >
                         Rendimiento E.A. (%)
                       </label>
@@ -158,7 +161,7 @@ export default function Boxes() {
                         inputMode="decimal"
                         placeholder="Ej: 9,30"
                         value={eaRateValue}
-                        className="fn-input h-9 w-28 bg-fn-card"
+                        className="fn-input h-8 min-w-0 flex-1 bg-fn-card"
                         onChange={(e) => setEaRateValue(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && doSaveBox(m.id)}
                         autoComplete="off"
@@ -167,30 +170,35 @@ export default function Boxes() {
 
                     {/* Desde qué día rinde. Al activar la tasa se elige libremente; si la caja ya
                         rinde solo se puede mover hacia atrás (los días anteriores se acreditan
-                        de una vez; los ya acreditados no cambian). */}
-                    {eaRateValue.trim() !== "" && (
-                      <div className="flex items-center gap-2">
-                        <label
-                          htmlFor={`from-box-${m.id}`}
-                          className="shrink-0 text-xs text-fn-muted"
-                        >
-                          Rinde desde
-                        </label>
-                        <input
-                          id={`from-box-${m.id}`}
-                          name={`from-box-${m.id}`}
-                          type="date"
-                          max={m.yield_from ?? localISODate()}
-                          value={fromValue}
-                          className="fn-input h-9 bg-fn-card"
-                          onChange={(e) => setFromValue(e.target.value)}
-                        />
-                      </div>
-                    )}
+                        de una vez; los ya acreditados no cambian). La fila siempre ocupa su
+                        espacio: sin tasa queda invisible (y fuera del foco) para que el alto no
+                        cambie al escribir. */}
+                    <div
+                      className={cn(
+                        "flex items-center gap-2",
+                        eaRateValue.trim() === "" && "invisible",
+                      )}
+                    >
+                      <label
+                        htmlFor={`from-box-${m.id}`}
+                        className="w-28 shrink-0 text-xs text-fn-muted"
+                      >
+                        Rinde desde
+                      </label>
+                      <input
+                        id={`from-box-${m.id}`}
+                        name={`from-box-${m.id}`}
+                        type="date"
+                        max={m.yield_from ?? localISODate()}
+                        value={fromValue}
+                        className="fn-input scheme-dark h-8 min-w-0 flex-1 bg-fn-card"
+                        onChange={(e) => setFromValue(e.target.value)}
+                      />
+                    </div>
                   </div>
                 ) : isConfirming ? (
                   /* MODO CONFIRMACIÓN DE BORRADO */
-                  <div className="flex w-full flex-wrap items-center justify-between gap-3">
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-center">
                     <span className="text-sm font-medium text-negative">
                       ¿Deseas eliminar la caja "{m.name}"?
                     </span>
@@ -215,7 +223,7 @@ export default function Boxes() {
                   </div>
                 ) : isResetting ? (
                   /* MODO CONFIRMACIÓN DE REINICIO DE RENDIMIENTOS */
-                  <div className="flex w-full flex-wrap items-center justify-between gap-3">
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-center">
                     <span className="text-sm font-medium text-fn-text">
                       ¿Eliminar también el dinero generado por el E.A. de "{m.name}"?
                     </span>
@@ -235,46 +243,56 @@ export default function Boxes() {
                     </div>
                   </div>
                 ) : (
-                  /* MODO VISUALIZACIÓN NORMAL */
-                  <>
-                    <div className="flex min-w-0 items-center gap-3 pr-2">
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-full fn-chip">
+                  /* MODO VISUALIZACIÓN NORMAL: tres franjas fijas (nombre y acciones, saldo,
+                      rendimiento). La franja del rendimiento reserva su alto aunque la caja no
+                      rinda, para que todas las tarjetas midan igual. */
+                  <div className="flex h-full w-full flex-col justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full fn-chip">
                         <IconBuildingBank className="size-5 text-fn-muted" aria-hidden />
                       </span>
-                      <div className="min-w-0">
-                        <span className="block truncate font-medium text-fn-text">{m.name}</span>
-                        <AnimatedNumber
-                          value={m.balance}
-                          className={`block text-lg font-bold tabular-nums tracking-tight ${m.balance < 0 ? "text-negative" : "text-fn-text"}`}
-                        />
-                        {m.ea_rate !== null && (
-                          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full fn-chip px-2 py-0.5 text-xs text-fn-muted">
-                            <IconTrendingUp className="size-3.5 text-success" aria-hidden />
+                      <span className="min-w-0 flex-1 truncate font-medium text-fn-text">
+                        {m.name}
+                      </span>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <button
+                          onClick={() => startEditBox(m)}
+                          aria-label="Editar"
+                          className="fn-icon-button flex size-8 items-center justify-center rounded-full text-fn-muted hover:text-fn-text"
+                          title="Editar"
+                        >
+                          <IconEdit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteBox(m.id)}
+                          aria-label="Eliminar"
+                          className="fn-icon-button flex size-8 items-center justify-center rounded-full text-fn-muted hover:text-negative"
+                          title="Eliminar"
+                        >
+                          <IconTrash className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="@container min-w-0">
+                      <AnimatedNumber
+                        value={m.balance}
+                        className={`block whitespace-nowrap text-[min(1.75rem,11cqw)] font-bold leading-none tracking-tight tabular-nums ${m.balance < 0 ? "text-negative" : "text-fn-text"}`}
+                      />
+                    </div>
+
+                    <div className="flex min-h-6 items-center">
+                      {m.ea_rate !== null && (
+                        <span className="inline-flex max-w-full items-center gap-1 truncate rounded-full fn-chip px-2.5 py-1 text-xs text-fn-muted">
+                          <IconTrendingUp className="size-3.5 shrink-0 text-success" aria-hidden />
+                          <span className="truncate">
                             {m.ea_rate.toLocaleString("es-CO")}% E.A. · ≈{" "}
                             {formatYield(estimatedDailyYield(m.balance, m.ea_rate))} al día
                           </span>
-                        )}
-                      </div>
+                        </span>
+                      )}
                     </div>
-                    <div className="flex shrink-0 items-center gap-1.5">
-                      <button
-                        onClick={() => startEditBox(m)}
-                        aria-label="Editar"
-                        className="fn-icon-button flex size-9 items-center justify-center rounded-full text-fn-muted hover:text-fn-text"
-                        title="Editar"
-                      >
-                        <IconEdit className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => setConfirmDeleteBox(m.id)}
-                        aria-label="Eliminar"
-                        className="fn-icon-button flex size-9 items-center justify-center rounded-full text-fn-muted hover:text-negative"
-                        title="Eliminar"
-                      >
-                        <IconTrash className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
             );
