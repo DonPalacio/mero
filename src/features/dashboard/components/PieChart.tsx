@@ -104,16 +104,6 @@ export default function PieChart({ expensesByCategory }: PieChartProps) {
         >
           <defs>{defs}</defs>
 
-          {/* Marcas finas alrededor del anillo: dan la sensación de un dial sin añadir color */}
-          <circle
-            cx={cx}
-            cy={cy}
-            r={r + sw / 2 + 6}
-            fill="none"
-            className="stroke-fn-muted opacity-40"
-            strokeWidth={3}
-            strokeDasharray="1 7.3255"
-          />
           {/* Pozo central hundido donde vive el total */}
           <circle
             cx={cx}
