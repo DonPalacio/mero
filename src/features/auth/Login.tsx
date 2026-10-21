@@ -54,7 +54,7 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="tu@correo.com"
-                className="flex h-10 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                className="flex h-10 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-foreground transition-colors"
               />
             </div>
           </div>
@@ -74,7 +74,7 @@ export default function Login() {
                 required
                 minLength={6}
                 placeholder="••••••••"
-                className="flex h-10 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-colors"
+                className="flex h-10 w-full rounded-md border border-input bg-transparent pl-10 pr-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-foreground transition-colors"
               />
             </div>
           </div>

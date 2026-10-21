@@ -6,18 +6,10 @@ interface PieChartProps {
   expensesByCategory: Record<string, number>;
 }
 
-// Rampa de azules y grises neutros (sin los rojos/verdes/amarillos de los estados): cada segmento
-// se distingue por tono y luminosidad, y la leyenda repite nombre, monto y porcentaje para que la
-// identidad no dependa solo del color.
-const SHADES = [
-  "oklch(0.7 0.16 258)",
-  "oklch(0.97 0 0)",
-  "oklch(0.8 0.1 235)",
-  "oklch(0.7 0 0)",
-  "oklch(0.58 0.17 270)",
-  "oklch(0.55 0 0)",
-  "oklch(0.88 0.06 245)",
-];
+// Rampa de grises neutros (sin los rojos/verdes/amarillos de los estados): cada segmento se
+// distingue por luminosidad, y la leyenda repite nombre, monto y porcentaje para que la identidad
+// no dependa solo del color.
+const SHADES = ["#a1a1aa", "#f4f4f5", "#71717a", "#d4d4d8", "#52525b", "#b8b8bf", "#e4e4e7"];
 
 export default function PieChart({ expensesByCategory }: PieChartProps) {
   const labels = Object.keys(expensesByCategory);
@@ -69,7 +61,7 @@ export default function PieChart({ expensesByCategory }: PieChartProps) {
     <div className="fn-card flex h-full flex-col gap-1 p-5">
       <div className="flex items-center gap-2.5">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full fn-chip">
-          <IconChartDonut className="size-[1.125rem] text-fn-brand" aria-hidden />
+          <IconChartDonut className="size-[1.125rem] text-foreground" aria-hidden />
         </span>
         <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">
           Gastos por categoría (este mes)

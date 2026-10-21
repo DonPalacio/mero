@@ -1,22 +1,13 @@
 import {
-  IconAlertTriangle,
   IconArrowDownRight,
   IconArrowUpRight,
-  IconBuildingBank,
+  IconPackages,
   IconChevronLeft,
   IconChevronRight,
   IconWallet,
 } from "@tabler/icons-react";
 import { monthLabelText } from "@/lib/utils";
 import AnimatedNumber from "@/components/AnimatedNumber";
-
-// Cada cifra vive en un contenedor (@container): su tamaño sigue el ancho disponible para que
-// montos de siete cifras no se desborden en pantallas angostas (13cqw ≈ ancho / 7 caracteres).
-// En negativo se reduce un poco para dejar sitio al ícono de alerta.
-const heroAmountClass = (negative: boolean) =>
-  `${negative ? "text-[min(2.5rem,11cqw)]" : "text-[min(2.5rem,13cqw)]"} font-bold whitespace-nowrap leading-none tracking-tight tabular-nums`;
-const SUB_AMOUNT_CLASS =
-  "text-[min(1.25rem,11cqw)] font-bold whitespace-nowrap leading-tight tracking-tight tabular-nums text-fn-text";
 
 interface Box {
   name: string;
@@ -53,7 +44,7 @@ export default function Summary({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <span className="flex size-9 items-center justify-center rounded-full fn-chip">
-            <IconWallet className="size-[1.125rem] text-fn-brand" aria-hidden />
+            <IconWallet className="size-[1.125rem] text-foreground" aria-hidden />
           </span>
           <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">
             Resumen del mes
@@ -85,38 +76,41 @@ export default function Summary({
         </div>
       </div>
 
-      {/* Panel hundido con la cifra principal: lo que queda del mes. */}
-      <div className="@container flex min-w-0 flex-col gap-2 rounded-2xl fn-chip p-4">
-        <span className="text-sm text-fn-muted">Queda</span>
-        <span
-          className={`${heroAmountClass(isNegative)} flex items-center gap-2 ${isNegative ? "text-negative" : "text-fn-text"}`}
-        >
-          {isNegative && <IconAlertTriangle className="size-[0.55em] shrink-0" aria-hidden />}
-          <AnimatedNumber value={remaining} />
-        </span>
-      </div>
-
-      {/* Mosaicos con el ícono arriba, como la fila de acciones del modelo. */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="@container min-w-0 rounded-2xl fn-chip p-3">
-          <div className="flex flex-col gap-2">
-            <span className="flex size-9 items-center justify-center rounded-full bg-fn-card">
-              <IconArrowUpRight className="size-[1.125rem] text-success" aria-hidden />
+      {/* Tres filas en un solo panel: ícono y etiqueta a la izquierda, cifra alineada a la derecha. */}
+      <ul className="rounded-2xl fn-chip px-4">
+        <li className="flex items-center justify-between gap-3 py-3.5">
+          <span className="text-sm font-medium text-fn-text">Queda</span>
+          <span
+            className={`flex items-center gap-2 text-xl font-bold leading-none tracking-tight tabular-nums ${isNegative ? "text-negative" : "text-fn-text"}`}
+          >
+            <AnimatedNumber value={remaining} />
+          </span>
+        </li>
+        <li className="flex items-center justify-between gap-3 py-3.5">
+          <span className="flex items-center gap-2.5 text-sm text-fn-muted">
+            <span className="flex size-8 items-center justify-center rounded-full bg-fn-card">
+              <IconArrowUpRight className="size-4 text-success" aria-hidden />
             </span>
-            <span className="text-xs text-fn-muted">Ingresos del mes</span>
-            <AnimatedNumber value={income} className={SUB_AMOUNT_CLASS} />
-          </div>
-        </div>
-        <div className="@container min-w-0 rounded-2xl fn-chip p-3">
-          <div className="flex flex-col gap-2">
-            <span className="flex size-9 items-center justify-center rounded-full bg-fn-card">
-              <IconArrowDownRight className="size-[1.125rem] text-negative" aria-hidden />
+            Ingresos del mes
+          </span>
+          <AnimatedNumber
+            value={income}
+            className="text-base font-semibold tabular-nums text-fn-text"
+          />
+        </li>
+        <li className="flex items-center justify-between gap-3 py-3.5">
+          <span className="flex items-center gap-2.5 text-sm text-fn-muted">
+            <span className="flex size-8 items-center justify-center rounded-full bg-fn-card">
+              <IconArrowDownRight className="size-4 text-negative" aria-hidden />
             </span>
-            <span className="text-xs text-fn-muted">Gastos del mes</span>
-            <AnimatedNumber value={expenses} className={SUB_AMOUNT_CLASS} />
-          </div>
-        </div>
-      </div>
+            Gastos del mes
+          </span>
+          <AnimatedNumber
+            value={expenses}
+            className="text-base font-semibold tabular-nums text-fn-text"
+          />
+        </li>
+      </ul>
 
       {boxes && boxes.length > 0 && (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
@@ -130,7 +124,7 @@ export default function Summary({
                   className="flex items-center gap-3 rounded-2xl fn-chip px-3 py-2.5 text-sm"
                 >
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fn-card">
-                    <IconBuildingBank className="size-4 text-fn-muted" aria-hidden />
+                    <IconPackages className="size-4 text-foreground" aria-hidden />
                   </span>
                   <span className="min-w-0 flex-1 truncate text-fn-text">{m.name}</span>
                   <span

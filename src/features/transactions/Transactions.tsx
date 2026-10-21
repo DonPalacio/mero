@@ -3,7 +3,7 @@ import {
   IconAlertTriangle,
   IconArrowDownRight,
   IconArrowUpRight,
-  IconCash,
+  IconCashRegister,
   IconCheck,
   IconTrash,
   IconTrendingDown,
@@ -62,7 +62,7 @@ export default function Transactions() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 lg:gap-6">
         <div className="dash-enter [--i:0] flex items-start gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full fn-card">
-            <IconCash className="size-5 text-fn-brand" aria-hidden />
+            <IconCashRegister className="size-5 text-foreground" aria-hidden />
           </span>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-fn-text">Transacciones</h1>

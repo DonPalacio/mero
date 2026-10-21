@@ -19,7 +19,7 @@ export default function BarChart({ labels, values }: BarChartProps) {
     <div className="flex h-full w-full flex-col gap-4 fn-card p-5">
       <div className="flex items-center gap-2.5">
         <span className="flex size-9 items-center justify-center rounded-full fn-chip">
-          <IconChartBar className="size-[1.125rem] text-fn-brand" aria-hidden />
+          <IconChartBar className="size-[1.125rem] text-foreground" aria-hidden />
         </span>
         <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">
           Últimos 6 meses

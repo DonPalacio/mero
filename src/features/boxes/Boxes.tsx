@@ -6,7 +6,6 @@ import {
   IconX,
   IconPlus,
   IconPackages,
-  IconBuildingBank,
   IconTrendingUp,
 } from "@tabler/icons-react";
 import { useBoxes } from "./hooks/useBoxes";
@@ -70,7 +69,7 @@ export default function Boxes() {
         <div className="dash-enter [--i:0] fn-card flex flex-col justify-between gap-5 p-5 md:flex-row md:items-end md:p-6">
           <div className="flex items-start gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full fn-chip">
-              <IconPackages className="size-5 text-fn-brand" aria-hidden />
+              <IconPackages className="size-5 text-foreground" aria-hidden />
             </span>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-fn-text">Cajas</h1>
@@ -270,9 +269,6 @@ export default function Boxes() {
                       rinda, para que todas las tarjetas midan igual. */
                   <div className="flex h-full w-full flex-col justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full fn-chip">
-                        <IconBuildingBank className="size-5 text-fn-muted" aria-hidden />
-                      </span>
                       <span className="min-w-0 flex-1 truncate font-medium text-fn-text">
                         {m.name}
                       </span>

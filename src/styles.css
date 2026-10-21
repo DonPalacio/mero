@@ -366,7 +366,7 @@
  * Controles compartidos del sistema del Dashboard (formularios y botones en píldora).
  */
 
-/* Campo de texto/fecha en píldora: fondo hundido, borde fino y foco azul visible. */
+/* Campo de texto/fecha en píldora: fondo hundido, borde fino y foco blanco visible. */
 @utility fn-input {
   background-color: var(--fn-chip);
   border: 1px solid var(--fn-line);
@@ -382,9 +382,9 @@
     border-color: var(--fn-muted);
   }
   &:focus-visible {
-    outline: 2px solid var(--fn-brand);
+    outline: 2px solid var(--foreground);
     outline-offset: 0;
-    border-color: var(--fn-brand);
+    border-color: var(--foreground);
   }
 }
 
@@ -494,4 +494,11 @@
   background-color: color-mix(in oklab, var(--fn-card) 80%, var(--fn-text));
   color: var(--fn-text);
   box-shadow: inset 0 0 0 1px var(--fn-line);
+}
+
+/* Dashboard: acento gris (#A1A1AA) en lugar del azul de marca, que comparten las demás pantallas
+   (--fn-brand). La clase se añade solo en el contenedor del Dashboard. */
+.dash-brand {
+  --fn-brand: #a1a1aa;
+  --fn-brand-soft: #3f3f46;
 }

@@ -60,7 +60,7 @@ export default function Categories() {
         <div className="dash-enter [--i:0] fn-card flex flex-col justify-between gap-5 p-5 md:flex-row md:items-start md:p-6">
           <div className="flex flex-1 items-start gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-full fn-chip">
-              <IconCategory2 className="size-5 text-fn-brand" aria-hidden />
+              <IconCategory2 className="size-5 text-foreground" aria-hidden />
             </span>
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-fn-text">Categorías</h1>

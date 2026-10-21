@@ -45,12 +45,12 @@ export default function Budgets({ categories, expensesByCategory, onBudgetChange
     <div className="fn-card flex h-auto flex-col gap-4 p-5 lg:h-full">
       <div className="flex items-center gap-2.5">
         <span className="flex size-9 items-center justify-center rounded-full fn-chip">
-          <IconTargetArrow className="size-[1.125rem] text-fn-brand" aria-hidden />
+          <IconTargetArrow className="size-[1.125rem] text-foreground" aria-hidden />
         </span>
         <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">Presupuestos</h2>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
+      <div className="grid flex-1 grid-cols-1 content-start gap-3 overflow-y-auto pr-1 xl:grid-cols-2">
         {expenseCategories.map((c, index) => {
           const spent = expensesByCategory[c.name] || 0;
           const pct = c.budget > 0 ? Math.min((spent / c.budget) * 100, 100) : 0;
@@ -94,7 +94,7 @@ export default function Budgets({ categories, expensesByCategory, onBudgetChange
                     inputMode="numeric"
                     aria-label={`Presupuesto de ${c.name}`}
                     value={getValue(c)}
-                    className="w-28 rounded-full border border-fn-line bg-fn-card px-3 py-1.5 text-right text-sm tabular-nums text-fn-text transition-colors [appearance:textfield] hover:border-fn-muted focus-visible:border-fn-brand focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-fn-brand [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    className="w-28 rounded-full border border-fn-line bg-fn-card px-3 py-1.5 text-right text-sm tabular-nums text-fn-text transition-colors [appearance:textfield] hover:border-fn-muted focus-visible:border-foreground focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     onChange={(e) => handleChange(c.id, e.target.value)}
                     onBlur={() => commitChange(c.id)}
                     onKeyDown={(e) => {
