@@ -37,11 +37,9 @@ export default function PieChart({ expensesByCategory }: PieChartProps) {
     labels.forEach((label, i) => {
       const frac = (expensesByCategory[label] ?? 0) / total;
       const arc = frac * circ;
-      // El último segmento llega hasta el inicio del primero: sin rendija en el punto de cierre (arriba),
-      // donde se vería como una línea vertical. Las demás separaciones se conservan.
-      const isLast = i === labels.length - 1;
-      const len = Math.max(arc - (isLast ? 0 : gap), 0);
-
+      // Cada segmento cede `gap` al final: también el último, para que haya rendija en el cierre (arriba,
+      // a las 12) y no queden pegados el último y el primer gasto.
+      const len = Math.max(arc - gap, 0);
       const pct = (frac * 100).toFixed(1);
 
       defs.push(
