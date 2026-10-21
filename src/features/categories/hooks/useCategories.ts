@@ -14,7 +14,7 @@ import {
 } from "@/lib/queries";
 import { generateUuid } from "@/lib/utils";
 
-export interface Category {
+interface Category {
   id: string;
   name: string;
   type: "expense" | "income";

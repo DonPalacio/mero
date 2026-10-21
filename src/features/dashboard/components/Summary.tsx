@@ -18,11 +18,8 @@ interface SummaryProps {
   onPrev: () => void;
   onNext: () => void;
   income: number;
-  // Parte de los ingresos que viene del E.A. de las cajas (ya incluida en `ingresos`).
-  yields?: number;
   expenses: number;
   remaining: number;
-  cmpColor: string;
   boxes?: Box[];
   balancesByBox?: Record<string, number>;
 }

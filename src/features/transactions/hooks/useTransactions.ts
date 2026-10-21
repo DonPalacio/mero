@@ -177,12 +177,12 @@ function useRowHorizontalScrollForwarding() {
   return listRef;
 }
 
-export interface CategoryBase {
+interface CategoryBase {
   name: string;
   type: "expense" | "income";
 }
 
-export interface Transaction {
+interface Transaction {
   id: string;
   type: "expense" | "income";
   amount: number;

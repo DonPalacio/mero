@@ -85,7 +85,7 @@ export function useDashboard() {
       .split("-")
       .map(Number);
     const date = new Date(year, month - 2);
-    setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
+    setSelectedMonth(toMonthKey(date));
   };
 
   const handleNextMonth = () => {
@@ -93,7 +93,7 @@ export function useDashboard() {
       .split("-")
       .map(Number);
     const date = new Date(year, month);
-    setSelectedMonth(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`);
+    setSelectedMonth(toMonthKey(date));
   };
 
   // --------------------------------------------------------
@@ -206,7 +206,6 @@ export function useDashboard() {
     categories,
     expensesByCategory,
     totalIncome: monthIncome,
-    monthYields,
     totalExpenses,
     availableBalance,
     isLoading,

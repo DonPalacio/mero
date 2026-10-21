@@ -1,4 +1,3 @@
-import React from "react";
 import Summary from "./components/Summary";
 import BarChart from "./components/BarChart";
 import PieChart from "./components/PieChart";
@@ -13,7 +12,6 @@ export default function Dashboard() {
     categories,
     expensesByCategory,
     totalIncome,
-    monthYields,
     totalExpenses,
     availableBalance,
     isLoading,
@@ -60,10 +58,8 @@ export default function Dashboard() {
               onPrev={handlePrevMonth}
               onNext={handleNextMonth}
               income={totalIncome}
-              yields={monthYields}
               expenses={totalExpenses}
               remaining={availableBalance}
-              cmpColor="#3fb27f"
               boxes={boxList}
               balancesByBox={balancesByBox}
             />
@@ -74,7 +70,7 @@ export default function Dashboard() {
           </div>
 
           <div className="dash-enter [--i:2] lg:col-start-3 lg:row-start-1 lg:min-h-0">
-            <BarChart labels={barLabels} values={barValues.map((value) => value ?? 0)} />
+            <BarChart labels={barLabels} values={barValues} />
           </div>
 
           <div className="dash-enter [--i:3] lg:col-span-2 lg:col-start-2 lg:row-start-2 lg:min-h-0">
