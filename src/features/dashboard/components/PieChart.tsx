@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { IconChartDonut } from "@tabler/icons-react";
 import { fmt } from "@/lib/utils";
 import AnimatedNumber from "@/components/AnimatedNumber";
@@ -28,32 +29,67 @@ export default function PieChart({ expensesByCategory }: PieChartProps) {
   const gap = labels.length > 1 ? 4 : 0;
 
   const circ = 2 * Math.PI * r;
+  // Ids únicos por instancia para los degradados de cada segmento.
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
 
   let offset = 0;
 
   const segments: React.ReactNode[] = [];
+  const defs: React.ReactNode[] = [];
 
   if (total > 0) {
     labels.forEach((label, i) => {
       const frac = (expensesByCategory[label] ?? 0) / total;
-      const len = Math.max(frac * circ - gap, 0);
+      const arc = frac * circ;
+      // Puntas redondas solo cuando el segmento es lo bastante largo: la punta añade sw/2 por
+      // lado, así que se descuenta del trazo para conservar la misma separación. Los segmentos
+      // diminutos quedan con punta recta para no inflar su peso real.
+      const rounded = gap > 0 && arc > sw * 2;
+      const len = rounded ? Math.max(arc - gap - sw, 0.01) : Math.max(arc - gap, 0);
+      const start = rounded ? offset + sw / 2 : offset;
 
-      segments.push(
-        <circle
+      const pct = (frac * 100).toFixed(1);
+
+      defs.push(
+        // Degradado vertical del mismo color: pierde fuerza hacia abajo y gana volumen. El giro de
+        // +90° compensa el rotate(-90) con el que se dibuja el círculo.
+        <linearGradient
           key={label}
-          cx={cx}
-          cy={cy}
-          r={r}
-          fill="none"
-          style={{ stroke: colors[i] }}
-          strokeWidth={sw}
-          strokeDasharray={`${len} ${circ - len}`}
-          strokeDashoffset={-offset}
-          transform={`rotate(-90 ${cx} ${cy})`}
-        />,
+          id={`${uid}-${i}`}
+          gradientUnits="userSpaceOnUse"
+          gradientTransform={`rotate(90 ${cx} ${cy})`}
+          x1={0}
+          y1={0}
+          x2={0}
+          y2={size}
+        >
+          <stop offset="0" stopColor={colors[i]} />
+          <stop offset="1" stopColor={colors[i]} stopOpacity={0.55} />
+        </linearGradient>,
       );
 
-      offset += frac * circ;
+      segments.push(
+        <g
+          key={label}
+          className="transition-[filter] duration-200 hover:brightness-125 motion-reduce:transition-none"
+        >
+          <title>{`${label}: ${fmt(expensesByCategory[label] ?? 0)} (${pct}%)`}</title>
+          <circle
+            cx={cx}
+            cy={cy}
+            r={r}
+            fill="none"
+            stroke={`url(#${uid}-${i})`}
+            strokeWidth={sw}
+            strokeLinecap={rounded ? "round" : "butt"}
+            strokeDasharray={`${len} ${circ - len}`}
+            strokeDashoffset={-start}
+            transform={`rotate(-90 ${cx} ${cy})`}
+          />
+        </g>,
+      );
+
+      offset += arc;
     });
   }
 
@@ -75,8 +111,28 @@ export default function PieChart({ expensesByCategory }: PieChartProps) {
           role="img"
           aria-label="Gastos por categoría"
         >
+          <defs>{defs}</defs>
+
+          {/* Marcas finas alrededor del anillo: dan la sensación de un dial sin añadir color */}
+          <circle
+            cx={cx}
+            cy={cy}
+            r={r + sw / 2 + 6}
+            fill="none"
+            className="stroke-fn-muted opacity-40"
+            strokeWidth={3}
+            strokeDasharray="1 7.3255"
+          />
+          {/* Pozo central hundido donde vive el total */}
+          <circle
+            cx={cx}
+            cy={cy}
+            r={r - sw / 2 - 6}
+            className="fill-fn-chip stroke-fn-line"
+            strokeWidth={1}
+          />
           {/* Anillo base: la misma regla fina del resto de la pantalla */}
-          <circle cx={cx} cy={cy} r={r} fill="none" className="stroke-fn-line" strokeWidth={sw} />
+          <circle cx={cx} cy={cy} r={r} fill="none" className="stroke-fn-chip" strokeWidth={sw} />
           {segments}
         </svg>
 

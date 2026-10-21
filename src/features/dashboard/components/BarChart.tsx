@@ -1,4 +1,6 @@
+import { useId } from "react";
 import { IconChartBar } from "@tabler/icons-react";
+import { fmt } from "@/lib/utils";
 
 interface BarChartProps {
   labels: string[];
@@ -14,6 +16,11 @@ export default function BarChart({ labels, values }: BarChartProps) {
   const bw = w / values.length;
   const barWidth = bw * 0.5;
   const lastIndex = values.length - 1;
+  // Ids únicos por instancia para que los degradados no choquen si el gráfico se monta dos veces.
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
+  const currentFill = `${uid}-current`;
+  const pastFill = `${uid}-past`;
+  const trackH = h - padB - padT;
 
   return (
     <div className="flex h-full w-full flex-col gap-4 fn-card p-5">
@@ -32,7 +39,29 @@ export default function BarChart({ labels, values }: BarChartProps) {
           role="img"
           aria-label="Últimos 6 meses"
         >
-          {/* Guía al 50 % y línea base: reglas finas, sin relleno */}
+          <defs>
+            {/* Mismos colores de siempre, con un degradado vertical: la barra pierde fuerza hacia la
+                base y gana volumen sin añadir otro tono. */}
+            <linearGradient id={currentFill} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stopColor="var(--fn-brand)" />
+              <stop offset="1" stopColor="var(--fn-brand)" stopOpacity={0.55} />
+            </linearGradient>
+            <linearGradient id={pastFill} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stopColor="oklch(0.52 0 0)" />
+              <stop offset="1" stopColor="oklch(0.45 0 0)" stopOpacity={0.55} />
+            </linearGradient>
+          </defs>
+
+          {/* Guías al 100 % y 50 %, y línea base: reglas finas, sin relleno */}
+          <line
+            x1={0}
+            y1={padT}
+            x2={w}
+            y2={padT}
+            className="stroke-fn-line"
+            strokeWidth={1}
+            strokeDasharray="2 4"
+          />
           <line
             x1={0}
             y1={h - padB - 0.5 * (h - padB - padT)}
@@ -58,7 +87,18 @@ export default function BarChart({ labels, values }: BarChartProps) {
             const isCurrent = i === lastIndex;
 
             return (
-              <g key={i}>
+              <g key={i} className="group/bar">
+                <title>{`${labels[i]}: ${fmt(v)}`}</title>
+                {/* Pista hundida: muestra la altura máxima y da estructura a cada columna */}
+                <rect
+                  x={x}
+                  y={padT}
+                  width={barWidth}
+                  height={trackH}
+                  rx={6}
+                  className="fill-fn-chip"
+                />
+
                 {/* Valor sobre la barra, solo si tiene datos */}
                 {v > 0 && (
                   <text
@@ -80,7 +120,8 @@ export default function BarChart({ labels, values }: BarChartProps) {
                   width={barWidth}
                   height={bh}
                   rx={6}
-                  className={`bar-rise transition-[y,height] duration-300 ease-out motion-reduce:transition-none ${isCurrent ? "fill-fn-brand" : "fill-[oklch(0.45_0_0)]"}`}
+                  className="bar-rise transition-[y,height,filter] duration-300 ease-out group-hover/bar:brightness-125 motion-reduce:transition-none"
+                  fill={`url(#${isCurrent ? currentFill : pastFill})`}
                   style={{ "--i": i } as React.CSSProperties}
                 />
 
