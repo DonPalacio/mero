@@ -45,15 +45,13 @@ bun run build
 
 ## Reglas
 
-### Git y Lovable
-
-El proyecto está conectado a Lovable, que sincroniza cada commit pusheado a la rama conectada.
+### Git
 
 - Lee `docs/constitution.md` y la spec activa en `docs/specs/` antes de tocar código.
 - No modifiques archivos dentro de `docs/specs/` salvo petición explícita.
 - Nunca `git push --force`, `git rebase`, `git commit --amend` ni squash sobre commits ya pusheados.
-- No reescribir el historial de la rama conectada.
-- Mantener la rama conectada funcional en cada commit pusheado.
+- No reescribir el historial de `main`.
+- Mantener `main` funcional en cada commit pusheado.
 
 ### Seguridad y autenticación
 
@@ -84,7 +82,7 @@ El proyecto está conectado a Lovable, que sincroniza cada commit pusheado a la 
 ### Dependencias y configuración
 
 - Solo Bun. Nunca `npm` ni un `package-lock.json`. No borrar `bun.lock` sin confirmar.
-- `vite.config.ts` se mantiene mínimo: `@lovable.dev/vite-tanstack-config` ya trae los plugins.
+- `vite.config.ts` declara los plugins de forma explícita (Tailwind, rutas de `tsconfig`, TanStack Start, Nitro solo al compilar y React). No duplicar plugins ni reintroducir un wrapper de configuración.
 - No quitar `inlineDynamicImports: true` de `nitro.config.ts`.
 - Conservar el manejo de errores de `src/server.ts`.
 - No importar `server-only`: ESLint lo prohíbe.
