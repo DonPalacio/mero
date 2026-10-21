@@ -2,15 +2,11 @@ import { useId } from "react";
 import { IconChartDonut } from "@tabler/icons-react";
 import { fmt } from "@/lib/utils";
 import AnimatedNumber from "@/components/AnimatedNumber";
+import { CHART_COLORS } from "./chartColors";
 
 interface PieChartProps {
   expensesByCategory: Record<string, number>;
 }
-
-// Rampa de grises neutros (sin los rojos/verdes/amarillos de los estados): cada segmento se
-// distingue por luminosidad, y la leyenda repite nombre, monto y porcentaje para que la identidad
-// no dependa solo del color.
-const SHADES = ["#a1a1aa", "#f4f4f5", "#71717a", "#d4d4d8", "#52525b", "#b8b8bf", "#e4e4e7"];
 
 export default function PieChart({ expensesByCategory }: PieChartProps) {
   const labels = Object.keys(expensesByCategory);
@@ -18,7 +14,7 @@ export default function PieChart({ expensesByCategory }: PieChartProps) {
 
   const total = values.reduce((a, b) => a + b, 0);
 
-  const colors = labels.map((_, i) => SHADES[i % SHADES.length]);
+  const colors = labels.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]);
 
   const size = 220;
   const cx = size / 2;
@@ -41,12 +37,10 @@ export default function PieChart({ expensesByCategory }: PieChartProps) {
     labels.forEach((label, i) => {
       const frac = (expensesByCategory[label] ?? 0) / total;
       const arc = frac * circ;
-      // Puntas redondas solo cuando el segmento es lo bastante largo: la punta añade sw/2 por
-      // lado, así que se descuenta del trazo para conservar la misma separación. Los segmentos
-      // diminutos quedan con punta recta para no inflar su peso real.
-      const rounded = gap > 0 && arc > sw * 2;
-      const len = rounded ? Math.max(arc - gap - sw, 0.01) : Math.max(arc - gap, 0);
-      const start = rounded ? offset + sw / 2 : offset;
+      // El último segmento llega hasta el inicio del primero: sin rendija en el punto de cierre (arriba),
+      // donde se vería como una línea vertical. Las demás separaciones se conservan.
+      const isLast = i === labels.length - 1;
+      const len = Math.max(arc - (isLast ? 0 : gap), 0);
 
       const pct = (frac * 100).toFixed(1);
 
@@ -81,9 +75,8 @@ export default function PieChart({ expensesByCategory }: PieChartProps) {
             fill="none"
             stroke={`url(#${uid}-${i})`}
             strokeWidth={sw}
-            strokeLinecap={rounded ? "round" : "butt"}
             strokeDasharray={`${len} ${circ - len}`}
-            strokeDashoffset={-start}
+            strokeDashoffset={-offset}
             transform={`rotate(-90 ${cx} ${cy})`}
           />
         </g>,

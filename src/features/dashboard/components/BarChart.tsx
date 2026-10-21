@@ -2,6 +2,10 @@ import { useId } from "react";
 import { IconChartBar } from "@tabler/icons-react";
 import { fmt } from "@/lib/utils";
 
+// Azul de las barras (el periwinkle del azul de marca de la app, suavizado): el mismo para todos los
+// meses. El mes actual se distingue por el valor en negrita, no por otro color.
+const BAR_COLOR = "oklch(0.82 0.1 265)";
+
 interface BarChartProps {
   labels: string[];
   values: number[];
@@ -18,8 +22,7 @@ export default function BarChart({ labels, values }: BarChartProps) {
   const lastIndex = values.length - 1;
   // Ids únicos por instancia para que los degradados no choquen si el gráfico se monta dos veces.
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const currentFill = `${uid}-current`;
-  const pastFill = `${uid}-past`;
+  const fillId = `${uid}-bar`;
   const trackH = h - padB - padT;
 
   return (
@@ -40,15 +43,10 @@ export default function BarChart({ labels, values }: BarChartProps) {
           aria-label="Últimos 6 meses"
         >
           <defs>
-            {/* Mismos colores de siempre, con un degradado vertical: la barra pierde fuerza hacia la
-                base y gana volumen sin añadir otro tono. */}
-            <linearGradient id={currentFill} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stopColor="var(--fn-brand)" />
-              <stop offset="1" stopColor="var(--fn-brand)" stopOpacity={0.55} />
-            </linearGradient>
-            <linearGradient id={pastFill} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stopColor="oklch(0.52 0 0)" />
-              <stop offset="1" stopColor="oklch(0.45 0 0)" stopOpacity={0.55} />
+            {/* Degradado vertical: la barra pierde fuerza hacia la base y gana volumen sin añadir otro tono. */}
+            <linearGradient id={fillId} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stopColor={BAR_COLOR} />
+              <stop offset="1" stopColor={BAR_COLOR} stopOpacity={0.55} />
             </linearGradient>
           </defs>
 
@@ -107,8 +105,11 @@ export default function BarChart({ labels, values }: BarChartProps) {
                     textAnchor="middle"
                     fontSize={11}
                     fontWeight={isCurrent ? 700 : 500}
-                    className={isCurrent ? "fill-fn-brand" : "fill-fn-muted"}
-                    style={{ fontVariantNumeric: "tabular-nums" }}
+                    className={isCurrent ? undefined : "fill-fn-muted"}
+                    style={{
+                      fontVariantNumeric: "tabular-nums",
+                      ...(isCurrent ? { fill: BAR_COLOR } : {}),
+                    }}
                   >
                     {v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v.toLocaleString("es-CO")}
                   </text>
@@ -121,7 +122,7 @@ export default function BarChart({ labels, values }: BarChartProps) {
                   height={bh}
                   rx={6}
                   className="bar-rise transition-[y,height,filter] duration-300 ease-out group-hover/bar:brightness-125 motion-reduce:transition-none"
-                  fill={`url(#${isCurrent ? currentFill : pastFill})`}
+                  fill={`url(#${fillId})`}
                   style={{ "--i": i } as React.CSSProperties}
                 />
 
