@@ -18,7 +18,7 @@ export default function BankRatesHelp({ className }: { className?: string }) {
         <button
           type="button"
           aria-label="Ver tasas E.A. de ahorro de las entidades"
-          className={cn("fn-button h-10 px-4", className)}
+          className={cn("fn-button-soft h-10 px-4", className)}
         >
           <IconHelpCircle className="h-5 w-5" />
           <span className="sm:hidden">Tasas de referencia</span>

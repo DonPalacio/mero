@@ -5,7 +5,6 @@ import {
   IconCheck,
   IconX,
   IconPlus,
-  IconPackages,
   IconTrendingUp,
 } from "@tabler/icons-react";
 import { useBoxes } from "./hooks/useBoxes";
@@ -66,41 +65,50 @@ export default function Boxes() {
     <div className="flex h-full flex-1 flex-col overflow-y-auto rounded-tl-2xl border border-fn-line bg-fn-ground p-3 text-fn-text md:p-8">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-5 lg:gap-6">
         {/* Encabezado y Creación */}
-        <div className="dash-enter [--i:0] fn-card flex flex-col justify-between gap-5 p-5 md:flex-row md:items-end md:p-6">
-          <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-full fn-chip">
-              <IconPackages className="size-5 text-foreground" aria-hidden />
-            </span>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-fn-text">Cajas</h1>
-              <p className="mt-1 text-sm text-fn-muted">
-                Administra las cuentas, tarjetas o lugares donde guardas tu dinero.
-              </p>
-            </div>
+        <div className="dash-enter [--i:0] fn-card flex flex-col justify-between gap-5 p-5 md:flex-row md:items-center md:p-6">
+          <div>
+            <h1 className="text-2xl font-medium tracking-tight text-fn-text">Cajas</h1>
+            <p className="mt-1 text-sm text-fn-muted">
+              Administra las cuentas, tarjetas o lugares donde guardas tu dinero. Si le asignas un %
+              E.A. a una caja, el dinero que genere se suma automáticamente cada día.
+            </p>
           </div>
 
-          {/* Orden en celular: nombre, E.A., botón + y botón de ayuda. Desde sm: 2 columnas,
-              nombre y + arriba; E.A. y ayuda abajo (la ayuda queda justo debajo del +). */}
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[auto_auto] sm:items-center">
+          {/* Etiqueta pequeña sobre cada campo, como en las cifras del Dashboard. En celular todo va
+              en una columna (nombre, E.A., botón + y ayuda). Desde sm: 2 columnas, con los botones a
+              la derecha de su campo (la ayuda queda justo debajo del +). */}
+          <div className="grid grid-cols-1 gap-x-2 gap-y-1.5 sm:grid-cols-[auto_auto] sm:items-center">
+            <label
+              htmlFor="new-box-input"
+              className="px-1 text-xs text-fn-muted sm:col-start-1 sm:row-start-1"
+            >
+              Nombre
+            </label>
             <input
               id="new-box-input"
               name="new-box-input"
               type="text"
               placeholder="Nueva caja"
-              className="fn-input h-10 w-full sm:col-start-1 sm:row-start-1 sm:w-64"
+              className="fn-input h-10 w-full sm:col-start-1 sm:row-start-2 sm:w-64"
               value={newBoxValue}
               onChange={(e) => setNewBoxValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddBox()}
               autoComplete="off"
             />
             {/* Rendimiento E.A. de la caja nueva: opcional, vacío = no rinde */}
+            <label
+              htmlFor="new-box-ea-rate-input"
+              className="mt-1.5 px-1 text-xs text-fn-muted sm:col-start-1 sm:row-start-3"
+            >
+              Rendimiento E.A. (%), opcional
+            </label>
             <input
               id="new-box-ea-rate-input"
               name="new-box-ea-rate-input"
               type="text"
               inputMode="decimal"
-              placeholder="Rendimiento E.A. % (ej: 9,30)"
-              className="fn-input h-10 w-full sm:col-start-1 sm:row-start-2 sm:w-64"
+              placeholder="Ej: 9,30"
+              className="fn-input h-10 w-full sm:col-start-1 sm:row-start-4 sm:w-64"
               value={newEaRateValue}
               onChange={(e) => setNewEaRateValue(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddBox()}
@@ -109,11 +117,11 @@ export default function Boxes() {
             <button
               onClick={handleAddBox}
               aria-label="Agregar caja"
-              className="fn-button h-10 w-full px-4 sm:col-start-2 sm:row-start-1 sm:w-14 sm:px-0"
+              className="fn-button mt-1.5 h-10 w-full px-4 sm:col-start-2 sm:row-start-2 sm:mt-0 sm:size-10 sm:px-0"
             >
               <IconPlus className="h-5 w-5" />
             </button>
-            <BankRatesHelp className="w-full sm:col-start-2 sm:row-start-2 sm:w-14 sm:px-0" />
+            <BankRatesHelp className="w-full sm:col-start-2 sm:row-start-4 sm:size-10 sm:px-0" />
           </div>
         </div>
 
@@ -130,11 +138,18 @@ export default function Boxes() {
                 style={{ "--i": Math.min(index + 1, 8) } as React.CSSProperties}
                 // Alto fijo y compacto en escritorio: ver, editar y confirmar ocupan el mismo espacio, así
                 // la tarjeta (y la cuadrícula) no cambia de tamaño al pulsar Editar.
-                className="dash-enter fn-card flex flex-col p-3.5 md:h-40"
+                className={cn(
+                  "dash-enter fn-card flex flex-col md:h-40",
+                  "p-5",
+                  // La tarjeta en edición se marca con un aro fino, sin cambiar su tamaño.
+                  isEditing && "ring-1 ring-foreground/20",
+                )}
               >
                 {/* MODO EDICIÓN */}
                 {isEditing ? (
-                  <div className="flex h-full w-full flex-col justify-between gap-1.5 rounded-2xl fn-chip p-2.5">
+                  /* Misma estructura que la vista normal: arriba el nombre (ahora editable) con las
+                     acciones a la derecha; abajo, dos columnas con la etiqueta pequeña sobre cada campo. */
+                  <div className="flex h-full w-full flex-col justify-between gap-2">
                     <div className="flex w-full items-center gap-2">
                       <input
                         id={`rename-box-${m.id}`}
@@ -142,7 +157,7 @@ export default function Boxes() {
                         type="text"
                         value={renameBoxValue}
                         aria-label="Nombre de la caja"
-                        className="fn-input h-8 w-full bg-fn-card"
+                        className="fn-input h-8 min-w-0 flex-1"
                         onChange={(e) => setRenameBoxValue(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && doSaveBox(m.id)}
                         autoComplete="off"
@@ -152,7 +167,7 @@ export default function Boxes() {
                         onClick={() => doSaveBox(m.id)}
                         aria-label="Guardar"
                         title="Guardar"
-                        className="fn-icon-button flex size-8 shrink-0 items-center justify-center rounded-full text-success"
+                        className="fn-button size-8 shrink-0"
                       >
                         <IconCheck className="h-4 w-4" />
                       </button>
@@ -166,55 +181,56 @@ export default function Boxes() {
                       </button>
                     </div>
 
-                    {/* Rendimiento E.A.: vacío = la caja no rinde. Etiqueta de ancho fijo para que
-                        los campos queden alineados. */}
-                    <div className="flex items-center gap-2">
-                      <label
-                        htmlFor={`ea-rate-box-${m.id}`}
-                        className="w-28 shrink-0 text-xs text-fn-muted"
-                      >
-                        Rendimiento E.A. (%)
-                      </label>
-                      <input
-                        id={`ea-rate-box-${m.id}`}
-                        name={`ea-rate-box-${m.id}`}
-                        type="text"
-                        inputMode="decimal"
-                        placeholder="Ej: 9,30"
-                        value={eaRateValue}
-                        className="fn-input h-8 min-w-0 flex-1 bg-fn-card"
-                        onChange={(e) => setEaRateValue(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && doSaveBox(m.id)}
-                        autoComplete="off"
-                      />
-                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Rendimiento E.A.: vacío = la caja no rinde. */}
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <label
+                          htmlFor={`ea-rate-box-${m.id}`}
+                          className="truncate px-1 text-xs text-fn-muted"
+                        >
+                          Rendimiento E.A.
+                        </label>
+                        <input
+                          id={`ea-rate-box-${m.id}`}
+                          name={`ea-rate-box-${m.id}`}
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="Ej: 9,30 %"
+                          value={eaRateValue}
+                          className="fn-input h-8 w-full min-w-0"
+                          onChange={(e) => setEaRateValue(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && doSaveBox(m.id)}
+                          autoComplete="off"
+                        />
+                      </div>
 
-                    {/* Desde qué día rinde. Al activar la tasa se elige libremente; si la caja ya
-                        rinde solo se puede mover hacia atrás (los días anteriores se acreditan
-                        de una vez; los ya acreditados no cambian). La fila siempre ocupa su
-                        espacio: sin tasa queda invisible (y fuera del foco) para que el alto no
-                        cambie al escribir. */}
-                    <div
-                      className={cn(
-                        "flex items-center gap-2",
-                        eaRateValue.trim() === "" && "invisible",
-                      )}
-                    >
-                      <label
-                        htmlFor={`from-box-${m.id}`}
-                        className="w-28 shrink-0 text-xs text-fn-muted"
+                      {/* Desde qué día rinde. Al activar la tasa se elige libremente; si la caja ya
+                          rinde solo se puede mover hacia atrás (los días anteriores se acreditan
+                          de una vez; los ya acreditados no cambian). La columna siempre ocupa su
+                          espacio: sin tasa queda invisible (y fuera del foco) para que el alto no
+                          cambie al escribir. */}
+                      <div
+                        className={cn(
+                          "flex min-w-0 flex-col gap-1",
+                          eaRateValue.trim() === "" && "invisible",
+                        )}
                       >
-                        Rinde desde
-                      </label>
-                      <input
-                        id={`from-box-${m.id}`}
-                        name={`from-box-${m.id}`}
-                        type="date"
-                        max={m.yield_from ?? localISODate()}
-                        value={fromValue}
-                        className="fn-input scheme-dark h-8 min-w-0 flex-1 bg-fn-card"
-                        onChange={(e) => setFromValue(e.target.value)}
-                      />
+                        <label
+                          htmlFor={`from-box-${m.id}`}
+                          className="truncate px-1 text-xs text-fn-muted"
+                        >
+                          Rinde desde
+                        </label>
+                        <input
+                          id={`from-box-${m.id}`}
+                          name={`from-box-${m.id}`}
+                          type="date"
+                          max={m.yield_from ?? localISODate()}
+                          value={fromValue}
+                          className="fn-input scheme-dark h-8 w-full min-w-0"
+                          onChange={(e) => setFromValue(e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
                 ) : isConfirming ? (
@@ -269,7 +285,7 @@ export default function Boxes() {
                       rinda, para que todas las tarjetas midan igual. */
                   <div className="flex h-full w-full flex-col justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <span className="min-w-0 flex-1 truncate font-medium text-fn-text">
+                      <span className="min-w-0 flex-1 truncate text-sm text-fn-muted">
                         {m.name}
                       </span>
                       <div className="flex shrink-0 items-center gap-1.5">
@@ -295,16 +311,16 @@ export default function Boxes() {
                     <div className="@container min-w-0">
                       <AnimatedNumber
                         value={m.balance}
-                        className={`block whitespace-nowrap text-[min(1.75rem,11cqw)] font-bold leading-none tracking-tight tabular-nums ${m.balance < 0 ? "text-negative" : "text-fn-text"}`}
+                        className={`block whitespace-nowrap text-[min(1.75rem,11cqw)] font-semibold leading-none tracking-tight tabular-nums ${m.balance < 0 ? "text-negative" : "text-fn-text"}`}
                       />
                     </div>
 
                     <div className="flex min-h-6 items-center">
                       {m.ea_rate !== null && (
-                        <span className="inline-flex max-w-full items-center gap-1 truncate rounded-full fn-chip px-2.5 py-1 text-xs text-fn-muted">
+                        <span className="inline-flex max-w-full items-center gap-1 truncate text-xs text-fn-muted">
                           <IconTrendingUp className="size-3.5 shrink-0 text-success" aria-hidden />
                           <span className="truncate">
-                            {m.ea_rate.toLocaleString("es-CO")}% E.A. · ≈{" "}
+                            {m.ea_rate.toLocaleString("es-CO")}% E.A. ={" "}
                             {formatYield(estimatedDailyYield(m.balance, m.ea_rate))} al día
                           </span>
                         </span>
