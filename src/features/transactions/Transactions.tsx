@@ -2,22 +2,24 @@ import {
   IconAlertTriangle,
   IconArrowDownRight,
   IconArrowUpRight,
-  IconCashRegister,
   IconCheck,
+  IconPlus,
   IconTrash,
   IconTrendingDown,
   IconTrendingUp,
 } from "@tabler/icons-react";
 import { cn, fmt, formatTypedAmount } from "@/lib/utils";
+import TypeSelector from "@/components/TypeSelector";
 import { useTransactions } from "./hooks/useTransactions";
 
-// Chip de selección (categoría y medio de pago): el activo va relleno y con ✓, no solo con color.
+// Chip de selección (categoría y medio de pago): el activo lleva el relleno suave del selector
+// Gasto/Ingreso y un ✓, no solo color.
 const chipClass = (isActive: boolean) =>
   cn(
-    "inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-fn-brand",
+    "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-fn-brand",
     isActive
-      ? "bg-fn-text text-fn-ground"
-      : "bg-fn-chip text-fn-muted hover:bg-fn-chip-hover hover:text-fn-text",
+      ? "border-transparent bg-foreground/20 text-fn-text"
+      : "border-fn-line bg-fn-chip text-fn-muted hover:bg-fn-chip-hover hover:text-fn-text",
   );
 
 export default function Transactions() {
@@ -59,12 +61,9 @@ export default function Transactions() {
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto rounded-tl-2xl border border-fn-line bg-fn-ground p-3 text-fn-text md:p-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 lg:gap-6">
-        <div className="dash-enter [--i:0] flex items-start gap-3">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-full fn-card">
-            <IconCashRegister className="size-5 text-foreground" aria-hidden />
-          </span>
+        <div className="dash-enter [--i:0]">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-fn-text">Transacciones</h1>
+            <h1 className="text-2xl font-medium tracking-tight text-fn-text">Transacciones</h1>
             <p className="mt-1 text-sm text-fn-muted">
               Registra tus nuevos movimientos y revisa tu historial.
             </p>
@@ -72,68 +71,33 @@ export default function Transactions() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-5">
-          <div className="dash-enter [--i:1] fn-card col-span-1 flex h-auto flex-col p-5 lg:h-[750px]">
-            {/* shrink-0 evita que el título se encoja cuando hay mucho contenido abajo */}
-            <h2 className="mb-4 shrink-0 text-[0.9375rem] font-semibold tracking-tight text-fn-text">
-              Nuevo registro
-            </h2>
+          {/* COLUMNA IZQUIERDA: un solo formulario en una sola tarjeta con dos zonas, sin separación. La de arriba
+              lleva el tipo y el monto; la de abajo, los
+              detalles y el botón. */}
+          <form
+            onSubmit={handleSubmit}
+            className="dash-enter [--i:1] fn-card col-span-1 flex flex-col overflow-hidden lg:h-[750px]"
+          >
+            <div className="flex shrink-0 flex-col gap-6 p-5 sm:p-6">
+              <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">
+                Nuevo registro
+              </h2>
 
-            {/* Contenedor con scroll interno y clases para ocultar la barra */}
-            <form
-              onSubmit={handleSubmit}
-              className="flex flex-col gap-5 overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-            >
-              {/* Selector de Tipo: la opción activa va rellena, con ícono y texto */}
-              <div className="flex shrink-0 rounded-full fn-chip p-1">
-                <button
-                  type="button"
-                  aria-pressed={selectedType === "expense"}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-fn-brand",
-                    selectedType === "expense"
-                      ? "fn-segment-active"
-                      : "text-fn-muted hover:text-fn-text",
-                  )}
-                  onClick={() => {
-                    setSelectedType("expense");
-                    setSelectedCategory(null);
-                  }}
-                >
-                  <IconArrowDownRight
-                    className={cn("size-4", selectedType === "expense" && "text-negative")}
-                    aria-hidden
-                  />
-                  Gasto
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={selectedType === "income"}
-                  className={cn(
-                    "flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-fn-brand",
-                    selectedType === "income"
-                      ? "fn-segment-active"
-                      : "text-fn-muted hover:text-fn-text",
-                  )}
-                  onClick={() => {
-                    setSelectedType("income");
-                    setSelectedCategory(null);
-                  }}
-                >
-                  <IconArrowUpRight
-                    className={cn("size-4", selectedType === "income" && "text-success")}
-                    aria-hidden
-                  />
-                  Ingreso
-                </button>
-              </div>
+              <TypeSelector
+                value={selectedType}
+                onChange={(type) => {
+                  setSelectedType(type);
+                  setSelectedCategory(null);
+                }}
+              />
 
-              {/* Monto */}
-              <div className="flex shrink-0 flex-col gap-1.5">
-                <label htmlFor="transaction-amount" className="text-sm font-medium text-fn-text">
+              {/* Monto: la cifra grande de la tarjeta, sin caja de campo */}
+              <div className="flex flex-col gap-1">
+                <label htmlFor="transaction-amount" className="px-1 text-xs text-fn-muted">
                   Monto
                 </label>
-                <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-fn-muted">$</span>
+                <div className="flex items-baseline gap-2 border-b border-fn-line pb-1 focus-within:border-fn-text">
+                  <span className="pl-1 text-3xl font-medium text-fn-muted">$</span>
                   {/* Texto y no number: el campo muestra el monto con formato (punto de miles y
                       coma decimal) mientras se escribe, hasta 3 decimales. */}
                   <input
@@ -142,83 +106,100 @@ export default function Transactions() {
                     type="text"
                     inputMode="decimal"
                     placeholder="0"
-                    className="fn-input h-12 w-full pl-8 text-lg font-semibold tabular-nums"
+                    className="w-full min-w-0 bg-transparent text-3xl font-semibold tabular-nums text-fn-text outline-none placeholder:text-fn-muted"
                     value={amount}
                     onChange={(e) => setAmount(formatTypedAmount(e.target.value, amount))}
                     autoComplete="off"
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Categorías (Chips) */}
-              <div className="flex shrink-0 flex-col gap-1.5">
-                <span className="text-sm font-medium text-fn-text">Categoría</span>
-                <div className="flex flex-wrap gap-2">
-                  {isLoading &&
-                    [0, 1, 2, 3].map((i) => (
-                      <span
-                        key={`sk-cat-${i}`}
-                        aria-hidden
-                        className="skeleton-pulse h-7 w-24 rounded-full fn-chip"
-                      />
-                    ))}
-                  {filteredCategories.map((c) => {
-                    const isActive = selectedCategory === c.name;
-                    return (
-                      <button
-                        key={c.name}
-                        type="button"
-                        aria-pressed={isActive}
-                        onClick={() => setSelectedCategory(isActive ? null : c.name)}
-                        className={chipClass(isActive)}
-                      >
-                        {isActive && <IconCheck className="size-3.5" aria-hidden />}
-                        {c.name}
-                      </button>
-                    );
-                  })}
-                  {!isLoading && filteredCategories.length === 0 && (
-                    <span className="text-xs italic text-fn-muted">
-                      No hay categorías para este tipo.
-                    </span>
-                  )}
+            <div className="flex min-h-0 flex-1 flex-col gap-4 p-5 sm:p-6">
+              <h2 className="shrink-0 text-[0.9375rem] font-semibold tracking-tight text-fn-text">
+                Detalles
+              </h2>
+
+              {/* Contenedor con scroll interno y clases para ocultar la barra */}
+              <div className="flex min-h-0 flex-col gap-5 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {/* Categorías (Chips) */}
+                <div className="flex shrink-0 flex-col gap-1.5">
+                  <span className="px-1 text-xs text-fn-muted">Categoría</span>
+                  <div className="flex flex-wrap gap-2">
+                    {isLoading &&
+                      [0, 1, 2, 3].map((i) => (
+                        <span
+                          key={`sk-cat-${i}`}
+                          aria-hidden
+                          className="skeleton-pulse h-7 w-24 rounded-full fn-chip"
+                        />
+                      ))}
+                    {filteredCategories.map((c) => {
+                      const isActive = selectedCategory === c.name;
+                      return (
+                        <button
+                          key={c.name}
+                          type="button"
+                          aria-pressed={isActive}
+                          onClick={() => setSelectedCategory(isActive ? null : c.name)}
+                          className={chipClass(isActive)}
+                        >
+                          {isActive && <IconCheck className="size-3.5" aria-hidden />}
+                          {c.name}
+                        </button>
+                      );
+                    })}
+                    {!isLoading && filteredCategories.length === 0 && (
+                      <span className="text-xs italic text-fn-muted">
+                        No hay categorías para este tipo.
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Medio/Box (Chips) */}
+                <div className="flex shrink-0 flex-col gap-1.5">
+                  <span className="px-1 text-xs text-fn-muted">Medio de pago</span>
+                  <div className="flex flex-wrap gap-2">
+                    {isLoading &&
+                      [0, 1, 2].map((i) => (
+                        <span
+                          key={`sk-box-${i}`}
+                          aria-hidden
+                          className="skeleton-pulse h-7 w-20 rounded-full fn-chip"
+                        />
+                      ))}
+                    {availableBoxes.map((m) => {
+                      const isActive = selectedBox === m;
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          aria-pressed={isActive}
+                          onClick={() => setSelectedBox(isActive ? null : m)}
+                          className={chipClass(isActive)}
+                        >
+                          {isActive && <IconCheck className="size-3.5" aria-hidden />}
+                          {m}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
-              {/* Medio/Box (Chips) */}
-              <div className="flex shrink-0 flex-col gap-1.5">
-                <span className="text-sm font-medium text-fn-text">Medio de pago</span>
-                <div className="flex flex-wrap gap-2">
-                  {isLoading &&
-                    [0, 1, 2].map((i) => (
-                      <span
-                        key={`sk-box-${i}`}
-                        aria-hidden
-                        className="skeleton-pulse h-7 w-20 rounded-full fn-chip"
-                      />
-                    ))}
-                  {availableBoxes.map((m) => {
-                    const isActive = selectedBox === m;
-                    return (
-                      <button
-                        key={m}
-                        type="button"
-                        aria-pressed={isActive}
-                        onClick={() => setSelectedBox(isActive ? null : m)}
-                        className={chipClass(isActive)}
-                      >
-                        {isActive && <IconCheck className="size-3.5" aria-hidden />}
-                        {m}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+              {formMessage && (
+                <p className="flex shrink-0 items-center justify-center gap-1.5 text-center text-sm font-medium text-negative">
+                  <IconAlertTriangle className="size-4 shrink-0" aria-hidden />
+                  {formMessage}
+                </p>
+              )}
 
-              {/* Fecha y Nota */}
-              <div className="grid shrink-0 grid-cols-2 gap-3">
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="transaction-date" className="text-sm font-medium text-fn-text">
+              {/* Fecha, nota y el botón de registrar en una sola fila, pegada a los chips (sin hueco), como el campo y el "+"
+                  de los formularios de Cajas y Categorías. */}
+              <div className="flex shrink-0 items-end gap-2">
+                <div className="flex w-36 shrink-0 flex-col gap-1.5">
+                  <label htmlFor="transaction-date" className="px-1 text-xs text-fn-muted">
                     Fecha
                   </label>
                   <input
@@ -231,8 +212,8 @@ export default function Transactions() {
                     autoComplete="off"
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="transaction-note" className="text-sm font-medium text-fn-text">
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <label htmlFor="transaction-note" className="px-1 text-xs text-fn-muted">
                     Nota
                   </label>
                   <input
@@ -246,20 +227,17 @@ export default function Transactions() {
                     autoComplete="off"
                   />
                 </div>
+                <button
+                  type="submit"
+                  aria-label="Registrar movimiento"
+                  title="Registrar movimiento"
+                  className="fn-button size-10 shrink-0 px-0"
+                >
+                  <IconPlus className="h-5 w-5" />
+                </button>
               </div>
-
-              {formMessage && (
-                <p className="flex shrink-0 items-center justify-center gap-1.5 text-center text-sm font-medium text-negative">
-                  <IconAlertTriangle className="size-4 shrink-0" aria-hidden />
-                  {formMessage}
-                </p>
-              )}
-
-              <button type="submit" className="fn-button mt-2 h-11 w-full shrink-0 px-4">
-                Registrar movimiento
-              </button>
-            </form>
-          </div>
+            </div>
+          </form>
 
           {/* COLUMNA DERECHA: Historial / Tabla */}
           <div className="dash-enter [--i:2] fn-card col-span-1 flex h-[800px] flex-col p-5 lg:col-span-2 lg:h-[750px]">
@@ -310,7 +288,7 @@ export default function Transactions() {
             {/* Contenedor con scroll interno y clases para ocultar la barra */}
             <div
               ref={listRef}
-              className="flex flex-col gap-2.5 overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              className="flex flex-col gap-1 overflow-y-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
               {/* Esqueleto de carga: filas hundidas con la misma altura que las reales. */}
               {isLoading &&
@@ -327,11 +305,16 @@ export default function Transactions() {
                   <div
                     key={transaction.id}
                     data-tx-row
-                    className="flex shrink-0 flex-col justify-between gap-3 rounded-2xl fn-chip p-3 transition-colors hover:bg-fn-chip-hover sm:flex-row sm:items-center"
+                    className="flex shrink-0 flex-col justify-between gap-3 border-b border-fn-line py-3 last:border-b-0 sm:flex-row sm:items-center"
                   >
                     {/* Info principal */}
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-fn-card">
+                      <div
+                        className={cn(
+                          "flex size-10 shrink-0 items-center justify-center rounded-full",
+                          isExpense ? "bg-negative/15" : "bg-success/15",
+                        )}
+                      >
                         {isExpense ? (
                           <IconTrendingDown size={20} className="text-negative" aria-hidden />
                         ) : (
@@ -366,7 +349,7 @@ export default function Transactions() {
                     <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
                       <span
                         className={cn(
-                          "whitespace-nowrap font-bold tabular-nums",
+                          "whitespace-nowrap font-semibold tabular-nums",
                           isExpense ? "text-fn-text" : "text-success",
                         )}
                       >
