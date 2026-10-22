@@ -1,128 +1,137 @@
-import { useId } from "react";
-import { IconChartBar } from "@tabler/icons-react";
+import { useId, useState } from "react";
 import { fmt } from "@/lib/utils";
-
-// Azul de las barras (el periwinkle del azul de marca de la app, suavizado): el mismo para todos los
-// meses. El mes actual se distingue por el valor en negrita, no por otro color.
-const BAR_COLOR = "oklch(0.82 0.1 265)";
+import { ACCENT_COLOR } from "./chartColors";
 
 interface BarChartProps {
   labels: string[];
   values: number[];
 }
 
+// Cifra corta para el eje: 1,2M / 350k / 80.
+function compact(value: number) {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1).replace(".", ",")}M`;
+  if (value >= 1_000) return `${Math.round(value / 1_000)}k`;
+  return String(Math.round(value));
+}
+
 export default function BarChart({ labels, values }: BarChartProps) {
   const max = Math.max(...values, 1);
   const w = 300,
-    h = 220,
-    padB = 30,
-    padT = 24;
-  const bw = w / values.length;
-  const barWidth = bw * 0.5;
+    h = 230,
+    padL = 34,
+    padR = 14,
+    padB = 28,
+    padT = 40;
+  const bw = (w - padL - padR) / values.length;
+  const barWidth = bw * 0.64;
   const lastIndex = values.length - 1;
-  // Ids únicos por instancia para que los degradados no choquen si el gráfico se monta dos veces.
+  const trackH = h - padB - padT;
+  // Con mouse, la barra activa sigue al cursor y, sin cursor encima, es la del mes actual (la última).
+  // En pantallas táctiles no hay "hover": al soltar el dedo el navegador dispara pointerleave, que
+  // devolvía al mes actual al instante; por eso un toque deja la barra elegida hasta el siguiente.
+  const [hovered, setHovered] = useState<number | null>(null);
+  const [tapped, setTapped] = useState<number | null>(null);
+  const active = hovered ?? tapped ?? lastIndex;
+  // Ids únicos por instancia para que los patrones no choquen si el gráfico se monta dos veces.
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   const fillId = `${uid}-bar`;
-  const trackH = h - padB - padT;
+  const hatchId = `${uid}-hatch`;
+
+  const ticks = [0, 0.5, 1].map((t) => ({ y: h - padB - t * trackH, label: compact(max * t) }));
 
   return (
-    <div className="flex h-full w-full flex-col gap-4 fn-card p-5">
-      <div className="flex items-center gap-2.5">
-        <span className="flex size-9 items-center justify-center rounded-full fn-chip">
-          <IconChartBar className="size-[1.125rem] text-foreground" aria-hidden />
-        </span>
-        <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">
-          Últimos 6 meses
-        </h2>
-      </div>
-      <div className="flex flex-1 items-center justify-center">
+    <div className="fn-card flex h-full w-full flex-col gap-4 p-5 sm:p-6">
+      <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">
+        Gastos últimos 6 meses
+      </h2>
+      <div className="flex min-h-[220px] flex-1 items-center justify-center">
         <svg
           viewBox={`0 0 ${w} ${h}`}
           style={{ width: "100%", height: "100%" }}
           role="img"
-          aria-label="Últimos 6 meses"
+          aria-label="Gastos de los últimos 6 meses"
         >
           <defs>
-            {/* Degradado vertical: la barra pierde fuerza hacia la base y gana volumen sin añadir otro tono. */}
+            {/* Degradado vertical: la barra activa pierde fuerza hacia la base sin añadir otro tono. */}
             <linearGradient id={fillId} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0" stopColor={BAR_COLOR} />
-              <stop offset="1" stopColor={BAR_COLOR} stopOpacity={0.55} />
+              <stop offset="0" stopColor={ACCENT_COLOR} />
+              <stop offset="1" stopColor={ACCENT_COLOR} stopOpacity={0.55} />
             </linearGradient>
+            {/* Rayado diagonal de las barras inactivas */}
+            <pattern
+              id={hatchId}
+              width={5}
+              height={5}
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(45)"
+            >
+              <line
+                x1={0}
+                y1={0}
+                x2={0}
+                y2={5}
+                className="stroke-fn-muted"
+                strokeWidth={1.5}
+                opacity={0.45}
+              />
+            </pattern>
           </defs>
 
-          {/* Guías al 100 % y 50 %, y línea base: reglas finas, sin relleno */}
-          <line
-            x1={0}
-            y1={padT}
-            x2={w}
-            y2={padT}
-            className="stroke-fn-line"
-            strokeWidth={1}
-            strokeDasharray="2 4"
-          />
-          <line
-            x1={0}
-            y1={h - padB - 0.5 * (h - padB - padT)}
-            x2={w}
-            y2={h - padB - 0.5 * (h - padB - padT)}
-            className="stroke-fn-line"
-            strokeWidth={1}
-            strokeDasharray="2 4"
-          />
-          <line
-            x1={0}
-            y1={h - padB}
-            x2={w}
-            y2={h - padB}
-            className="stroke-fn-line"
-            strokeWidth={1}
-          />
+          {/* Eje vertical: solo cifras, sin líneas */}
+          {ticks.map((tick) => (
+            <text
+              key={tick.y}
+              x={0}
+              y={tick.y + 4}
+              fontSize={10}
+              className="fill-fn-muted"
+              style={{ fontVariantNumeric: "tabular-nums" }}
+            >
+              {tick.label}
+            </text>
+          ))}
 
           {values.map((v, i) => {
-            const bh = v > 0 ? (v / max) * (h - padB - padT) : 0;
-            const x = i * bw + (bw - barWidth) / 2;
+            const bh = v > 0 ? Math.max((v / max) * trackH, 8) : 0;
+            const x = padL + i * bw + (bw - barWidth) / 2;
             const y = h - padB - bh;
-            const isCurrent = i === lastIndex;
+            const isActive = i === active;
+
+            const tip = fmt(v);
+            const tipW = tip.length * 5.3 + 14;
+            const tipX = Math.min(Math.max(x + barWidth / 2, tipW / 2), w - tipW / 2);
 
             return (
-              <g key={i} className="group/bar">
-                <title>{`${labels[i]}: ${fmt(v)}`}</title>
-                {/* Pista hundida: muestra la altura máxima y da estructura a cada columna */}
+              <g
+                key={i}
+                onPointerEnter={(e) => {
+                  if (e.pointerType === "mouse") setHovered(i);
+                }}
+                onPointerLeave={(e) => {
+                  if (e.pointerType === "mouse") setHovered(null);
+                }}
+                onPointerDown={(e) => {
+                  if (e.pointerType !== "mouse") setTapped(i);
+                }}
+              >
+                <title>{`${labels[i]}: ${tip}`}</title>
+                {/* Zona de contacto de toda la columna, para activar la barra sin apuntar con precisión */}
                 <rect
-                  x={x}
+                  x={padL + i * bw}
                   y={padT}
-                  width={barWidth}
-                  height={trackH}
-                  rx={6}
-                  className="fill-fn-chip"
+                  width={bw}
+                  height={trackH + padB}
+                  fill="transparent"
                 />
-
-                {/* Valor sobre la barra, solo si tiene datos */}
-                {v > 0 && (
-                  <text
-                    x={x + barWidth / 2}
-                    y={y - 6}
-                    textAnchor="middle"
-                    fontSize={11}
-                    fontWeight={isCurrent ? 700 : 500}
-                    className={isCurrent ? undefined : "fill-fn-muted"}
-                    style={{
-                      fontVariantNumeric: "tabular-nums",
-                      ...(isCurrent ? { fill: BAR_COLOR } : {}),
-                    }}
-                  >
-                    {v >= 1000000 ? `${(v / 1000000).toFixed(1)}M` : v.toLocaleString("es-CO")}
-                  </text>
-                )}
 
                 <rect
                   x={x}
                   y={y}
                   width={barWidth}
                   height={bh}
-                  rx={6}
-                  className="bar-rise transition-[y,height,filter] duration-300 ease-out group-hover/bar:brightness-125 motion-reduce:transition-none"
-                  fill={`url(#${fillId})`}
+                  rx={barWidth / 2}
+                  className="bar-rise transition-[y,height] duration-300 ease-out motion-reduce:transition-none"
+                  fill={isActive ? `url(#${fillId})` : `url(#${hatchId})`}
                   style={{ "--i": i } as React.CSSProperties}
                 />
 
@@ -139,13 +148,43 @@ export default function BarChart({ labels, values }: BarChartProps) {
                   />
                 )}
 
+                {isActive && v > 0 && (
+                  <>
+                    <circle
+                      cx={x + barWidth / 2}
+                      cy={y + barWidth / 2}
+                      r={2.5}
+                      className="fill-fn-ground"
+                    />
+                    <rect
+                      x={tipX - tipW / 2}
+                      y={y - 26}
+                      width={tipW}
+                      height={18}
+                      rx={9}
+                      className="fill-fn-text"
+                    />
+                    <text
+                      x={tipX}
+                      y={y - 13.5}
+                      textAnchor="middle"
+                      fontSize={9}
+                      fontWeight={600}
+                      className="fill-fn-ground"
+                      style={{ fontVariantNumeric: "tabular-nums" }}
+                    >
+                      {tip}
+                    </text>
+                  </>
+                )}
+
                 <text
                   x={x + barWidth / 2}
-                  y={h - 10}
+                  y={h - 8}
                   textAnchor="middle"
                   fontSize={11}
-                  fontWeight={isCurrent ? 700 : 400}
-                  className={`pointer-events-none ${isCurrent ? "fill-fn-text" : "fill-fn-muted"}`}
+                  fontWeight={isActive ? 700 : 400}
+                  className={`pointer-events-none ${isActive ? "fill-fn-text" : "fill-fn-muted"}`}
                 >
                   {labels[i]}
                 </text>

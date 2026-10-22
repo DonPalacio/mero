@@ -11,3 +11,7 @@ export const CHART_COLORS = [
   "oklch(0.84 0.12 120)",
   "oklch(0.82 0.1 235)",
 ] as const;
+
+// Azul de acento del Dashboard (el periwinkle del azul de marca de la app, suavizado): lo comparten
+// las barras activas y la tarjeta de saldo total.
+export const ACCENT_COLOR = "oklch(0.82 0.1 265)";

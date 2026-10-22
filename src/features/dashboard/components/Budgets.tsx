@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { IconAlertOctagon, IconAlertTriangle, IconTargetArrow } from "@tabler/icons-react";
 import { fmt, cn } from "@/lib/utils";
 
 export interface Category {
@@ -42,15 +41,13 @@ export default function Budgets({ categories, expensesByCategory, onBudgetChange
   };
 
   return (
-    <div className="fn-card flex h-auto flex-col gap-4 p-5 lg:h-full">
-      <div className="flex items-center gap-2.5">
-        <span className="flex size-9 items-center justify-center rounded-full fn-chip">
-          <IconTargetArrow className="size-[1.125rem] text-foreground" aria-hidden />
-        </span>
-        <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">Presupuestos</h2>
-      </div>
+    <div className="fn-card flex h-full min-h-0 flex-col gap-4 p-5 sm:p-6">
+      <h2 className="text-[0.9375rem] font-semibold tracking-tight text-fn-text">Presupuestos</h2>
 
-      <div className="grid flex-1 grid-cols-1 content-start gap-3 overflow-y-auto pr-1 xl:grid-cols-2">
+      <div className="grid min-h-0 flex-1 grid-cols-1 content-start gap-x-8 gap-y-5 overflow-y-auto pr-1 pt-2 lg:grid-cols-2">
+        {expenseCategories.length === 0 && (
+          <p className="text-sm text-fn-muted">Sin categorías de gasto</p>
+        )}
         {expenseCategories.map((c, index) => {
           const spent = expensesByCategory[c.name] || 0;
           const pct = c.budget > 0 ? Math.min((spent / c.budget) * 100, 100) : 0;
@@ -65,25 +62,13 @@ export default function Budgets({ categories, expensesByCategory, onBudgetChange
           }
 
           return (
-            <div key={c.id} className="flex flex-col gap-2.5 rounded-2xl fn-chip p-3.5">
+            <div key={c.id} className="flex flex-col gap-2.5">
               <div className="flex items-center justify-between gap-3 text-sm">
                 <span className="flex min-w-0 items-center gap-1.5 font-medium text-fn-text">
                   <span className="truncate">{c.name}</span>
-                  {/* El estado no depende del color: cada uno lleva su propio ícono y etiqueta. */}
-                  {exceeded && (
-                    <IconAlertOctagon
-                      role="img"
-                      aria-label="Presupuesto superado"
-                      className="size-4 shrink-0 text-negative"
-                    />
-                  )}
-                  {nearLimit && (
-                    <IconAlertTriangle
-                      role="img"
-                      aria-label="Cerca del límite"
-                      className="size-4 shrink-0 text-warning"
-                    />
-                  )}
+                  {/* Sin ícono: el estado se ve en el color de la barra y se anuncia a lectores de pantalla. */}
+                  {exceeded && <span className="sr-only">Presupuesto superado</span>}
+                  {nearLimit && <span className="sr-only">Cerca del límite</span>}
                 </span>
                 <span className="flex shrink-0 items-center gap-2 tabular-nums text-fn-muted">
                   {fmt(spent)} /{" "}
@@ -94,7 +79,7 @@ export default function Budgets({ categories, expensesByCategory, onBudgetChange
                     inputMode="numeric"
                     aria-label={`Presupuesto de ${c.name}`}
                     value={getValue(c)}
-                    className="w-28 rounded-full border border-fn-line bg-fn-card px-3 py-1.5 text-right text-sm tabular-nums text-fn-text transition-colors [appearance:textfield] hover:border-fn-muted focus-visible:border-foreground focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    className="w-28 rounded-full border border-fn-line bg-fn-chip px-3 py-1.5 text-right text-sm tabular-nums text-fn-text transition-colors [appearance:textfield] hover:border-fn-muted focus-visible:border-foreground focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-foreground [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     onChange={(e) => handleChange(c.id, e.target.value)}
                     onBlur={() => commitChange(c.id)}
                     onKeyDown={(e) => {
@@ -104,7 +89,7 @@ export default function Budgets({ categories, expensesByCategory, onBudgetChange
                 </span>
               </div>
 
-              <div className="h-2 w-full overflow-hidden rounded-full bg-fn-card">
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-fn-chip">
                 <div
                   className={cn(
                     "fill-reveal h-full rounded-full transition-[width] duration-300 ease-out motion-reduce:transition-none",
