@@ -170,7 +170,9 @@ export default function Categories() {
                         <span
                           className={cn(
                             "flex size-10 shrink-0 items-center justify-center rounded-full",
-                            isIncome ? "bg-success/15" : "bg-negative/15",
+                            isIncome
+                              ? "bg-linear-to-b from-success/30 to-success/15"
+                              : "bg-linear-to-b from-negative/30 to-negative/15",
                           )}
                         >
                           {isIncome ? (

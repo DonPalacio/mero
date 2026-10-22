@@ -5,8 +5,6 @@ import {
   IconCheck,
   IconPlus,
   IconTrash,
-  IconTrendingDown,
-  IconTrendingUp,
 } from "@tabler/icons-react";
 import { cn, fmt, formatTypedAmount } from "@/lib/utils";
 import TypeSelector from "@/components/TypeSelector";
@@ -91,13 +89,24 @@ export default function Transactions() {
                 }}
               />
 
-              {/* Monto: la cifra grande de la tarjeta, sin caja de campo */}
-              <div className="flex flex-col gap-1">
-                <label htmlFor="transaction-amount" className="px-1 text-xs text-fn-muted">
+              {/* Monto: la cifra grande de la tarjeta, sin caja de campo. Al enfocarlo, una línea crece
+                  desde el centro y la etiqueta y el $ se aclaran (solo transform y color, con
+                  prefers-reduced-motion). */}
+              <div className="group flex flex-col gap-1">
+                <label
+                  htmlFor="transaction-amount"
+                  className="px-1 text-xs text-fn-muted transition-colors duration-300 group-focus-within:text-fn-text motion-reduce:transition-none"
+                >
                   Monto
                 </label>
-                <div className="flex items-baseline gap-2 border-b border-fn-line pb-1 focus-within:border-fn-text">
-                  <span className="pl-1 text-3xl font-medium text-fn-muted">$</span>
+                <div className="relative flex items-baseline gap-2 border-b border-fn-line pb-1">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-x-0 -bottom-px h-0.5 origin-center scale-x-0 bg-fn-text transition-transform duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] group-focus-within:scale-x-100 motion-reduce:transition-none"
+                  />
+                  <span className="pl-1 text-3xl font-medium text-fn-muted transition-colors duration-300 group-focus-within:text-fn-text motion-reduce:transition-none">
+                    $
+                  </span>
                   {/* Texto y no number: el campo muestra el monto con formato (punto de miles y
                       coma decimal) mientras se escribe, hasta 3 decimales. */}
                   <input
@@ -312,13 +321,15 @@ export default function Transactions() {
                       <div
                         className={cn(
                           "flex size-10 shrink-0 items-center justify-center rounded-full",
-                          isExpense ? "bg-negative/15" : "bg-success/15",
+                          isExpense
+                            ? "bg-linear-to-b from-negative/30 to-negative/15"
+                            : "bg-linear-to-b from-success/30 to-success/15",
                         )}
                       >
                         {isExpense ? (
-                          <IconTrendingDown size={20} className="text-negative" aria-hidden />
+                          <IconArrowDownRight className="size-5 text-negative" aria-hidden />
                         ) : (
-                          <IconTrendingUp size={20} className="text-success" aria-hidden />
+                          <IconArrowUpRight className="size-5 text-success" aria-hidden />
                         )}
                       </div>
                       <div className="flex min-w-0 flex-col">
