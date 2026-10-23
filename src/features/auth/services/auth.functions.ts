@@ -31,12 +31,19 @@ export const getAccessToken = createServerFn({ method: "POST" }).handler(async (
   return { accessToken: session.access_token, expiresAt: session.expires_at ?? 0 };
 });
 
+// Mismo dato que entrega getAccessToken: el navegador lo guarda solo en memoria. Devolverlo al
+// crear la sesión evita un viaje extra al servidor justo antes de cargar el dashboard.
+function toAccessToken(session: { access_token: string; expires_at?: number } | null) {
+  if (!session) return null;
+  return { accessToken: session.access_token, expiresAt: session.expires_at ?? 0 };
+}
+
 export const signIn = createServerFn({ method: "POST" })
   .inputValidator(credentials)
   .handler(async ({ data }) => {
     const supabase = createSupabaseServerClient();
-    const { error } = await supabase.auth.signInWithPassword(data);
-    return { error: error?.message ?? null };
+    const { data: result, error } = await supabase.auth.signInWithPassword(data);
+    return { error: error?.message ?? null, token: toAccessToken(result.session) };
   });
 
 export const signUp = createServerFn({ method: "POST" })
@@ -54,6 +61,7 @@ export const signUp = createServerFn({ method: "POST" })
       error: error?.message ?? null,
       // Sin sesión = falta confirmar el correo
       needsConfirmation: !error && !result.session,
+      token: toAccessToken(result.session),
     };
   });
 

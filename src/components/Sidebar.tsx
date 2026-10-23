@@ -12,6 +12,7 @@ import { FloatingDock, type DockItem } from "@/components/ui/floating-dock";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useLogout } from "@/features/auth/hooks/useLogout";
+import { useRoutePreload } from "@/hooks/useRoutePreload";
 import { Link } from "@tanstack/react-router";
 
 interface SidebarLayoutProps {
@@ -21,6 +22,7 @@ interface SidebarLayoutProps {
 export default function SidebarDemo({ children }: SidebarLayoutProps) {
   const [open, setOpen] = useState(false);
   const logout = useLogout();
+  useRoutePreload();
 
   const links = [
     {
@@ -58,8 +60,7 @@ export default function SidebarDemo({ children }: SidebarLayoutProps) {
     { label: "Salir", icon: <IconArrowLeft className="h-5 w-5" />, onClick: () => void logout() },
   ];
 
-  // El redirect a /login lo maneja automáticamente el guard de __root.tsx
-  // (useLogout -> router.invalidate() -> beforeLoad detecta sesión nula)
+  // useLogout oculta el shell privado, cierra la sesión y navega a /login.
   const handleLogout = async (e: React.MouseEvent) => {
     e.preventDefault();
     await logout();

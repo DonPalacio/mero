@@ -26,6 +26,12 @@ export function clearAccessTokenCache() {
   pending = null;
 }
 
+// Guarda el token que el servidor ya entregó al crear la sesión (login), para que la primera
+// consulta de datos no tenga que pedirlo con getAccessToken.
+export function setAccessToken(token: { accessToken: string; expiresAt: number }) {
+  cache = { token: token.accessToken, exp: token.expiresAt };
+}
+
 async function resolveToken(): Promise<string | null> {
   // En el servidor (SSR) este módulo también se evalúa y supabase-js pide el
   // token al crear el cliente. Allí no hay sesión de navegador: se omite.
