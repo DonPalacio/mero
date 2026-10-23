@@ -9,12 +9,12 @@ import {
   Scripts,
   redirect,
 } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { SITE_URL } from "@/lib/site";
 import { getCachedSessionUser } from "@/lib/session-cache";
-import { useIsSigningOut } from "@/lib/signing-out";
+import { setSigningOut, useIsSigningOut } from "@/lib/signing-out";
 import SidebarDemo from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -189,6 +189,12 @@ function RootComponent() {
   const isSigningOut = useIsSigningOut();
 
   const isLoginPage = location.pathname === "/login";
+
+  // /login ya está en pantalla: terminó el cierre de sesión. Se quita aquí y no en useLogout para
+  // que la pantalla privada no reaparezca entre que el router navega y React dibuja /login.
+  useEffect(() => {
+    if (isLoginPage) setSigningOut(false);
+  }, [isLoginPage]);
 
   return (
     <QueryClientProvider client={queryClient}>

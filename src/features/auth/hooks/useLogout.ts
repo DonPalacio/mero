@@ -30,9 +30,14 @@ export function useLogout() {
 
     try {
       // Directo a /login, sin esperar a que el guard de __root.tsx lo deduzca con un invalidate.
+      // El estado "saliendo" NO se quita aquí: navigate() resuelve antes de que React dibuje
+      // /login, y quitarlo ya dejaría ver la pantalla anterior (con la caché vacía: su esqueleto).
+      // Lo quita RootComponent cuando /login ya está en pantalla.
       await router.navigate({ to: "/login", replace: true });
-    } finally {
+    } catch (error) {
+      // No se llegó a /login: se vuelve a mostrar la pantalla y el guard decidirá.
       setSigningOut(false);
+      throw error;
     }
   };
 }
