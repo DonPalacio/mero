@@ -13,8 +13,12 @@ const GRID =
 // El PieChart y el BarChart comparten ancho (primera columna) y alto en escritorio; los
 // presupuestos, al lado del BarChart, usan ese mismo alto.
 const SAME_SIZE = "lg:h-[26rem]";
-// Móvil: "Queda" arriba a todo el ancho y las otras dos debajo; sin tarjeta, pero con el mismo aire.
-const MOBILE_TILE = "max-sm:p-4";
+// Móvil: "Queda" centrada y grande arriba; debajo, Ingresos y Gastos en dos columnas separadas por
+// líneas finas. Sin tarjetas: las líneas son lo único que las ordena.
+const MOBILE_REMAINING =
+  "max-sm:order-first max-sm:col-span-2 max-sm:border-b max-sm:border-fn-line max-sm:pb-5 max-sm:pt-3";
+const MOBILE_INCOME = "max-sm:pr-2 max-sm:pt-1";
+const MOBILE_EXPENSES = "max-sm:border-l max-sm:border-fn-line max-sm:pl-2 max-sm:pt-1";
 
 export default function Dashboard() {
   const {
@@ -77,21 +81,21 @@ export default function Dashboard() {
               label="Ingresos del mes"
               value={totalIncome}
               trend="up"
-              className={MOBILE_TILE}
+              className={MOBILE_INCOME}
               valueClassName="max-sm:text-xl"
             />
             <SummaryStat
               label="Gastos del mes"
               value={totalExpenses}
               trend="down"
-              className={MOBILE_TILE}
+              className={MOBILE_EXPENSES}
               valueClassName="max-sm:text-xl"
             />
             <SummaryStat
               label="Queda"
               value={availableBalance}
               trend="auto"
-              className={`${MOBILE_TILE} max-sm:order-first max-sm:col-span-2`}
+              className={MOBILE_REMAINING}
               valueClassName="max-sm:text-4xl"
             />
           </div>

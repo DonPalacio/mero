@@ -7,7 +7,7 @@ interface SummaryStatProps {
   value: number;
   // "up" y "down" colorean la cifra del chip; "auto" lo decide el signo del valor.
   trend: "up" | "down" | "auto";
-  // Ajustes de la vista móvil (tarjeta, ancho y tamaño de la cifra); en escritorio no se usan.
+  // Ajustes de la vista móvil (separadores, orden y tamaño de la cifra); en escritorio no se usan.
   className?: string;
   valueClassName?: string;
 }
@@ -23,9 +23,14 @@ export default function SummaryStat({
   const isUp = trend === "auto" ? value >= 0 : trend === "up";
 
   return (
-    <div className={cn("flex min-w-0 flex-col gap-1", className)}>
+    <div
+      className={cn(
+        "flex min-w-0 flex-col gap-1 max-sm:items-center max-sm:text-center",
+        className,
+      )}
+    >
       <span className="text-xs text-fn-muted">{label}</span>
-      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 max-sm:justify-center">
         <AnimatedNumber
           value={value}
           className={cn(
