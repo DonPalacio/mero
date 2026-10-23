@@ -1,4 +1,3 @@
-"use client";
 import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
 import {
@@ -19,7 +18,7 @@ interface SidebarLayoutProps {
   children?: React.ReactNode;
 }
 
-export default function SidebarDemo({ children }: SidebarLayoutProps) {
+export default function AppShell({ children }: SidebarLayoutProps) {
   const [open, setOpen] = useState(false);
   const logout = useLogout();
   useRoutePreload();
