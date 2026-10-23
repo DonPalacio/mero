@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 // Reenvía el gesto de scroll horizontal desde cualquier punto de una fila
 // del historial (ícono, monto, botón de eliminar) hacia la franja de texto
-// de esa fila (data-mov-scroll), que es la única que realmente se desplaza.
+// de esa fila (data-tx-scroll), que es la única que realmente se desplaza.
 // Así el scroll-x "se siente" disponible en todo el registro sin mover el
 // ícono, el monto ni el botón, y sin tocar el diseño de Transactions.tsx.
 function findRowScroll(
