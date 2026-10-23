@@ -37,11 +37,15 @@ bun run build
 - **TypeScript:** `strict`, con `noUncheckedIndexedAccess` y `exactOptionalPropertyTypes`. Los imports usan el alias `@/*` y, dentro de una feature, rutas relativas.
 - **Idioma:** la nomenclatura (variables, funciones, tipos, archivos, tablas, columnas, funciones SQL y valores de dato) va en **inglés**. UI, toasts, mensajes de error y comentarios van en español; los comentarios explican el *por qué*. Nombres del dominio: `transactions`, `boxes` (cajas), `categories`, `yields`.
 - **Feature:** `<Feature>.tsx` (solo UI), `hooks/use<Feature>.ts` (estado y caché) y `services/<feature>.service.ts` (objeto literal con funciones `async` en inglés (`getBoxes`, `createBox`)).
+- **Hooks de una feature grande:** si `use<Feature>.ts` crece, se divide en `hooks/` por responsabilidad y el principal queda como orquestador con la misma API (ejemplo: `useTransactions.ts` compone `useTransactionMonths.ts`, `useTransactionForm.ts` y `useRowHorizontalScrollForwarding.ts`). Las claves de mes se arman con `toMonthKey` de `queries.ts`, no a mano.
 - **Servicios:** las lecturas lanzan error (lo maneja React Query) y las escrituras devuelven `{ ok, motivo }`.
 - **Caché:** las claves y queries viven solo en `src/lib/queries.ts`. Tras mutar se usan sus helpers, con actualización optimista y `toast.error("No se pudo …")` si falla.
 - **UI:** Tailwind v4 con tokens semánticos (`bg-card`, `text-muted-foreground`) y shadcn/ui en `src/components/ui`. Iconos con Tabler en las pantallas y Lucide solo en `ui/`. Toasts con `sonner`.
 - **Tarjetas del Dashboard:** las superficies usan las utilidades de `src/styles.css` (`fn-card`, `fn-chip`, `fn-icon-button`, `fn-input`, `fn-button`, `fn-button-soft`, `fn-button-danger`) y los tokens `fn-*` (`bg-fn-card`, `text-fn-muted`, `bg-fn-brand`), que reutilizan `--background`, `--card` y `--border`; estados con `text-success`, `text-warning`, `text-negative`, siempre con ícono o texto. Movimiento corto y solo `transform`/`opacity`/`clip-path` (`dash-enter`, `bar-rise`, `fill-reveal`), con `prefers-reduced-motion`. Cifras animadas con `AnimatedNumber` (`src/components`); entrada de tarjetas con `dash-enter` y `[--i:N]`.
 - **Servidor:** `*.server.ts` o `@tanstack/react-start/server-only`. Nunca `server-only`.
+- **Cierre de sesión:** `src/lib/signing-out.ts` guarda el estado "saliendo" y `AppShell` (`components/Sidebar.tsx`) deja de dibujar contenido privado mientras dura. `useLogout` lo activa y `RootComponent` lo quita cuando `/login` ya está en pantalla (no antes: reaparecería la pantalla anterior).
+- **Precarga tras el login:** `signIn`/`signUp` devuelven el token de acceso (solo en memoria, con `setAccessToken`) y `useAuth` precarga el dashboard con `prefetchScreen`. `useRoutePreload` (en `AppShell`) descarga el código de las demás pantallas privadas cuando no quedan consultas en curso; si se agrega una pantalla al menú, hay que sumarla a su lista.
+- **Saltos de línea:** `.gitattributes` fija LF en el repositorio.
 
 ## Reglas
 
