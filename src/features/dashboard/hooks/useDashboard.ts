@@ -46,9 +46,14 @@ export function useDashboard() {
   // no tiene la función) cuenta como 0 y los ingresos se ven igual que antes.
   const yieldsQ = useQuery(monthlyYieldsQuery(selectedMonth));
 
+  const isLoading = summaryQ.isPending || categoriesQ.isPending || boxesQ.isPending;
+
   // Precarga el resumen del mes anterior y del siguiente (sin pasar del actual), para que
-  // navegar de mes no espere a la red.
+  // navegar de mes no espere a la red. Espera a que carguen los datos de la pantalla: así no
+  // compite con ellos por la conexión.
   useEffect(() => {
+    if (isLoading) return;
+
     const [yearNumber = 0, monthNumber = 1] = selectedMonth.split("-").map(Number);
     [new Date(yearNumber, monthNumber - 2, 1), new Date(yearNumber, monthNumber, 1)]
       .map(toMonthKey)
@@ -57,9 +62,7 @@ export function useDashboard() {
         queryClient.prefetchQuery(monthlySummaryQuery(month));
         queryClient.prefetchQuery(monthlyYieldsQuery(month));
       });
-  }, [selectedMonth, initialCurrentMonth, queryClient]);
-
-  const isLoading = summaryQ.isPending || categoriesQ.isPending || boxesQ.isPending;
+  }, [selectedMonth, initialCurrentMonth, queryClient, isLoading]);
 
   const categories: Category[] = useMemo(
     () =>

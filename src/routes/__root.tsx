@@ -14,16 +14,20 @@ import type { ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { SITE_URL } from "@/lib/site";
 import { getCachedSessionUser } from "@/lib/session-cache";
+import { useIsSigningOut } from "@/lib/signing-out";
 import SidebarDemo from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 
 // El destino de ?redirect= viene de la URL, así que solo se acepta una ruta interna: debe
 // empezar con una sola "/" y no llevar "\" ni caracteres de control (los navegadores los
-// normalizan y "/\sitio.com" o "/\t/sitio.com" terminarían en otro dominio).
+// normalizan y "/\sitio.com" o "/\t/sitio.com" terminarían en otro dominio). Sin destino
+// válido se va directo al dashboard, para no pasar por "/" (que solo redirige allí).
 function safeInternalPath(destination: string | null): string {
-  if (!destination || !destination.startsWith("/") || destination.startsWith("//")) return "/";
+  if (!destination || !destination.startsWith("/") || destination.startsWith("//")) {
+    return "/dashboard";
+  }
   // eslint-disable-next-line no-control-regex
-  if (/[\\\u0000-\u001f\u007f]/.test(destination)) return "/";
+  if (/[\\\u0000-\u001f\u007f]/.test(destination)) return "/dashboard";
   return destination;
 }
 
@@ -182,12 +186,17 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
 
+  const isSigningOut = useIsSigningOut();
+
   const isLoginPage = location.pathname === "/login";
 
   return (
     <QueryClientProvider client={queryClient}>
       {isLoginPage ? (
         <Outlet />
+      ) : isSigningOut ? (
+        // Sin contenido privado mientras se cierra la sesión: solo el indicador de carga.
+        <PendingComponent />
       ) : (
         <SidebarDemo>
           <Outlet />

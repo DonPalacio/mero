@@ -222,13 +222,16 @@ export function useTransactions() {
 
   // Precarga el mes anterior y el siguiente (sin pasar del actual) para que al cambiar
   // de mes la lista ya esté en caché. prefetchQuery respeta el staleTime y no lanza errores.
+  // Espera a que cargue lo que la pantalla necesita para no competir con ello por la conexión.
   useEffect(() => {
+    if (isLoading) return;
+
     const [yearNumber = 0, monthNumber = 1] = selectedMonth.split("-").map(Number);
     [new Date(yearNumber, monthNumber - 2, 1), new Date(yearNumber, monthNumber, 1)]
       .map((d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`)
       .filter((month) => month <= currentMonth)
       .forEach((month) => queryClient.prefetchQuery(monthTransactionsQuery(month)));
-  }, [selectedMonth, currentMonth, queryClient]);
+  }, [selectedMonth, currentMonth, queryClient, isLoading]);
 
   // Los selectores se muestran ordenados por nombre
   const boxesData = useMemo(
