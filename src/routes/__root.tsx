@@ -15,7 +15,7 @@ import appCss from "../styles.css?url";
 import { SITE_URL } from "@/lib/site";
 import { getCachedSessionUser } from "@/lib/session-cache";
 import { setSigningOut, useIsSigningOut } from "@/lib/signing-out";
-import SidebarDemo from "@/components/Sidebar";
+import AppShell from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 
 // El destino de ?redirect= viene de la URL, así que solo se acepta una ruta interna: debe
@@ -204,9 +204,9 @@ function RootComponent() {
         // Sin contenido privado mientras se cierra la sesión: solo el indicador de carga.
         <PendingComponent />
       ) : (
-        <SidebarDemo>
+        <AppShell>
           <Outlet />
-        </SidebarDemo>
+        </AppShell>
       )}
       <Toaster />
     </QueryClientProvider>
