@@ -12,6 +12,7 @@ import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useLogout } from "@/features/auth/hooks/useLogout";
 import { useRoutePreload } from "@/hooks/useRoutePreload";
+import VoiceFab from "@/features/voice/VoiceFab";
 import { Link } from "@tanstack/react-router";
 
 interface SidebarLayoutProps {
@@ -103,6 +104,7 @@ export default function AppShell({ children }: SidebarLayoutProps) {
       </div>
 
       <FloatingDock items={dockItems} />
+      <VoiceFab />
     </div>
   );
 }

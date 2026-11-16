@@ -535,3 +535,97 @@
   --fn-brand: #a1a1aa;
   --fn-brand-soft: #3f3f46;
 }
+
+/*
+ * Botón flotante del micrófono (registro por voz). Solo transform/opacity.
+ * Al pulsarlo para hablar: "pop" del botón, ondas que se expanden y el ícono entra girando.
+ * Al terminar de escuchar: el botón se encoge un instante y vuelve a su tamaño.
+ */
+@keyframes mic-open {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes mic-close {
+  0% {
+    transform: scale(1.08);
+  }
+  40% {
+    transform: scale(0.88);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes mic-ripple {
+  from {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  to {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+@keyframes mic-icon-pop {
+  from {
+    transform: scale(0.6) rotate(-12deg);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@utility mic-open {
+  animation: mic-open 420ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@utility mic-close {
+  animation: mic-close 420ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@utility mic-ripple {
+  animation: mic-ripple 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@utility mic-icon-pop {
+  animation: mic-icon-pop 300ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mic-open {
+    animation: none;
+    transform: scale(1.08);
+  }
+  .mic-close,
+  .mic-ripple,
+  .mic-icon-pop {
+    animation: none;
+  }
+}
+
+/* Superficie del botón del micrófono: el mismo degradado vertical de los íconos de categoría
+   (más intenso arriba, más suave abajo), pero opaco porque el botón flota sobre el contenido.
+   El azul se fija igual en claro y oscuro para que el ícono blanco siempre contraste. */
+:root {
+  --mic-brand: oklch(0.55 0.2 262);
+}
+
+@utility mic-surface {
+  background-image: linear-gradient(
+    to bottom,
+    var(--mic-brand),
+    color-mix(in oklab, var(--mic-brand) 78%, var(--fn-card))
+  );
+}

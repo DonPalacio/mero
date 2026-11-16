@@ -45,6 +45,7 @@ bun run build
 - **Servidor:** `*.server.ts` o `@tanstack/react-start/server-only`. Nunca `server-only`.
 - **Cierre de sesión:** `src/lib/signing-out.ts` guarda el estado "saliendo" y `AppShell` (`components/Sidebar.tsx`) deja de dibujar contenido privado mientras dura. `useLogout` lo activa y `RootComponent` lo quita cuando `/login` ya está en pantalla (no antes: reaparecería la pantalla anterior).
 - **Precarga tras el login:** `signIn`/`signUp` devuelven el token de acceso (solo en memoria, con `setAccessToken`) y `useAuth` precarga el dashboard con `prefetchScreen`. `useRoutePreload` (en `AppShell`) descarga el código de las demás pantallas privadas cuando no quedan consultas en curso; si se agrega una pantalla al menú, hay que sumarla a su lista.
+- **Registro por voz:** `features/voice/` (botón flotante `VoiceFab` montado en `AppShell`). La voz se transcribe en el navegador (Web Speech API, `es-CO`) y la server function `parseVoiceTransaction` (`voice.functions.ts`, `POST`, exige sesión) llama a `claude-haiku-5-5` solo con texto y nombres de categorías y cajas, nunca ids ni saldos. El cliente resuelve los ids y guarda con el flujo optimista de Transacciones tras una tarjeta de confirmación. La lógica vive en funciones puras de `lib/` (`voice-parse`, `voice-prompt`, `voice-api`, `voice-flow`, `speech`); los efectos quedan en `hooks/`. `ANTHROPIC_API_KEY` solo en servidor (sin `VITE_`; ver `.env.example`). Limitaciones conocidas en `docs/specs/voice-transactions.md`.
 - **Saltos de línea:** `.gitattributes` fija LF en el repositorio.
 
 ## Reglas
@@ -64,7 +65,7 @@ bun run build
 - Nunca exponer, persistir en el navegador ni registrar refresh tokens. El access token vive solo en memoria.
 - Los flujos de `auth.functions.ts` son `createServerFn({ method: "POST" })` a propósito: no cambiarlos a `GET`.
 - No quitar `createCsrfMiddleware` ni el `requestMiddleware` de `src/start.ts`. Definir ese archivo desactiva el CSRF automático.
-- No relajar la CSP ni las cabeceras de `vercel.json` sin avisar.
+- No relajar la CSP ni las cabeceras de `vercel.json` sin avisar. La única excepción vigente es `Permissions-Policy: microphone=(self)`, necesaria para el dictado; cámara y geolocalización siguen bloqueadas.
 
 ### Base de datos
 
